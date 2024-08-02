@@ -1,5 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { JudicialBinacleService } from './app/judicial/judicial-binacle/modules/services/judicial-binacle.service';
+
+const service = new JudicialBinacleService();
 
 dotenv.config();
 
@@ -13,6 +16,10 @@ app.get("/ping", (_req, res) => {
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
+  //Jobs
+  // import("./jobs/cron-jobs").then((cronJobs) => cronJobs.inizializeCronJobs());
+  service.main();
+
 });
 
 
