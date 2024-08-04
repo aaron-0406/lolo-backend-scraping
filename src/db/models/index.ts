@@ -1,3 +1,5 @@
 import { Sequelize } from "sequelize";
 
-export const setupModels = (sequelize: Sequelize) => {}
+export const setupModels = (sequelize: Sequelize) => {
+  
+}

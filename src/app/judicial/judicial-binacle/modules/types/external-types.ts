@@ -38,3 +38,33 @@ export interface CaseFileNumber {
   codEspecialidad: string
   codInstancia: string
 }
+
+
+export interface Notificacion {
+  numero: string | null;
+  destinatario: string | null;
+  fechaEnvio: string | null;
+  anexos: string | null;
+  formaEntrega: string | null;
+  detallesAdicionales?: {
+    fechaResolucion: string | null;
+    notificacionImpresion: string | null;
+    enviadaCentral: string | null;
+    recepcionCentral: string | null;
+    formaEntrega: string | null;
+  } | null,
+  enlaceDescarga: string | null;
+}
+
+export interface PnlSeguimientoData {
+  index: number;
+  fechaResolucion: string | null;
+  resolucion: string | null;
+  tipoNotificacion: string | null;
+  acto: string | null;
+  fojas: string | null;
+  proveido: string | null;
+  sumilla: string | null;
+  descripcionUsuario: string | null;
+  notificaciones: Notificacion[];
+}
