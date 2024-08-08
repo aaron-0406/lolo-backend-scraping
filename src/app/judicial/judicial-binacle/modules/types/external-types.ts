@@ -53,7 +53,6 @@ export interface Notificacion {
     recepcionCentral: string | null;
     formaEntrega: string | null;
   } | null,
-  enlaceDescarga: string | null;
 }
 
 export interface PnlSeguimientoData {
@@ -67,4 +66,5 @@ export interface PnlSeguimientoData {
   sumilla: string | null;
   descripcionUsuario: string | null;
   notificaciones: Notificacion[];
+  enlaceDescarga: string | null;
 }

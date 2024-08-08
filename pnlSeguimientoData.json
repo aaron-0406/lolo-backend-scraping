@@ -22,8 +22,7 @@
           "enviadaCentral": "03/08/2023",
           "recepcionCentral": "Días en central de notificación",
           "formaEntrega": "* Días calendario desde Resolución de Fecha"
-        },
-        "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=nfEJDovkYHdPFKM"
+        }
       },
       {
         "numero": "AKAMINE GARCIA KEIKO AKEMI SUJELL",
@@ -37,57 +36,61 @@
           "enviadaCentral": "07/08/2023",
           "recepcionCentral": "07/08/2023",
           "formaEntrega": "* Días calendario desde Resolución de Fecha"
-        },
-        "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=nfEJDovkYHdPFKM"
+        }
       }
-    ]
+    ],
+    "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=swOUesgOkzkMFWAkUH"
   },
   {
     "index": 2,
     "fechaResolucion": null,
     "resolucion": "DOS",
-    "tipoNotificacion": "Acto:",
+    "tipoNotificacion": "",
     "acto": "ESCRITO",
     "fojas": null,
     "proveido": "25/07/2023",
     "sumilla": "ANEXA ANOTACION DE INSCRIPCION.",
     "descripcionUsuario": "INGRESADO POR:ROSA MERCEDES URTECHO FERRER",
-    "notificaciones": []
+    "notificaciones": [],
+    "enlaceDescarga": null
   },
   {
     "index": 3,
     "fechaResolucion": "02/06/2023",
     "resolucion": "02/06/2023",
-    "tipoNotificacion": "Acto:",
+    "tipoNotificacion": "",
     "acto": "OFICIO",
     "fojas": "1",
     "proveido": "02/06/2023",
     "sumilla": "OFICIO PARA LA INSCRIPCIÓN DE LA MEDIDA CAUTELAR.-",
     "descripcionUsuario": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
-    "notificaciones": []
+    "notificaciones": [],
+    "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=pMzYLAaRPyxkeaqJMJ"
   },
   {
     "index": 4,
     "fechaResolucion": "02/06/2023",
     "resolucion": "02/06/2023",
-    "tipoNotificacion": "Acto:",
+    "tipoNotificacion": "",
     "acto": "AUTO",
     "fojas": "5",
     "proveido": "02/06/2023",
     "sumilla": "SE RESUELVE:",
     "descripcionUsuario": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
-    "notificaciones": []
+    "notificaciones": [],
+    "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=fsTRpZHyMKWKYVxWdO"
   },
   {
     "index": 5,
     "fechaResolucion": null,
     "resolucion": "UNO",
-    "tipoNotificacion": "Acto:",
+    "tipoNotificacion": "",
     "acto": "ESCRITO",
     "fojas": null,
     "proveido": "02/06/2023",
     "sumilla": "SUBSANA OMISION",
-    "descripcionUsuario": "INGRESADO POR:YENI ARSELI LEIVA CASTILLO",
-    "notificaciones": []
+    "descripcionUsuario": "INGRESADO POR:",
+    "notificaciones": [],
+    "enlaceDescarga": null
   }
 ]
