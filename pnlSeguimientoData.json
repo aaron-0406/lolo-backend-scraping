@@ -1,96 +1,90 @@
 [
   {
     "index": 1,
-    "fechaResolucion": "24/07/2023",
-    "resolucion": "24/07/2023",
-    "tipoNotificacion": "Pta. Cedula Not.",
+    "resolutionDate": "24/07/2023",
+    "resolution": "24/07/2023",
+    "notificationType": "Pta. Cedula Not.",
     "acto": "DECRETO",
     "fojas": "1",
     "proveido": "25/07/2023",
     "sumilla": "HABIENDOSE EJECUTADO MEDIDA CAUTELAR: NOTIFIQUESE A PARTE AFECTADA CON RESOLUCION NOI. UNO",
-    "descripcionUsuario": "DESCARGADO POR: SEGUNDO MUÑOZ MENDOZA",
-    "notificaciones": [
+    "userDescription": "DESCARGADO POR: SEGUNDO MUÑOZ MENDOZA",
+    "notifications": [
       {
-        "numero": "BANCO DE CREDITO DEL PERU SA",
-        "destinatario": "BANCO DE CREDITO DEL PERU SA",
-        "fechaEnvio": "03/08/2023 11:05",
-        "anexos": "RESOLUCIÓN N° DOS",
-        "formaEntrega": "",
-        "detallesAdicionales": {
-          "fechaResolucion": "24/07/2023",
-          "notificacionImpresion": "Enviada a la Central de Notificación o Casilla Electrónica:",
-          "enviadaCentral": "03/08/2023",
-          "recepcionCentral": "Días en central de notificación",
-          "formaEntrega": "* Días calendario desde Resolución de Fecha"
-        }
+        "number": "BANCO DE CREDITO DEL PERU SA",
+        "addressee": "BANCO DE CREDITO DEL PERU SA",
+        "shipDate": "03/08/2023 11:05",
+        "attachments": "RESOLUCIÓN N° DOS",
+        "deliveryMethod": "",
+        "resolutionDate": "24/07/2023",
+        "notificationPrint": "Enviada a la Central de Notificación o Casilla Electrónica:",
+        "sentCentral": "03/08/2023",
+        "centralReceipt": "Días en central de notificación"
       },
       {
-        "numero": "AKAMINE GARCIA KEIKO AKEMI SUJELL",
-        "destinatario": "AKAMINE GARCIA KEIKO AKEMI SUJELL",
-        "fechaEnvio": "07/08/2023 08:34",
-        "anexos": "RESOLUCIONES N° UNO Y DOS, SOLICITUD CAUTELAR CON ANEXOS Y ESCRITO",
-        "formaEntrega": "",
-        "detallesAdicionales": {
-          "fechaResolucion": "24/07/2023",
-          "notificacionImpresion": "03/08/2023",
-          "enviadaCentral": "07/08/2023",
-          "recepcionCentral": "07/08/2023",
-          "formaEntrega": "* Días calendario desde Resolución de Fecha"
-        }
+        "number": "AKAMINE GARCIA KEIKO AKEMI SUJELL",
+        "addressee": "AKAMINE GARCIA KEIKO AKEMI SUJELL",
+        "shipDate": "07/08/2023 08:34",
+        "attachments": "RESOLUCIONES N° UNO Y DOS, SOLICITUD CAUTELAR CON ANEXOS Y ESCRITO",
+        "deliveryMethod": "",
+        "resolutionDate": "24/07/2023",
+        "notificationPrint": "03/08/2023",
+        "sentCentral": "07/08/2023",
+        "centralReceipt": "07/08/2023"
       }
     ],
-    "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=swOUesgOkzkMFWAkUH"
+    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=lPcDsQFlhFXRPGlzkFJ"
   },
   {
     "index": 2,
-    "fechaResolucion": null,
-    "resolucion": "DOS",
-    "tipoNotificacion": "",
+    "resolutionDate": null,
+    "resolution": "DOS",
+    "notificationType": "",
     "acto": "ESCRITO",
     "fojas": null,
     "proveido": "25/07/2023",
     "sumilla": "ANEXA ANOTACION DE INSCRIPCION.",
-    "descripcionUsuario": "INGRESADO POR:ROSA MERCEDES URTECHO FERRER",
-    "notificaciones": [],
-    "enlaceDescarga": null
+    "userDescription": "INGRESADO POR:ROSA MERCEDES URTECHO FERRER",
+    "notifications": [],
+    "urlDownload": null
   },
   {
     "index": 3,
-    "fechaResolucion": "02/06/2023",
-    "resolucion": "02/06/2023",
-    "tipoNotificacion": "",
+    "resolutionDate": "02/06/2023",
+    "resolution": "02/06/2023",
+    "notificationType": "",
     "acto": "OFICIO",
     "fojas": "1",
     "proveido": "02/06/2023",
     "sumilla": "OFICIO PARA LA INSCRIPCIÓN DE LA MEDIDA CAUTELAR.-",
-    "descripcionUsuario": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
-    "notificaciones": [],
-    "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=pMzYLAaRPyxkeaqJMJ"
+    "userDescription": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
+    "notifications": [],
+    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=uKzJDicQobpYRqJQZo"
   },
   {
     "index": 4,
-    "fechaResolucion": "02/06/2023",
-    "resolucion": "02/06/2023",
-    "tipoNotificacion": "",
+    "resolutionDate": "02/06/2023",
+    "resolution": "02/06/2023",
+    "notificationType": "",
     "acto": "AUTO",
     "fojas": "5",
     "proveido": "02/06/2023",
     "sumilla": "SE RESUELVE:",
-    "descripcionUsuario": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
-    "notificaciones": [],
-    "enlaceDescarga": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=fsTRpZHyMKWKYVxWdO"
+    "userDescription": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
+    "notifications": [],
+    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=kggSIOxTLKEScfzvSXR"
   },
   {
     "index": 5,
-    "fechaResolucion": null,
-    "resolucion": "UNO",
-    "tipoNotificacion": "",
+    "resolutionDate": null,
+    "resolution": "UNO",
+    "notificationType": "",
     "acto": "ESCRITO",
     "fojas": null,
     "proveido": "02/06/2023",
     "sumilla": "SUBSANA OMISION",
-    "descripcionUsuario": "INGRESADO POR:",
-    "notificaciones": [],
-    "enlaceDescarga": null
+    "userDescription": "INGRESADO POR:",
+    "notifications": [],
+    "urlDownload": null
   }
 ]

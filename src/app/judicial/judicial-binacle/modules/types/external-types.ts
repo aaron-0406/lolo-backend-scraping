@@ -29,6 +29,19 @@ export interface CaseFile {
   is_valid: boolean
 }
 
+export interface CaseFileScrapingData {
+  caseFileNumber: string;
+  juridictionalBody: string;
+  juridictionalDistrict: string;
+  judge: string;
+  legalSpecialist: string;
+  initialDate: string;
+  process: string;
+  observation: string;
+  speciality: string;
+  subjects: string;
+}
+
 export interface CaseFileNumber {
   codeExp: string
   codeAnio: string
@@ -40,31 +53,28 @@ export interface CaseFileNumber {
 }
 
 
-export interface Notificacion {
-  numero: string | null;
-  destinatario: string | null;
-  fechaEnvio: string | null;
-  anexos: string | null;
-  formaEntrega: string | null;
-  detallesAdicionales?: {
-    fechaResolucion: string | null;
-    notificacionImpresion: string | null;
-    enviadaCentral: string | null;
-    recepcionCentral: string | null;
-    formaEntrega: string | null;
-  } | null,
+export interface Notification {
+  number: string | null;
+  addressee: string | null;
+  shipDate: string | null;
+  attachments: string | null;
+  deliveryMethod: string | null;
+  resolutionDate?: string | null;
+  notificationPrint?: string | null;
+  sentCentral?: string | null;
+  centralReceipt?: string | null;
 }
 
 export interface PnlSeguimientoData {
   index: number;
-  fechaResolucion: string | null;
-  resolucion: string | null;
-  tipoNotificacion: string | null;
+  resolutionDate: string | null;
+  resolution: string | null;
+  notificationType: string | null;
   acto: string | null;
   fojas: string | null;
   proveido: string | null;
   sumilla: string | null;
-  descripcionUsuario: string | null;
-  notificaciones: Notificacion[];
-  enlaceDescarga: string | null;
+  userDescription: string | null;
+  notifications: Notification[];
+  urlDownload: string | null;
 }

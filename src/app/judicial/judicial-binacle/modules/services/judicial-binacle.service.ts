@@ -1,5 +1,5 @@
 
-import { CaseFileNumber, CaseFiles, Notificacion, PnlSeguimientoData } from "../types/external-types";
+import { CaseFileNumber, CaseFiles, CaseFileScrapingData, Notification, PnlSeguimientoData } from '../types/external-types';
 import {
   JEC_URL,
   PYTHON_SCRIPT_PATH,
@@ -64,12 +64,25 @@ export class JudicialBinacleService {
       codEspecialidad,
       codInstancia,
     } = numberCaseFileDecoder;
-    const data = await page.evaluate(() => {
+
+ // #####################################
+
+    const caseFileExist = await page.evaluate(() => {
       const errElement = document.getElementById("mensajeNoExisteExpedientes");
-      return errElement?.style?.display ? true : false;
+      if (!errElement?.style?.display) return true;
+      return false;
     });
 
-    console.log("data", data);
+    const isCorrectCaptcha = await page.evaluate(() => {
+      const errElement = document.getElementById("codCaptchaError");
+      if (!errElement?.style?.display) return true;
+      return false;
+    });
+
+    console.log("existe el case file", caseFileExist);
+    console.log("es correcto el captcha", isCorrectCaptcha);
+
+    // #####################################
 
     await page.waitForSelector("#myTab > li:nth-child(2) > a"),
       await page.click("#myTab > li:nth-child(2) > a"),
@@ -88,6 +101,7 @@ export class JudicialBinacleService {
     let isBotDetected = false;
     let isCasFileTrue = false;
     let isSolved = false;
+
     await page.waitForSelector("#captcha_image");
     await page.waitForSelector("#mensajeNoExisteExpedientes");
     await page.waitForSelector("#codCaptchaError");
@@ -132,20 +146,26 @@ export class JudicialBinacleService {
       const parsedStdout = JSON.parse(replaceStdout);
 
       await page.locator('input[id="codigoCaptcha"]').fill(parsedStdout.code);
-      await page.click("#consultarExpedientes").then(async (res) =>{
-        console.log("res", res);
+      await page.click("#consultarExpedientes").then(async () => {
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        const data = await page.evaluate(() => {
+
+        const caseFileExist = await page.evaluate(() =>{
           const errElement = document.getElementById("mensajeNoExisteExpedientes");
-          return errElement?.style?.display ? true : false;
+          if (!errElement?.style?.display) return true;
+          return false;
+        })
+
+        const isCorrectCaptcha = await page.evaluate(() => {
+          const errElement = document.getElementById("codCaptchaError");
+          if (!errElement?.style?.display) return true;
+          return false;
         });
-          console.log("data", data);
-        }
-      );
 
+          console.log("existe el case file", caseFileExist);
+          console.log("es correcto el captcha", isCorrectCaptcha);
+      });
 
-
-      [isCasFileTrue, isSolved, isBotDetected] = await Promise.all([
+      [isCasFileTrue, isSolved] = await Promise.all([
         page.evaluate(() => {
           const errElement = document.getElementById("mensajeNoExisteExpedientes");
           if (!errElement) return true;
@@ -156,10 +176,11 @@ export class JudicialBinacleService {
           if (!errorCaptcha) return true;
           return false;
         }),
-        page.evaluate(() => {
-          const botDetected = document.getElementById("captcha-bot-detected");
-          return botDetected ? !botDetected.hidden : false;
-        }),
+        // page.evaluate(() => {
+        //   const botDetected = document.getElementById("captcha-bot-detected");
+        //   if(!botDetected) return true;
+        //   return false
+        // }),
       ]);
       console.log("isBotDetected:", isBotDetected, "isSolved:", isSolved, "isCasFileTrue:", isCasFileTrue);
       return { isSolved, isCasFileTrue, isBotDetected };
@@ -169,7 +190,8 @@ export class JudicialBinacleService {
       return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
     }
   }
-  async getCaseFileInfo(page: Page): Promise<any> {
+
+  async getCaseFileInfo(page: Page): Promise<CaseFileScrapingData> {
     await page.waitForSelector(".panel.panel-default");
     const data = await page.evaluate(() => {
       const getText = (selector: any, index = 0) => {
@@ -179,40 +201,40 @@ export class JudicialBinacleService {
           : null;
       };
 
-      const expedienteElement = getText(".divRepExp .celdaGrid");
-      const organoJurisdiccional = getText(".divRepExp .celdaGrid", 1);
-      const distritoJudicial = getText(".divRepExp .celdaGrid", 2);
-      const juez = getText(".divRepExp .celdaGrid", 3);
-      const especialistaLegal = getText(".divRepExp .celdaGrid", 4);
-      const fechaInicio = getText(".divRepExp .celdaGrid", 5);
-      const proceso = getText(".divRepExp .celdaGrid", 6);
-      const observacion = getText(".divRepExp .celdaGrid", 7);
-      const especialidad = getText(".divRepExp .celdaGrid", 8);
-      const materias = getText(".divRepExp .celdaGrid", 9);
-      const estado = getText(".divRepExp .celdaGrid", 10);
-      const etapaProcesal = getText(".divRepExp .celdaGrid", 11);
-      const fechaConclusion = getText(".divRepExp .celdaGrid", 12);
-      const ubicacion = getText(".divRepExp .celdaGrid", 13);
-      const motivoConclusion = getText(".divRepExp .celdaGrid", 14);
-      const sumilla = getText(".celdaGridxT");
+      const caseFileNumber = getText(".divRepExp .celdaGrid");
+      const juridictionalBody = getText(".divRepExp .celdaGrid", 1);
+      const juridictionalDistrict = getText(".divRepExp .celdaGrid", 2);
+      const judge = getText(".divRepExp .celdaGrid", 3);
+      const legalSpecialist = getText(".divRepExp .celdaGrid", 4);
+      const initialDate = getText(".divRepExp .celdaGrid", 5);
+      const process = getText(".divRepExp .celdaGrid", 6);
+      const observation = getText(".divRepExp .celdaGrid", 7);
+      const speciality = getText(".divRepExp .celdaGrid", 8);
+      const subjects = getText(".divRepExp .celdaGrid", 9);
+      const state = getText(".divRepExp .celdaGrid", 10);
+      const proceduralStage = getText(".divRepExp .celdaGrid", 11);
+      const completionDate = getText(".divRepExp .celdaGrid", 12);
+      const location = getText(".divRepExp .celdaGrid", 13);
+      const reasonForConclusion = getText(".divRepExp .celdaGrid", 14);
+      const sumary = getText(".celdaGridxT");
 
       return {
-        expediente: expedienteElement,
-        organoJurisdiccional,
-        distritoJudicial,
-        juez,
-        especialistaLegal,
-        fechaInicio,
-        proceso,
-        observacion,
-        especialidad,
-        materias,
-        estado,
-        etapaProcesal,
-        fechaConclusion,
-        ubicacion,
-        motivoConclusion,
-        sumilla,
+        caseFileNumber,
+        juridictionalBody,
+        juridictionalDistrict,
+        judge,
+        legalSpecialist,
+        initialDate,
+        process,
+        observation,
+        speciality,
+        subjects,
+        state,
+        proceduralStage,
+        completionDate,
+        location,
+        reasonForConclusion,
+        sumary,
       };
     });
     return data;
@@ -229,12 +251,12 @@ export class JudicialBinacleService {
 
         const data: PnlSeguimientoData = {
           index,
-          fechaResolucion: extractTextContent(
+          resolutionDate: extractTextContent(
             pnlSeguimiento,
             "Fecha de Resolución:"
           ),
-          resolucion: extractTextContent(pnlSeguimiento, "Resolución:") ?? "",
-          tipoNotificacion:
+          resolution: extractTextContent(pnlSeguimiento, "Resolución:") ?? "",
+          notificationType:
             extractTextContent(pnlSeguimiento, "Tipo de Notificación:") ===
             "Acto:"
               ? ""
@@ -243,35 +265,37 @@ export class JudicialBinacleService {
           fojas: extractTextContent(pnlSeguimiento, "Fojas:"),
           proveido: extractTextContent(pnlSeguimiento, "Proveido:"),
           sumilla: extractTextContent(pnlSeguimiento, "Sumilla:"),
-          descripcionUsuario: extractTextContent(
+          userDescription: extractTextContent(
             pnlSeguimiento,
             "Descripción de Usuario:"
           ),
-          notificaciones: [],
-          enlaceDescarga: getEnlaceDescarga(pnlSeguimiento),
+          notifications: [],
+          urlDownload: getEnlaceDescarga(pnlSeguimiento),
         };
 
         // Extraer información de notificaciones
         const notificacionesDivs = pnlSeguimiento.querySelectorAll('.panel-body .borderinf');
         for (const div of notificacionesDivs) {
-          const notificacion: Notificacion = {
-            numero: extractTextContent(div, "Destinatario:"),
-            destinatario: extractTextContent(div, "Destinatario:"),
-            fechaEnvio: extractTextContent(div, "Fecha de envio:"),
-            anexos: extractTextContent(div, "Anexo(s):"),
-            formaEntrega: extractTextContent(div, "Forma de entrega:"),
-            detallesAdicionales: null,
+          const notificacion: Notification = {
+            number: extractTextContent(div, "Destinatario:"),
+            addressee: extractTextContent(div, "Destinatario:"),
+            shipDate: extractTextContent(div, "Fecha de envio:"),
+            attachments: extractTextContent(div, "Anexo(s):"),
+            deliveryMethod: extractTextContent(div, "Forma de entrega:"),
           };
 
           // Extraer información adicional del modal si existe
           const detalles = await getDetallesAdicionales(div);
           if (detalles) {
-            notificacion.detallesAdicionales = detalles;
+            notificacion.resolutionDate = detalles.resolutionDate;
+            notificacion.notificationPrint = detalles.notificationPrint;
+            notificacion.sentCentral = detalles.sentCentral;
+            notificacion.centralReceipt = detalles.centralReceipt;
           }
 
-          if (notificacion.numero) {
-            data.notificaciones.push(notificacion);
-          }
+          if (notificacion.number) {
+            data.notifications.push(notificacion);
+            }
         }
 
         results.push(data);
@@ -295,7 +319,12 @@ export class JudicialBinacleService {
         return enlace ? (enlace as HTMLAnchorElement).href : null;
       }
 
-      async function getDetallesAdicionales(notificacionDiv: Element): Promise<Notificacion['detallesAdicionales'] | null> {
+      async function getDetallesAdicionales(notificacionDiv: Element): Promise<{
+        resolutionDate?: string | null;
+        notificationPrint?: string | null;
+        sentCentral?: string | null;
+        centralReceipt?: string | null;
+      } | null> {
         const btnMasDetalle = notificacionDiv.querySelector('.btnMasDetalle');
         if (!btnMasDetalle) return null;
 
@@ -305,15 +334,14 @@ export class JudicialBinacleService {
         if (!modal) return null;
 
         // Extraer la información del modal
-        const detalles: Notificacion['detallesAdicionales'] = {
-          fechaResolucion: extractTextContent(modal, "Fecha de Resolución:"),
-          notificacionImpresion: extractTextContent(modal, "Notificación Impresa el:"),
-          enviadaCentral: extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:"),
-          recepcionCentral: extractTextContent(modal, "Recepcionada en la central de Notificación el:"),
-          formaEntrega: extractTextContent(modal, "Forma de entrega:")
+        const details = {
+          resolutionDate: extractTextContent(modal, "Fecha de Resolución:")?.length ? extractTextContent(modal, "Fecha de Resolución:") : null,
+          notificationPrint: extractTextContent(modal, "Notificación Impresa el:")?.length ? extractTextContent(modal, "Notificación Impresa el:") : null,
+          sentCentral: extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")?.length ? extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:") : null,
+          centralReceipt: extractTextContent(modal, "Recepcionada en la central de Notificación el:")?.length ? extractTextContent(modal, "Recepcionada en la central de Notificación el:") : null,
         };
 
-        return detalles;
+        return details;
       }
 
       return results;
@@ -338,7 +366,7 @@ export class JudicialBinacleService {
         let isValidCaseFile = false;
         const page = await browser.newPage();
         await page.goto(JEC_URL);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
         const maxAttempts = 5;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -373,7 +401,10 @@ export class JudicialBinacleService {
           }
         }
 
-        if (!isValidCaseFile) continue
+        if (!isValidCaseFile) {
+          // await page.close();
+          continue;
+        }
 
         await page.waitForSelector("#command > button");
         await page.click("#command > button");
@@ -390,6 +421,6 @@ export class JudicialBinacleService {
       }
     }
 
-    await browser.close();
+    // await browser.close();
   }
 }
