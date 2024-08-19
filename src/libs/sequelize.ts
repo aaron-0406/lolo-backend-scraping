@@ -13,5 +13,5 @@ const sequelize = new Sequelize(URI, {
 });
 
 setupModels(sequelize);
- 
+
 export default sequelize;

@@ -4,3 +4,4 @@ module.exports = {
   "migrations-path": "./dist/db/migrations/",
   "seeders-path": "./dist/db/seeders/",
 };
+

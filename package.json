@@ -4,9 +4,21 @@
   "description": "scrapping microservice",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/index.ts",
-    "tsc": "tsc",
-    "start": "node build/index.js"
+    "dev": "nodemon src/index.ts --exec ts-node",
+    "lint": "eslint",
+    "production:build": "tsc && npm run production:copy-docs",
+    "production:copy-docs": "npm run production:create-docs-dir && cp -R src/docs/* dist/docs",
+    "production:create-docs-dir": "mkdir -p dist/docs",
+    "production:start": "node dist/index.js",
+    "migrations:generate": "sequelize-cli  migration:generate --name",
+    "migrations:run": "sequelize-cli db:migrate",
+    "migrations:revert": "sequelize-cli db:migrate:undo",
+    "migrations:revert:all": "sequelize-cli db:migrate:undo:all",
+    "seeders:generate": "sequelize-cli seed:generate --name",
+    "seeders:run:all": "sequelize-cli db:seed:all",
+    "seeders:run": "sequelize-cli db:seed --seed",
+    "seeders:revert": "sequelize-cli db:seed:undo",
+    "seeders:revert:all": "sequelize-cli db:seed:undo:all"
   },
   "repository": {
     "type": "git",
@@ -47,7 +59,7 @@
     "puppeteer-extra-plugin-recaptcha": "^3.6.8",
     "qrcode": "^1.5.3",
     "request": "^2.88.2",
-    "sequelize": "^6.37.3",
+    "sequelize": "^6.26.0",
     "speakeasy": "^2.0.0",
     "ts-node": "^10.9.2",
     "uuid": "^9.0.0"

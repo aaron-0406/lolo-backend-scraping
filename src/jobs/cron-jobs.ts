@@ -1,4 +1,4 @@
-import { JudicialBinacleJob } from '../app/judicial/judicial-binacle/jobs'
+import { JudicialBinacleJob } from '../app/judicial/judicial-binnacle/jobs/index'
 
 export const inizializeCronJobs = () => {
   JudicialBinacleJob()

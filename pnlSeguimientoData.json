@@ -2,10 +2,12 @@
   {
     "index": 1,
     "resolutionDate": "24/07/2023",
+    "entryDate": null,
     "resolution": "24/07/2023",
     "notificationType": "Pta. Cedula Not.",
     "acto": "DECRETO",
     "fojas": "1",
+    "folios": null,
     "proveido": "25/07/2023",
     "sumilla": "HABIENDOSE EJECUTADO MEDIDA CAUTELAR: NOTIFIQUESE A PARTE AFECTADA CON RESOLUCION NOI. UNO",
     "userDescription": "DESCARGADO POR: SEGUNDO MUÑOZ MENDOZA",
@@ -33,15 +35,17 @@
         "centralReceipt": "07/08/2023"
       }
     ],
-    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=lPcDsQFlhFXRPGlzkFJ"
+    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=kRUJJwwyOhRAmfx"
   },
   {
     "index": 2,
     "resolutionDate": null,
+    "entryDate": "22/06/2023 11:54",
     "resolution": "DOS",
     "notificationType": "",
     "acto": "ESCRITO",
     "fojas": null,
+    "folios": "5",
     "proveido": "25/07/2023",
     "sumilla": "ANEXA ANOTACION DE INSCRIPCION.",
     "userDescription": "INGRESADO POR:ROSA MERCEDES URTECHO FERRER",
@@ -51,36 +55,42 @@
   {
     "index": 3,
     "resolutionDate": "02/06/2023",
+    "entryDate": null,
     "resolution": "02/06/2023",
     "notificationType": "",
     "acto": "OFICIO",
     "fojas": "1",
+    "folios": null,
     "proveido": "02/06/2023",
     "sumilla": "OFICIO PARA LA INSCRIPCIÓN DE LA MEDIDA CAUTELAR.-",
     "userDescription": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
     "notifications": [],
-    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=uKzJDicQobpYRqJQZo"
+    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=ppZIdTtElDOzsItigjnB"
   },
   {
     "index": 4,
     "resolutionDate": "02/06/2023",
+    "entryDate": null,
     "resolution": "02/06/2023",
     "notificationType": "",
     "acto": "AUTO",
     "fojas": "5",
+    "folios": null,
     "proveido": "02/06/2023",
     "sumilla": "SE RESUELVE:",
     "userDescription": "DESCARGADO POR: VICTOR ALEJANDRO TORRES ALBITRES",
     "notifications": [],
-    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=kggSIOxTLKEScfzvSXR"
+    "urlDownload": "https://cej.pj.gob.pe/cej/forms/documentoD.html?nid=FritjEIXtkTAubASyc"
   },
   {
     "index": 5,
     "resolutionDate": null,
+    "entryDate": "02/05/2023 11:54",
     "resolution": "UNO",
     "notificationType": "",
     "acto": "ESCRITO",
     "fojas": null,
+    "folios": "9",
     "proveido": "02/06/2023",
     "sumilla": "SUBSANA OMISION",
     "userDescription": "INGRESADO POR:",
