@@ -1,6 +1,6 @@
 import path from "path";
-import { CompareExcelType } from "../../app-test/settings/types/compare-excels.type";
-import { CompareExcelResult } from '../../app-test/settings/services/compare-excels.service';
+import { CompareExcelType } from "../../app/settings/types/compare-excels.type";
+import { CompareExcelResult } from '../../app/settings/services/compare-excels.service';
 import Excel from 'exceljs';
 import fs from 'fs';
 const headers = ['IDC', 'CODCUENTACOBRANZA', 'NOMBRECLIENTE', 'ESTADO_CARTERA'];

@@ -1,10 +1,10 @@
 import cron from "node-cron";
 import fs from "fs";
 import path from "path";
-import DocumentService from "../app-test/extrajudicial/services/document.service";
-import CustomerService from "../app-test/dash/services/customer.service";
-import TemplateService from "../app-test/extrajudicial/services/template.service";
-import CustomerUserService from "../app-test/dash/services/customer-user.service";
+import DocumentService from "../app/extrajudicial/services/document.service";
+import CustomerService from "../app/dash/services/customer.service";
+import TemplateService from "../app/extrajudicial/services/template.service";
+import CustomerUserService from "../app/dash/services/customer-user.service";
 import { saveWordDocument } from "../libs/helpers";
 import * as nodemailer from "nodemailer";
 import config from "../config/config";

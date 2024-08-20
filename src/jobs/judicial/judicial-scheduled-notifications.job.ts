@@ -1,9 +1,9 @@
 import moment from "moment";
 import cron from "node-cron";
 import * as nodemailer from "nodemailer";
-import ScheduledNotificationsService from "../../app-test/settings/services/scheduled-notifications.service";
+import ScheduledNotificationsService from "../../app/settings/services/scheduled-notifications.service";
 import config from "../../config/config";
-import JudicialBinnacleService from "../../app-test/judicial/services/judicial-binnacle.service";
+import JudicialBinnacleService from "../../app/judicial/services/judicial-binnacle.service";
 
 let scheduledJobs: { [key: number]: cron.ScheduledTask } = {};
 const daysOfTheWeek = [
