@@ -12,9 +12,15 @@ import puppeteerExtra from "../utils/puppeteer-extra"
 import caseFilesData from "../assets/mock/mockCaseFiles.json"
 import path from "path";
 import fs, { writeFileSync } from 'fs';
+import moment from "moment";
 // import extractTextContent from "../utils/extract-text-content";
 
 const { models } = sequelize;
+
+// ! THINGS TO FIX
+  // 1. detect if normar captcha is solved
+  // 2. detect if bot is detected where it shouldn't be
+  // 3. detect if case file is valid
 
 export class JudicialBinacleService {
   constructor() {}
@@ -268,6 +274,7 @@ export class JudicialBinacleService {
   }
 
   async  extractPnlSeguimientoData(page: Page): Promise<PnlSeguimientoData[]> {
+
     const results: PnlSeguimientoData[] = await page.evaluate(async () => {
       const results: PnlSeguimientoData[] = [];
       let index = 1;
@@ -301,6 +308,8 @@ export class JudicialBinacleService {
           notifications: [],
           urlDownload: getEnlaceDescarga(pnlSeguimiento),
         };
+
+
 
         // Extraer información de notificaciones
         const notificacionesDivs = pnlSeguimiento.querySelectorAll('.panel-body .borderinf');
@@ -408,15 +417,39 @@ export class JudicialBinacleService {
   async main(): Promise<void> {
     try {
       const caseFiles = await this.getAllCaseFilesDB();
-      console.log(caseFiles);
       const browser = await puppeteerExtra.launch({
         headless: false,
         slowMo: 5,
       });
 
       for (const caseFile of caseFiles) {
-        console.log(caseFile.dataValues);
         try {
+
+          const binnacleTypes = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
+            where: {
+              customer_has_bank_id_customer_has_bank:
+                caseFile.dataValues.customerHasBankId,
+            },
+          });
+
+          if (!binnacleTypes) {
+            console.log("No existe binnacle type");
+            continue;
+          }
+
+
+          const proceduralStages = await models.JUDICIAL_BIN_PROCEDURAL_STAGE.findAll({
+            where: {
+              customer_has_bank_id_customer_has_bank:
+                caseFile.dataValues.customerHasBankId,
+            },
+          });
+
+          if (!proceduralStages) {
+            console.log("No existe procedural stage");
+            continue;
+          }
+
           let isValidCaseFile = false;
           const page = await browser.newPage();
           await page.goto(JEC_URL);
@@ -466,8 +499,88 @@ export class JudicialBinacleService {
           // TODO: Save case file
           const caseFileInfo = await this.getCaseFileInfo(page);
           const caseFileBinacles = await this.extractPnlSeguimientoData(page);
-          console.log(caseFileInfo);
-          console.log(caseFileBinacles);
+
+          let newBinnacles:any[] = []
+
+          const binnaclesIndexs = caseFile.dataValues.judicialBinnacle
+            .filter((binnacle: any) => binnacle.dataValues.index !== null)
+            .map((binnacle: any) => binnacle.dataValues.index);
+
+          if (binnaclesIndexs.length) newBinnacles = caseFileBinacles.filter((binnacle:any) => !binnaclesIndexs.includes(binnacle.index));
+          else newBinnacles = caseFileBinacles;
+
+
+          await Promise.all( newBinnacles.map(async (binnacle:any) => {
+            const judicialBinnacle = await models.JUDICIAL_BINNACLE.findOne({
+              where: {
+                index: binnacle.index
+              }
+            })
+            if (judicialBinnacle) {
+              console.log("La bitacora ya existe");
+              return;
+            }
+
+            const resolutionDate = binnacle.resolutionDate ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+            const entryDate = binnacle.entryDate ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+            const provedioDate = binnacle.proveido ? moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+              const binnacleType = binnacle.resolutionDate
+              ? binnacleTypes.find(
+                  (binnacleType: any) =>
+                    binnacleType.dataValues.typeBinnacle === "RESOLUCION"
+                )
+              : binnacleTypes.find(
+                  (binnacleType: any) =>
+                    binnacleType.dataValues.typeBinnacle === "ESCRITO"
+                );
+            const proceduralStage = proceduralStages[0].dataValues.id
+
+
+            const judicialBinnacleData = await models.JUDICIAL_BINNACLE.create({
+              judicialBinProceduralStageId: proceduralStage,
+              lastPerformed: binnacle.sumilla,
+              binnacleTypeId: binnacleType?.dataValues.id, //TODO : CREATE A FUNCTION TO RETURN BINNACLE TYPE ID
+              date: new Date(),
+              judicialFileCaseId: caseFile.dataValues.id,
+              customerHasBankId: caseFile.dataValues.customerHasBankId,
+
+              index: binnacle.index,
+              resolutionDate: resolutionDate,
+              entryDate: entryDate,
+              notificationType: binnacle.notificationType,
+              acto: binnacle.acto,
+              fojas: binnacle.fojas,
+              folios: binnacle.folios,
+              provedioDate: provedioDate,
+              userDescription: binnacle.userDescription,
+              createdBy: "BOT",
+
+              totalTariff: 0,
+              tariffHistory: "[]",
+            });
+
+            await Promise.all(binnacle.notifications.map(async (notification:any) => {
+              const shipDate = notification.shipDate ? moment(notification.shipDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+              const resolutionDate = notification.resolutionDate ? moment(notification.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+              const sentCentral = notification.sentCentral ? moment(notification.sentCentral, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+              const judicialBinNotification = await models.JUDICIAL_BIN_NOTIFICATION.create({
+                number: notification.number,
+                addressee: notification.addressee,
+                shipDate: shipDate,
+                attachments: notification.attachments,
+                deliveryMethod: notification.deliveryMethod,
+                resolutionDate: resolutionDate,
+                notificationPrint: notification.notificationPrint,
+                sentCentral: sentCentral,
+                centralReceipt: notification.centralReceipt,
+                idJudicialBinacle: judicialBinnacleData.dataValues.id,
+              });
+              console.log("Creado notificacion: ",  judicialBinNotification);
+            }))
+          }))
+
+
+
 
           await page.close();
         } catch (error) {
