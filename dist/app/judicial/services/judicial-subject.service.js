@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,54 +8,42 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const { models } = sequelize_1.default;
 class JudicialSubjectService {
     constructor() { }
-    findAll() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.JUDICIAL_SUBJECT.findAll();
-            return rta;
-        });
+    async findAll() {
+        const rta = await models.JUDICIAL_SUBJECT.findAll();
+        return rta;
     }
-    findAllByCHB(chb) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.JUDICIAL_SUBJECT.findAll({
-                where: { customerHasBankId: chb },
-            });
-            return rta;
+    async findAllByCHB(chb) {
+        const rta = await models.JUDICIAL_SUBJECT.findAll({
+            where: { customerHasBankId: chb },
         });
+        return rta;
     }
-    findByID(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialSubject = yield models.JUDICIAL_SUBJECT.findOne({
-                where: {
-                    id,
-                },
-            });
-            if (!judicialSubject) {
-                throw boom_1.default.notFound("Materia no encontrado");
-            }
-            return judicialSubject;
+    async findByID(id) {
+        const judicialSubject = await models.JUDICIAL_SUBJECT.findOne({
+            where: {
+                id,
+            },
         });
+        if (!judicialSubject) {
+            throw boom_1.default.notFound("Materia no encontrado");
+        }
+        return judicialSubject;
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newJudicialSubject = yield models.JUDICIAL_SUBJECT.create(data);
-            return newJudicialSubject;
-        });
+    async create(data) {
+        const newJudicialSubject = await models.JUDICIAL_SUBJECT.create(data);
+        return newJudicialSubject;
     }
-    update(id, changes) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialSubject = yield this.findByID(id);
-            const oldJudicialSubject = Object.assign({}, judicialSubject.get());
-            const newJudicialSubject = yield judicialSubject.update(changes);
-            return { oldJudicialSubject, newJudicialSubject };
-        });
+    async update(id, changes) {
+        const judicialSubject = await this.findByID(id);
+        const oldJudicialSubject = Object.assign({}, judicialSubject.get());
+        const newJudicialSubject = await judicialSubject.update(changes);
+        return { oldJudicialSubject, newJudicialSubject };
     }
-    delete(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialSubject = yield this.findByID(id);
-            const oldJudicialSubject = Object.assign({}, judicialSubject.get());
-            yield judicialSubject.destroy();
-            return oldJudicialSubject;
-        });
+    async delete(id) {
+        const judicialSubject = await this.findByID(id);
+        const oldJudicialSubject = Object.assign({}, judicialSubject.get());
+        await judicialSubject.destroy();
+        return oldJudicialSubject;
     }
 }
 exports.default = JudicialSubjectService;

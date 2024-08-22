@@ -22,15 +22,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -43,9 +34,9 @@ const nodemailer = __importStar(require("nodemailer"));
 const config_1 = __importDefault(require("../../../config/config"));
 class CompareExcelsService {
     constructor() {
-        this.getSortingAndData = (pathname) => __awaiter(this, void 0, void 0, function* () {
+        this.getSortingAndData = async (pathname) => {
             const workbook = new exceljs_1.Workbook();
-            const readWorkbook = yield workbook.xlsx.readFile(pathname);
+            const readWorkbook = await workbook.xlsx.readFile(pathname);
             let data = [];
             const orderData = {};
             if (workbook.worksheets.length) {
@@ -104,14 +95,14 @@ class CompareExcelsService {
                     orderData,
                 };
             }
-        });
-        this.compareExcels = (prevFile, newFile) => __awaiter(this, void 0, void 0, function* () {
+        };
+        this.compareExcels = async (prevFile, newFile) => {
             const prevFileName = prevFile.filename;
             const newFileName = newFile.filename;
             const prevFilePath = path.join(__dirname, "../../../docs", prevFileName);
             const newFilePath = path.join(__dirname, "../../../docs", newFileName);
-            const prevData = yield this.getSortingAndData(prevFilePath);
-            const newData = yield this.getSortingAndData(newFilePath);
+            const prevData = await this.getSortingAndData(prevFilePath);
+            const newData = await this.getSortingAndData(newFilePath);
             const data1 = prevData === null || prevData === void 0 ? void 0 : prevData.data;
             const data2 = newData === null || newData === void 0 ? void 0 : newData.data;
             const orderData1 = prevData === null || prevData === void 0 ? void 0 : prevData.orderData;
@@ -200,8 +191,8 @@ class CompareExcelsService {
             };
             const fileData = (0, compare_excels_util_1.generateExcelReport)(result);
             return fileData;
-        });
-        this.sendReportByEmail = (data) => __awaiter(this, void 0, void 0, function* () {
+        };
+        this.sendReportByEmail = async (data) => {
             const reportPath = path.join(__dirname, "../../../public/download/compare-excels", data.fileData.fileName);
             const fileData = fs_1.default.readFileSync(reportPath);
             const transport = nodemailer.createTransport({
@@ -236,7 +227,7 @@ class CompareExcelsService {
                     console.log("Email sent: " + info.response);
                 }
             });
-        });
+        };
     }
 }
 exports.default = CompareExcelsService;

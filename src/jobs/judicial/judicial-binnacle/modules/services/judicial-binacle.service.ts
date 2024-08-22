@@ -273,8 +273,7 @@ export class JudicialBinacleService {
     return data;
   }
 
-  async  extractPnlSeguimientoData(page: Page): Promise<PnlSeguimientoData[]> {
-
+  async extractPnlSeguimientoData(page: Page): Promise<PnlSeguimientoData[]> {
     const results: PnlSeguimientoData[] = await page.evaluate(async () => {
       const results: PnlSeguimientoData[] = [];
       let index = 1;
@@ -285,44 +284,32 @@ export class JudicialBinacleService {
 
         const data: PnlSeguimientoData = {
           index,
-          resolutionDate: extractTextContent(
-            pnlSeguimiento,
-            "Fecha de Resolución:"
-          ),
+          resolutionDate: extractTextContent(pnlSeguimiento, "Fecha de Resolución:"),
           entryDate: extractTextContent(pnlSeguimiento, "Fecha de Ingreso:"),
           resolution: extractTextContent(pnlSeguimiento, "Resolución:") ?? "",
-          notificationType:
-            extractTextContent(pnlSeguimiento, "Tipo de Notificación:") ===
-            "Acto:"
-              ? ""
-              : extractTextContent(pnlSeguimiento, "Tipo de Notificación:"),
+          notificationType: extractTextContent(pnlSeguimiento, "Tipo de Notificación:") === "Acto:" ? "" : extractTextContent(pnlSeguimiento, "Tipo de Notificación:"),
           acto: extractTextContent(pnlSeguimiento, "Acto:"),
           fojas: extractTextContent(pnlSeguimiento, "Fojas:"),
           folios: extractTextContent(pnlSeguimiento, "Folios:"),
           proveido: extractTextContent(pnlSeguimiento, "Proveido:"),
           sumilla: extractTextContent(pnlSeguimiento, "Sumilla:"),
-          userDescription: extractTextContent(
-            pnlSeguimiento,
-            "Descripción de Usuario:"
-          ),
+          userDescription: extractTextContent(pnlSeguimiento, "Descripción de Usuario:"),
           notifications: [],
           urlDownload: getEnlaceDescarga(pnlSeguimiento),
         };
 
-
-
         // Extraer información de notificaciones
         const notificacionesDivs = pnlSeguimiento.querySelectorAll('.panel-body .borderinf');
         for (const div of notificacionesDivs) {
+          const notificationCode = extractNotificationCode(div);
           const notificacion: Notification = {
-            number: extractTextContent(div, "Destinatario:"),
+            notificationCode: notificationCode,
             addressee: extractTextContent(div, "Destinatario:"),
             shipDate: extractTextContent(div, "Fecha de envio:"),
             attachments: extractTextContent(div, "Anexo(s):"),
             deliveryMethod: extractTextContent(div, "Forma de entrega:"),
           };
 
-          // Extraer información adicional del modal si existe
           const detalles = await getDetallesAdicionales(div);
           if (detalles) {
             notificacion.resolutionDate = detalles.resolutionDate;
@@ -331,16 +318,16 @@ export class JudicialBinacleService {
             notificacion.centralReceipt = detalles.centralReceipt;
           }
 
-          if (notificacion.number) {
+          if (notificationCode) {
             data.notifications.push(notificacion);
-            }
+          }
         }
 
         results.push(data);
         index++;
       }
 
-      function extractTextContent  (element: Element, label: string): string | null {
+      function extractTextContent(element: Element, label: string): string | null {
         const labelElement = Array.from(element.querySelectorAll('*')).find(el => el.textContent?.includes(label));
         if (labelElement) {
           const textContent = labelElement.textContent || '';
@@ -351,6 +338,15 @@ export class JudicialBinacleService {
         }
         return null;
       }
+
+      function extractNotificationCode(element: Element): string | null {
+        const codeElement = element.querySelector('h5.redb');
+        if (!codeElement) return null;
+
+        const codeText = codeElement.textContent?.trim().split(' ')[1];
+        return codeText !== undefined ? codeText : null;
+      }
+
 
       function getEnlaceDescarga(element: Element): string | null {
         const enlace = element.querySelector('.dBotonDesc a.aDescarg');
@@ -367,52 +363,35 @@ export class JudicialBinacleService {
         if (!btnMasDetalle) return null;
 
         // Abrir el modal y esperar a que se cargue
-        const modalId = (btnMasDetalle as HTMLButtonElement).getAttribute(
-          "data-target"
-        );
+        const modalId = (btnMasDetalle as HTMLButtonElement).getAttribute("data-target");
         const modal = document.querySelector(modalId ?? "");
         if (!modal) return null;
 
         // Extraer la información del modal
         const details = {
-          resolutionDate: extractTextContent(modal, "Fecha de Resolución:")
-            ?.length
+          resolutionDate: extractTextContent(modal, "Fecha de Resolución:")?.length
             ? extractTextContent(modal, "Fecha de Resolución:")
             : null,
-          notificationPrint: extractTextContent(
-            modal,
-            "Notificación Impresa el:"
-          )?.length
+          notificationPrint: extractTextContent(modal, "Notificación Impresa el:")?.length
             ? extractTextContent(modal, "Notificación Impresa el:")
             : null,
-          sentCentral: extractTextContent(
-            modal,
-            "Enviada a la Central de Notificación o Casilla Electrónica:"
-          )?.length
-            ? extractTextContent(
-                modal,
-                "Enviada a la Central de Notificación o Casilla Electrónica:"
-              )
+          sentCentral: extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")?.length
+            ? extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")
             : null,
-          centralReceipt: extractTextContent(
-            modal,
-            "Recepcionada en la central de Notificación el:"
-          )?.length
-            ? extractTextContent(
-                modal,
-                "Recepcionada en la central de Notificación el:"
-              )
+          centralReceipt: extractTextContent(modal, "Recepcionada en la central de Notificación el:")?.length
+            ? extractTextContent(modal, "Recepcionada en la central de Notificación el:")
             : null,
         };
 
         return details;
       }
-      // writeFileSync('pnlSeguimientoData.json', JSON.stringify(results, null, 2), 'utf-8');
-      // console.log('Datos guardados en pnlSeguimientoData.json');
+
       return results;
     });
+
     return results;
   }
+
 
   async main(): Promise<void> {
     try {
@@ -517,7 +496,7 @@ export class JudicialBinacleService {
               }
             })
             if (judicialBinnacle) {
-              console.log("La bitacora ya existe");
+              console.log("La bitacora ya existe"); // TODO: READ NEW NOTIFICATIONS IF THERE EXISTS
               return;
             }
 
@@ -534,7 +513,8 @@ export class JudicialBinacleService {
                     binnacleType.dataValues.typeBinnacle === "ESCRITO"
                 );
             const proceduralStage = proceduralStages[0].dataValues.id
-
+            const folios = typeof binnacle.folios !== "string" ? binnacle.folios : null;
+            const fojas = typeof binnacle.fojas !== "string" ? binnacle.fojas : null;
 
             const judicialBinnacleData = await models.JUDICIAL_BINNACLE.create({
               judicialBinProceduralStageId: proceduralStage,
@@ -549,8 +529,8 @@ export class JudicialBinacleService {
               entryDate: entryDate,
               notificationType: binnacle.notificationType,
               acto: binnacle.acto,
-              fojas: binnacle.fojas,
-              folios: binnacle.folios,
+              fojas: fojas,
+              folios: folios,
               provedioDate: provedioDate,
               userDescription: binnacle.userDescription,
               createdBy: "BOT",
@@ -559,30 +539,68 @@ export class JudicialBinacleService {
               tariffHistory: "[]",
             });
 
-            await Promise.all(binnacle.notifications.map(async (notification:any) => {
-              const shipDate = notification.shipDate ? moment(notification.shipDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-              const resolutionDate = notification.resolutionDate ? moment(notification.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-              const sentCentral = notification.sentCentral ? moment(notification.sentCentral, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-              const judicialBinNotification = await models.JUDICIAL_BIN_NOTIFICATION.create({
-                number: notification.number,
-                addressee: notification.addressee,
-                shipDate: shipDate,
-                attachments: notification.attachments,
-                deliveryMethod: notification.deliveryMethod,
-                resolutionDate: resolutionDate,
-                notificationPrint: notification.notificationPrint,
-                sentCentral: sentCentral,
-                centralReceipt: notification.centralReceipt,
-                idJudicialBinacle: judicialBinnacleData.dataValues.id,
-              });
+            if(!binnacle.notifications.length) return
+
+            await Promise.all(binnacle.notifications.map(async (notification:Notification) => {
+              const shipDate =
+                notification.shipDate &&
+                moment(notification.shipDate, "DD/MM/YYYY HH:mm").format(
+                  "YYYY-MM-DD HH:mm:ss"
+                ) !== "Invalid date"
+                  ? moment(notification.shipDate, "DD/MM/YYYY HH:mm").format(
+                      "YYYY-MM-DD HH:mm:ss"
+                    )
+                  : null;
+              const resolutionDate =
+                notification.resolutionDate &&
+                moment(notification.resolutionDate, "DD/MM/YYYY HH:mm").format(
+                  "YYYY-MM-DD HH:mm:ss"
+                ) !== "Invalid date"
+                  ? moment(
+                      notification.resolutionDate,
+                      "DD/MM/YYYY HH:mm"
+                    ).format("YYYY-MM-DD HH:mm:ss")
+                  : null;
+              const notificationPrint =
+                notification.notificationPrint &&
+                moment(
+                  notification.notificationPrint,
+                  "DD/MM/YYYY HH:mm"
+                ).format("YYYY-MM-DD HH:mm:ss") !== "Invalid date"
+                  ? moment(
+                      notification.notificationPrint,
+                      "DD/MM/YYYY HH:mm"
+                    ).format("YYYY-MM-DD HH:mm:ss")
+                  : null;
+              const sentCentral =
+                notification.sentCentral &&
+                moment(notification.sentCentral, "DD/MM/YYYY HH:mm").format(
+                  "YYYY-MM-DD HH:mm:ss"
+                ) !== "Invalid date"
+                  ? moment(notification.sentCentral, "DD/MM/YYYY HH:mm").format(
+                      "YYYY-MM-DD HH:mm:ss"
+                    )
+                  : null;
+
+              const judicialBinNotification =
+                await models.JUDICIAL_BIN_NOTIFICATION.create({
+                  notificationCode: notification.notificationCode,
+                  addressee: notification.addressee,
+                  shipDate: shipDate,
+                  attachments: notification.attachments,
+                  deliveryMethod: notification.deliveryMethod,
+                  resolutionDate: resolutionDate,
+                  notificationPrint: notificationPrint,
+                  sentCentral: sentCentral,
+                  centralReceipt: notification.centralReceipt,
+                  idJudicialBinacle: judicialBinnacleData.dataValues.id,
+                });
               console.log("Creado notificacion: ",  judicialBinNotification);
             }))
           }))
 
+            await page.close();
 
-
-
-          await page.close();
         } catch (error) {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`

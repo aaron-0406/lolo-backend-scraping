@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -22,7 +13,7 @@ const client = new client_s3_1.S3Client({
     region: AWS_BUCKET_REGION,
     credentials: { accessKeyId: AWS_PUBLIC_KEY, secretAccessKey: AWS_SECRET_KEY },
 });
-const uploadFile = (file, pathname) => __awaiter(void 0, void 0, void 0, function* () {
+const uploadFile = async (file, pathname) => {
     // Reading File
     const stream = fs_1.default.createReadStream(path_1.default.join(__dirname, "../public/docs/", file.filename));
     const uploadParam = {
@@ -32,17 +23,17 @@ const uploadFile = (file, pathname) => __awaiter(void 0, void 0, void 0, functio
     };
     // UPLOAD TO AWS
     const command = new client_s3_1.PutObjectCommand(uploadParam);
-    return yield client.send(command);
-});
+    return await client.send(command);
+};
 exports.uploadFile = uploadFile;
-const readFile = (filename) => __awaiter(void 0, void 0, void 0, function* () {
+const readFile = async (filename) => {
     const getParam = {
         Bucket: AWS_BUCKET_NAME,
         Key: filename,
     };
     const pathName = filename.split("/");
     const command = new client_s3_1.GetObjectCommand(getParam);
-    const result = yield client.send(command);
+    const result = await client.send(command);
     if (result.Body) {
         const stream = result.Body;
         const newFile = fs_1.default.createWriteStream(path_1.default.join(__dirname, "../public/download", pathName[pathName.length - 1]));
@@ -51,27 +42,27 @@ const readFile = (filename) => __awaiter(void 0, void 0, void 0, function* () {
             stream.on("end", () => resolve(stream.read()));
             stream.on("error", reject); // or something like that. might need to close `hash`
         });
-        yield end;
+        await end;
         return;
     }
-});
+};
 exports.readFile = readFile;
-const createFolder = (folderName) => __awaiter(void 0, void 0, void 0, function* () {
+const createFolder = async (folderName) => {
     const uploadParam = {
         Bucket: AWS_BUCKET_NAME,
         Key: folderName,
     };
     const command = new client_s3_1.PutObjectCommand(uploadParam);
-    return yield client.send(command);
-});
+    return await client.send(command);
+};
 exports.createFolder = createFolder;
-const deleteFileBucket = (fileName) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteFileBucket = async (fileName) => {
     const commandListParams = {
         Bucket: AWS_BUCKET_NAME,
         Prefix: fileName,
     };
     const commandList = new client_s3_1.ListObjectVersionsCommand(commandListParams);
-    yield client.send(commandList).then((data) => {
+    await client.send(commandList).then((data) => {
         var _a;
         const latestVersion = (_a = data.Versions) === null || _a === void 0 ? void 0 : _a[0];
         const commandDeleteParam = {
@@ -82,5 +73,5 @@ const deleteFileBucket = (fileName) => __awaiter(void 0, void 0, void 0, functio
         const commandDelete = new client_s3_1.DeleteObjectCommand(commandDeleteParam);
         return client.send(commandDelete);
     });
-});
+};
 exports.deleteFileBucket = deleteFileBucket;

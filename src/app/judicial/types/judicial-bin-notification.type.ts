@@ -1,6 +1,6 @@
 export type JudicialBinNotificationType = {
   id: number;
-  number: number;
+  notificationCode: number;
   addressee: string;
   shipDate: string;
   attachments: string;

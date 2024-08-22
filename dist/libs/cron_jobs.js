@@ -22,15 +22,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -61,21 +52,21 @@ const deleteDownloadFolderTask = () => {
 };
 exports.deleteDownloadFolderTask = deleteDownloadFolderTask;
 const sendWeeklyReportsByEmail = () => {
-    node_cron_1.default.schedule("0 8 * * 1", () => __awaiter(void 0, void 0, void 0, function* () {
-        const customers = yield serviceCustomer.find();
-        customers.map((customer) => __awaiter(void 0, void 0, void 0, function* () {
-            const templates = yield serviceTemplate.findAllByCustomerId(customer.id);
+    node_cron_1.default.schedule("0 8 * * 1", async () => {
+        const customers = await serviceCustomer.find();
+        customers.map(async (customer) => {
+            const templates = await serviceTemplate.findAllByCustomerId(customer.id);
             //encontramos el template para reportes
             const template = templates.find((temp) => temp.dataValues.name.includes("REPORTE"));
             if (template) {
-                const customersUser = yield serviceCustomerUser.findAllByCustomerID(customer.id);
+                const customersUser = await serviceCustomerUser.findAllByCustomerID(customer.id);
                 customersUser
                     .filter((customerUser) => customerUser.dataValues.privilege === "LECTOR")
-                    .map((customerUser) => __awaiter(void 0, void 0, void 0, function* () {
+                    .map(async (customerUser) => {
                     //Generando reporte
-                    const doc = yield serviceDocument.generateReport(template.dataValues, customerUser.dataValues.id);
+                    const doc = await serviceDocument.generateReport(template.dataValues, customerUser.dataValues.id);
                     //Guardandolo
-                    const document = yield (0, helpers_1.saveWordDocument)(doc, template.dataValues.name);
+                    const document = await (0, helpers_1.saveWordDocument)(doc, template.dataValues.name);
                     //Empezando a crear objeto de nodemailer
                     const transport = nodemailer.createTransport({
                         host: config_1.default.AWS_EMAIL_HOST,
@@ -107,12 +98,12 @@ const sendWeeklyReportsByEmail = () => {
                         console.log(error);
                         console.log(info);
                     });
-                }));
+                });
                 customersUser
                     .filter((customerUser) => customerUser.dataValues.privilege === "EDITOR")
-                    .map((customerUser) => __awaiter(void 0, void 0, void 0, function* () {
-                    const doc = yield serviceDocument.generateReport(template.dataValues);
-                    const document = yield (0, helpers_1.saveWordDocument)(doc, template.dataValues.name);
+                    .map(async (customerUser) => {
+                    const doc = await serviceDocument.generateReport(template.dataValues);
+                    const document = await (0, helpers_1.saveWordDocument)(doc, template.dataValues.name);
                     //Empezando a crear objeto de nodemailer
                     const transport = nodemailer.createTransport({
                         host: config_1.default.AWS_EMAIL_HOST,
@@ -144,10 +135,10 @@ const sendWeeklyReportsByEmail = () => {
                         console.log(error);
                         console.log(info);
                     });
-                }));
+                });
             }
-        }));
-    }), { timezone: "America/Lima" });
+        });
+    }, { timezone: "America/Lima" });
 };
 exports.sendWeeklyReportsByEmail = sendWeeklyReportsByEmail;
 //8:00 am Cada Lunes

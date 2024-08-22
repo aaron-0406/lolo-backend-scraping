@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,53 +8,43 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const { models } = sequelize_1.default;
 class DistrictService {
     constructor() { }
-    findAll() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.DISTRICT.findAll();
-            if (!rta) {
-                throw boom_1.default.notFound("No existen distritos");
-            }
-            return rta;
-        });
+    async findAll() {
+        const rta = await models.DISTRICT.findAll();
+        if (!rta) {
+            throw boom_1.default.notFound("No existen distritos");
+        }
+        return rta;
     }
-    findAllByProvince(provinceId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.DISTRICT.findAll({
-                where: {
-                    provinceId,
-                },
-            });
-            if (!rta) {
-                throw boom_1.default.notFound("No existen distritos");
-            }
-            return rta;
+    async findAllByProvince(provinceId) {
+        const rta = await models.DISTRICT.findAll({
+            where: {
+                provinceId,
+            },
         });
+        if (!rta) {
+            throw boom_1.default.notFound("No existen distritos");
+        }
+        return rta;
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newDistrict = yield models.DISTRICT.create(data);
-            return newDistrict;
-        });
+    async create(data) {
+        const newDistrict = await models.DISTRICT.create(data);
+        return newDistrict;
     }
-    update(id, data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const district = yield models.DISTRICT.findByPk(id);
-            if (!district) {
-                throw boom_1.default.notFound("Distrito no encontrado");
-            }
-            yield district.update(data);
-            return district;
-        });
+    async update(id, data) {
+        const district = await models.DISTRICT.findByPk(id);
+        if (!district) {
+            throw boom_1.default.notFound("Distrito no encontrado");
+        }
+        await district.update(data);
+        return district;
     }
-    delete(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const district = yield models.DISTRICT.findByPk(id);
-            if (!district) {
-                throw boom_1.default.notFound("Distrito no encontrado");
-            }
-            yield district.destroy();
-            return { id };
-        });
+    async delete(id) {
+        const district = await models.DISTRICT.findByPk(id);
+        if (!district) {
+            throw boom_1.default.notFound("Distrito no encontrado");
+        }
+        await district.destroy();
+        return { id };
     }
 }
 exports.default = DistrictService;

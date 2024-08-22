@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -22,125 +13,115 @@ const sequelize_2 = require("sequelize");
 const { models } = sequelize_1.default;
 class JudicialCollateralFilesService {
     constructor() { }
-    findByID(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialCollateralFile = yield models.JUDICIAL_COLLATERAL_FILE.findOne({
+    async findByID(id) {
+        const judicialCollateralFile = await models.JUDICIAL_COLLATERAL_FILE.findOne({
+            where: {
+                id,
+            },
+        });
+        if (!judicialCollateralFile) {
+            throw boom_1.default.notFound("Archivo de garantía no encontrado");
+        }
+        return judicialCollateralFile;
+    }
+    async findOne(chb, collateralId, id) {
+        try {
+            const file = await models.JUDICIAL_COLLATERAL_FILES.findOne({
                 where: {
                     id,
                 },
+                attributes: {
+                    exclude: ["judicialCollateralId"],
+                },
+            });
+            if (!file) {
+                throw boom_1.default.notFound("Archivo no encontrado");
+            }
+            const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), file.dataValues.name);
+            if (!isStored) {
+                await (0, aws_bucket_1.readFile)(`${config_1.default.AWS_CHB_PATH}${chb}/collaterals/${collateralId}/${file.dataValues.nameOriginAws}`);
+            }
+            return file;
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+    async findAllByCollateralId(collateralId, chb, query) {
+        const { filter } = query;
+        const fileName = filter;
+        let filtersWhere = {
+            judicialCollateralIdJudicialCollateral: collateralId,
+            customerHasBankId: chb,
+        };
+        if (fileName) {
+            filtersWhere = Object.assign(Object.assign({}, filtersWhere), { originalName: { [sequelize_2.Op.like]: `%${fileName}%` } });
+        }
+        try {
+            const judicialCollateralFile = await models.JUDICIAL_COLLATERAL_FILES.findAll({
+                where: filtersWhere,
+                attributes: {
+                    exclude: ["judicialCollateralId"],
+                },
             });
             if (!judicialCollateralFile) {
-                throw boom_1.default.notFound("Archivo de garantía no encontrado");
+                throw boom_1.default.notFound("Collateral file no encontrado");
             }
             return judicialCollateralFile;
-        });
+        }
+        catch (error) {
+            console.log(error);
+        }
     }
-    findOne(chb, collateralId, id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const file = yield models.JUDICIAL_COLLATERAL_FILES.findOne({
-                    where: {
-                        id,
-                    },
-                    attributes: {
-                        exclude: ["judicialCollateralId"],
-                    },
+    async create(files, chb, collateralId) {
+        try {
+            const filesData = await Promise.all(files.map(async (file) => {
+                const newJudicialCollateralFile = await models.JUDICIAL_COLLATERAL_FILES.create({
+                    originalName: file.originalname,
+                    nameOriginAws: "",
+                    judicialCollateralIdJudicialCollateral: collateralId,
+                    customerHasBankId: chb,
                 });
-                if (!file) {
-                    throw boom_1.default.notFound("Archivo no encontrado");
-                }
-                const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), file.dataValues.name);
-                if (!isStored) {
-                    yield (0, aws_bucket_1.readFile)(`${config_1.default.AWS_CHB_PATH}${chb}/collaterals/${collateralId}/${file.dataValues.nameOriginAws}`);
-                }
-                return file;
-            }
-            catch (error) {
-                console.log(error);
-            }
-        });
-    }
-    findAllByCollateralId(collateralId, chb, query) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { filter } = query;
-            const fileName = filter;
-            let filtersWhere = {
-                judicialCollateralIdJudicialCollateral: collateralId,
-                customerHasBankId: chb,
-            };
-            if (fileName) {
-                filtersWhere = Object.assign(Object.assign({}, filtersWhere), { originalName: { [sequelize_2.Op.like]: `%${fileName}%` } });
-            }
-            try {
-                const judicialCollateralFile = yield models.JUDICIAL_COLLATERAL_FILES.findAll({
-                    where: filtersWhere,
-                    attributes: {
-                        exclude: ["judicialCollateralId"],
-                    },
+                const date = new Date();
+                const month = date.getMonth() + 1;
+                const year = date.getFullYear();
+                const nameOriginAws = `${collateralId}-${month}-${year}-${file.originalname}`;
+                await (0, helpers_1.renameFile)(`../public/docs/`, file.filename, nameOriginAws);
+                file.filename = nameOriginAws;
+                await (0, aws_bucket_1.uploadFile)(file, `${config_1.default.AWS_CHB_PATH}${chb}/collaterals/${collateralId}`);
+                // UPDATE NAME IN DATABASE
+                const updatedJudicialCollateralFile = await newJudicialCollateralFile.update({
+                    nameOriginAws: file.filename,
                 });
-                if (!judicialCollateralFile) {
-                    throw boom_1.default.notFound("Collateral file no encontrado");
-                }
-                return judicialCollateralFile;
-            }
-            catch (error) {
-                console.log(error);
-            }
-        });
+                // DELETE TEMP FILE
+                await (0, helpers_1.deleteFile)("../public/docs", file.filename);
+                return updatedJudicialCollateralFile;
+            }));
+            return filesData;
+        }
+        catch (error) {
+            console.log(error);
+        }
     }
-    create(files, chb, collateralId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const filesData = yield Promise.all(files.map((file) => __awaiter(this, void 0, void 0, function* () {
-                    const newJudicialCollateralFile = yield models.JUDICIAL_COLLATERAL_FILES.create({
-                        originalName: file.originalname,
-                        nameOriginAws: "",
-                        judicialCollateralIdJudicialCollateral: collateralId,
-                        customerHasBankId: chb,
-                    });
-                    const date = new Date();
-                    const month = date.getMonth() + 1;
-                    const year = date.getFullYear();
-                    const nameOriginAws = `${collateralId}-${month}-${year}-${file.originalname}`;
-                    yield (0, helpers_1.renameFile)(`../public/docs/`, file.filename, nameOriginAws);
-                    file.filename = nameOriginAws;
-                    yield (0, aws_bucket_1.uploadFile)(file, `${config_1.default.AWS_CHB_PATH}${chb}/collaterals/${collateralId}`);
-                    // UPDATE NAME IN DATABASE
-                    const updatedJudicialCollateralFile = yield newJudicialCollateralFile.update({
-                        nameOriginAws: file.filename,
-                    });
-                    // DELETE TEMP FILE
-                    yield (0, helpers_1.deleteFile)("../public/docs", file.filename);
-                    return updatedJudicialCollateralFile;
-                })));
-                return filesData;
-            }
-            catch (error) {
-                console.log(error);
-            }
-        });
-    }
-    delete(id, chb, collateralId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const judicialCollateralFile = yield models.JUDICIAL_COLLATERAL_FILES.findOne({
-                    where: {
-                        id,
-                    },
-                    attributes: {
-                        exclude: ["judicialCollateralId"],
-                    },
-                });
-                if (!judicialCollateralFile)
-                    throw boom_1.default.notFound("Archivo no encontrado");
-                yield judicialCollateralFile.destroy();
-                yield (0, aws_bucket_1.deleteFileBucket)(`${config_1.default.AWS_CHB_PATH}${chb}/collaterals/${collateralId}/${judicialCollateralFile.dataValues.nameOriginAws}`);
-                return { id };
-            }
-            catch (error) {
-                console.log(error);
-            }
-        });
+    async delete(id, chb, collateralId) {
+        try {
+            const judicialCollateralFile = await models.JUDICIAL_COLLATERAL_FILES.findOne({
+                where: {
+                    id,
+                },
+                attributes: {
+                    exclude: ["judicialCollateralId"],
+                },
+            });
+            if (!judicialCollateralFile)
+                throw boom_1.default.notFound("Archivo no encontrado");
+            await judicialCollateralFile.destroy();
+            await (0, aws_bucket_1.deleteFileBucket)(`${config_1.default.AWS_CHB_PATH}${chb}/collaterals/${collateralId}/${judicialCollateralFile.dataValues.nameOriginAws}`);
+            return { id };
+        }
+        catch (error) {
+            console.log(error);
+        }
     }
 }
 exports.default = JudicialCollateralFilesService;

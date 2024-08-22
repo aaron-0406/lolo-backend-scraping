@@ -9,67 +9,93 @@ const { JUDICIAL_BINNACLE_TABLE } = judicial_binnacle_model_1.default;
 const JUDICIAL_BIN_NOTIFICATION_TABLE = "JUDICIAL_BIN_NOTIFICATION";
 const JudicialBinNotificationSchema = {
     id: {
-        primaryKey: true,
+        type: sequelize_1.DataTypes.INTEGER,
+        field: 'id_judicial_bin_notification',
         allowNull: false,
         autoIncrement: true,
-        field: "id_judicial_bin_notification",
-        type: sequelize_1.DataTypes.INTEGER,
+        primaryKey: true,
     },
     number: {
-        allowNull: false,
+        field: 'number',
         type: sequelize_1.DataTypes.INTEGER,
-        field: "number",
+        allowNull: true,
+        defaultValue: null
     },
     addressee: {
-        allowNull: false,
+        field: 'addressee',
         type: sequelize_1.DataTypes.STRING(200),
-        field: "addressee",
+        allowNull: true,
+        defaultValue: null
     },
     shipDate: {
-        allowNull: false,
         type: sequelize_1.DataTypes.DATE,
-        field: "ship_date",
+        allowNull: true,
+        field: 'ship_date',
+        defaultValue: null
     },
     attachments: {
-        allowNull: false,
         type: sequelize_1.DataTypes.STRING(200),
-        field: "attachments",
+        allowNull: true,
+        field: 'attachments',
+        defaultValue: null
     },
     deliveryMethod: {
-        allowNull: false,
         type: sequelize_1.DataTypes.STRING(200),
-        field: "delivery_method",
+        allowNull: true,
+        field: 'delivery_method',
+        defaultValue: null
     },
     resolutionDate: {
-        allowNull: false,
         type: sequelize_1.DataTypes.DATE,
-        field: "resolution_date",
+        allowNull: true,
+        field: 'resolution_date',
+        defaultValue: null
     },
     notificationPrint: {
-        allowNull: false,
         type: sequelize_1.DataTypes.STRING(200),
-        field: "notification_print",
+        allowNull: true,
+        field: 'notification_print',
+        defaultValue: null
     },
     sentCentral: {
-        allowNull: false,
         type: sequelize_1.DataTypes.STRING(200),
-        field: "sent_central",
+        allowNull: true,
+        field: 'sent_central',
+        defaultValue: null
     },
     centralReceipt: {
-        allowNull: false,
         type: sequelize_1.DataTypes.STRING(200),
-        field: "central_receipt",
+        allowNull: true,
+        field: 'central_receipt',
+        defaultValue: null
+    },
+    createdAt: {
+        allowNull: false,
+        field: "created_at",
+        defaultValue: sequelize_1.DataTypes.NOW,
+        type: sequelize_1.DataTypes.DATE,
+    },
+    updatedAt: {
+        allowNull: false,
+        field: "updated_at",
+        defaultValue: sequelize_1.DataTypes.NOW,
+        type: sequelize_1.DataTypes.DATE,
+    },
+    deletedAt: {
+        allowNull: true,
+        field: "deleted_at",
+        type: sequelize_1.DataTypes.DATE,
     },
     idJudicialBinacle: {
-        allowNull: false,
         type: sequelize_1.DataTypes.INTEGER,
-        field: "id_judicial_binacle",
+        allowNull: false,
+        field: 'judicial_binacle_id_judicial_binacle',
         references: {
             model: JUDICIAL_BINNACLE_TABLE,
-            key: "id_judicial_binnacle",
+            key: 'id_judicial_binnacle',
         },
-        onUpdate: "CASCADE",
-        onDelete: "NO ACTION",
+        onUpdate: 'CASCADE',
+        onDelete: 'NO ACTION',
     },
 };
 class JudicialBinNotification extends sequelize_1.Model {

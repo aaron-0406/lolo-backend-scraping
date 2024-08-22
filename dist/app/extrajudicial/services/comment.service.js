@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,125 +10,110 @@ const sequelize_2 = require("sequelize");
 const { models } = sequelize_1.default;
 class CommentService {
     constructor() { }
-    findAllByClient(clientID) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.COMMENT.findAll({
-                where: {
-                    client_id_client: clientID,
+    async findAllByClient(clientID) {
+        const rta = await models.COMMENT.findAll({
+            where: {
+                client_id_client: clientID,
+            },
+            include: [
+                {
+                    model: models.CUSTOMER_USER,
+                    as: "customerUser",
+                    attributes: ["name"],
                 },
-                include: [
-                    {
-                        model: models.CUSTOMER_USER,
-                        as: "customerUser",
-                        attributes: ["name"],
-                    },
-                    {
-                        model: models.MANAGEMENT_ACTION,
-                        as: "managementAction",
-                        attributes: ["nameAction"],
-                    },
-                ],
-                order: [["id", "DESC"]],
-            });
-            return rta;
-        });
-    }
-    findAllByDate(date) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.COMMENT.findAll({
-                where: {
-                    date,
+                {
+                    model: models.MANAGEMENT_ACTION,
+                    as: "managementAction",
+                    attributes: ["nameAction"],
                 },
-                include: [
-                    {
-                        model: models.CLIENT,
-                        as: "client",
-                        attributes: ["id", "code", "name", "cityId"],
-                    },
-                    {
-                        model: models.MANAGEMENT_ACTION,
-                        as: "managementAction",
-                        attributes: ["id", "codeAction", "nameAction"],
-                    },
-                ],
-            });
-            return JSON.parse(JSON.stringify(rta));
+            ],
+            order: [["id", "DESC"]],
         });
+        return rta;
     }
-    chart(clientID) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.formatDate)((0, helpers_1.getFirstDayOfWeek)());
-            const ultimoDia = (0, helpers_1.formatDate)((0, helpers_1.getLastDayOfWeek)());
-            const rta = yield models.COMMENT.findAll({
-                attributes: [
-                    [sequelize_1.default.literal("DATE(date)"), "fecha"],
-                    [sequelize_1.default.fn("COUNT", sequelize_1.default.col("date")), "cantidad"],
-                ],
-                group: ["date"],
-                where: {
-                    customer_user_id_customer_user: clientID,
-                    date: {
-                        [sequelize_2.Op.between]: [primerDia, ultimoDia],
-                    },
+    async findAllByDate(date) {
+        const rta = await models.COMMENT.findAll({
+            where: {
+                date,
+            },
+            include: [
+                {
+                    model: models.CLIENT,
+                    as: "client",
+                    attributes: ["id", "code", "name", "cityId"],
                 },
-            });
-            return JSON.parse(JSON.stringify(rta));
-        });
-    }
-    findByID(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const comment = yield models.COMMENT.findOne({
-                where: {
-                    id_comment: id,
+                {
+                    model: models.MANAGEMENT_ACTION,
+                    as: "managementAction",
+                    attributes: ["id", "codeAction", "nameAction"],
                 },
-                include: [
-                    {
-                        model: models.CUSTOMER_USER,
-                        as: "customerUser",
-                        attributes: ["name"],
-                    },
-                    {
-                        model: models.MANAGEMENT_ACTION,
-                        as: "managementAction",
-                        attributes: ["nameAction", "customerHasBankId"],
-                    },
-                ],
-            });
-            if (!comment) {
-                throw boom_1.default.notFound("Comment no encontrado");
-            }
-            return comment;
+            ],
         });
+        return JSON.parse(JSON.stringify(rta));
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newComment = yield models.COMMENT.create(data);
-            const commentFound = yield this.findByID(newComment.dataValues.id);
-            return commentFound;
+    async chart(clientID) {
+        const primerDia = (0, helpers_1.formatDate)((0, helpers_1.getFirstDayOfWeek)());
+        const ultimoDia = (0, helpers_1.formatDate)((0, helpers_1.getLastDayOfWeek)());
+        const rta = await models.COMMENT.findAll({
+            attributes: [
+                [sequelize_1.default.literal("DATE(date)"), "fecha"],
+                [sequelize_1.default.fn("COUNT", sequelize_1.default.col("date")), "cantidad"],
+            ],
+            group: ["date"],
+            where: {
+                customer_user_id_customer_user: clientID,
+                date: {
+                    [sequelize_2.Op.between]: [primerDia, ultimoDia],
+                },
+            },
         });
+        return JSON.parse(JSON.stringify(rta));
     }
-    update(id, changes) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const comment = yield this.findByID(id);
-            const rta = yield comment.update(changes);
-            const commentFound = yield this.findByID(rta.dataValues.id);
-            return commentFound;
+    async findByID(id) {
+        const comment = await models.COMMENT.findOne({
+            where: {
+                id_comment: id,
+            },
+            include: [
+                {
+                    model: models.CUSTOMER_USER,
+                    as: "customerUser",
+                    attributes: ["name"],
+                },
+                {
+                    model: models.MANAGEMENT_ACTION,
+                    as: "managementAction",
+                    attributes: ["nameAction", "customerHasBankId"],
+                },
+            ],
         });
+        if (!comment) {
+            throw boom_1.default.notFound("Comment no encontrado");
+        }
+        return comment;
     }
-    delete(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const comment = yield this.findByID(id);
-            yield comment.destroy();
-            return { id };
-        });
+    async create(data) {
+        const newComment = await models.COMMENT.create(data);
+        const commentFound = await this.findByID(newComment.dataValues.id);
+        return commentFound;
     }
-    getCommentsGroupByDayWeekly(customerId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
-            const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
-            const query = `
+    async update(id, changes) {
+        const comment = await this.findByID(id);
+        const rta = await comment.update(changes);
+        const commentFound = await this.findByID(rta.dataValues.id);
+        return commentFound;
+    }
+    async delete(id) {
+        const comment = await this.findByID(id);
+        await comment.destroy();
+        return { id };
+    }
+    async getCommentsGroupByDayWeekly(customerId) {
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
+        const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
+        const query = `
         SELECT fecha.dia, COALESCE(COUNT(C.id_comment), 0) AS cantidad
         FROM (
           SELECT DATE('${(0, helpers_1.formatDate)(primerDiaSemanaPasada)}') + INTERVAL (days.number) DAY AS dia
@@ -153,27 +129,25 @@ class CommentService {
         WHERE CUS.id_customer = ${customerId}
         GROUP BY fecha.dia
     `;
-            const comentariosPorDia = yield sequelize_1.default.query(query);
-            const diasSemana = [];
-            while (primerDiaSemanaPasada <= ultimoDiaSemanaPasada) {
-                diasSemana.push({
-                    dia: (0, helpers_1.formatDate)(primerDiaSemanaPasada),
-                    cantidad: 0,
-                });
-                primerDiaSemanaPasada.setDate(primerDiaSemanaPasada.getDate() + 1);
-            }
-            const diasFaltantes = diasSemana.filter((dia) => !comentariosPorDia[0].some((r) => r.dia === dia.dia));
-            const resultadosFinales = [...comentariosPorDia[0], ...diasFaltantes];
-            return (0, helpers_1.sortDaysByDate)(resultadosFinales, "dia");
-        });
+        const comentariosPorDia = await sequelize_1.default.query(query);
+        const diasSemana = [];
+        while (primerDiaSemanaPasada <= ultimoDiaSemanaPasada) {
+            diasSemana.push({
+                dia: (0, helpers_1.formatDate)(primerDiaSemanaPasada),
+                cantidad: 0,
+            });
+            primerDiaSemanaPasada.setDate(primerDiaSemanaPasada.getDate() + 1);
+        }
+        const diasFaltantes = diasSemana.filter((dia) => !comentariosPorDia[0].some((r) => r.dia === dia.dia));
+        const resultadosFinales = [...comentariosPorDia[0], ...diasFaltantes];
+        return (0, helpers_1.sortDaysByDate)(resultadosFinales, "dia");
     }
-    getCommentsGroupByGestorWeekly(customerId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
-            const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
-            const query = `
+    async getCommentsGroupByGestorWeekly(customerId) {
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
+        const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
+        const query = `
       SELECT CU.id_customer_user AS id,CU.name AS name, COUNT(C.id_comment) AS cantidad
       FROM COMMENT C
         INNER JOIN CUSTOMER_USER CU ON CU.id_customer_user = C.customer_user_id_customer_user
@@ -182,35 +156,33 @@ class CommentService {
             C.date BETWEEN DATE('${(0, helpers_1.formatDate)(primerDiaSemanaPasada)}') AND DATE('${(0, helpers_1.formatDate)(ultimoDiaSemanaPasada)}')
       GROUP BY CU.id_customer_user
     `;
-            const comentariosPorUsuario = yield sequelize_1.default.query(query);
-            const gestores = yield models.CUSTOMER_USER.findAll({
-                where: { customerId },
-            });
-            const newGestores = gestores.map((gestor) => {
-                const gestorFound = comentariosPorUsuario[0].find((gestor2) => gestor2.name === gestor.dataValues.name);
-                if (gestorFound) {
-                    return {
-                        id: gestorFound.id,
-                        name: gestorFound.name,
-                        cantidad: gestorFound.cantidad,
-                    };
-                }
-                return {
-                    id: gestor.dataValues.id,
-                    name: gestor.dataValues.name,
-                    cantidad: 0,
-                };
-            });
-            return newGestores;
+        const comentariosPorUsuario = await sequelize_1.default.query(query);
+        const gestores = await models.CUSTOMER_USER.findAll({
+            where: { customerId },
         });
+        const newGestores = gestores.map((gestor) => {
+            const gestorFound = comentariosPorUsuario[0].find((gestor2) => gestor2.name === gestor.dataValues.name);
+            if (gestorFound) {
+                return {
+                    id: gestorFound.id,
+                    name: gestorFound.name,
+                    cantidad: gestorFound.cantidad,
+                };
+            }
+            return {
+                id: gestor.dataValues.id,
+                name: gestor.dataValues.name,
+                cantidad: 0,
+            };
+        });
+        return newGestores;
     }
-    getCommentsGroupByBanks(customerId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
-            const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
-            const query = `
+    async getCommentsGroupByBanks(customerId) {
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
+        const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
+        const query = `
       SELECT  B.id_bank AS id, B.name AS name, COUNT(C.id_comment) AS cantidad
         FROM COMMENT C
         INNER JOIN CLIENT CLI ON CLI.id_client = C.client_id_client
@@ -220,39 +192,37 @@ class CommentService {
             AND C.date BETWEEN DATE('${(0, helpers_1.formatDate)(primerDiaSemanaPasada)}') AND DATE('${(0, helpers_1.formatDate)(ultimoDiaSemanaPasada)}')
       GROUP BY B.id_bank
     `;
-            const queryBank = `
+        const queryBank = `
       SELECT B.id_bank AS id, B.name AS name
       FROM BANK B
       INNER JOIN CUSTOMER_HAS_BANK CHB ON B.id_bank = CHB.bank_id_bank
       WHERE CHB.customer_id_customer=${customerId}
     `;
-            const comentariosPorBanco = yield sequelize_1.default.query(query);
-            const banks = yield sequelize_1.default.query(queryBank);
-            const newBanks = banks[0].map((bank) => {
-                const bankFound = comentariosPorBanco[0].find((bank2) => bank2.name === bank.name);
-                if (bankFound) {
-                    return {
-                        id: bankFound.id,
-                        name: bankFound.name,
-                        cantidad: bankFound.cantidad,
-                    };
-                }
+        const comentariosPorBanco = await sequelize_1.default.query(query);
+        const banks = await sequelize_1.default.query(queryBank);
+        const newBanks = banks[0].map((bank) => {
+            const bankFound = comentariosPorBanco[0].find((bank2) => bank2.name === bank.name);
+            if (bankFound) {
                 return {
-                    id: bank.id,
-                    name: bank.name,
-                    cantidad: 0,
+                    id: bankFound.id,
+                    name: bankFound.name,
+                    cantidad: bankFound.cantidad,
                 };
-            });
-            return newBanks;
+            }
+            return {
+                id: bank.id,
+                name: bank.name,
+                cantidad: 0,
+            };
         });
+        return newBanks;
     }
-    getCommentsGroupByDayWeeklyUser(customerId, customerUserId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
-            const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
-            const query = `
+    async getCommentsGroupByDayWeeklyUser(customerId, customerUserId) {
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
+        const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
+        const query = `
         SELECT fecha.dia, COALESCE(COUNT(C.id_comment), 0) AS cantidad
         FROM (
           SELECT DATE('${(0, helpers_1.formatDate)(primerDiaSemanaPasada)}') + INTERVAL (days.number) DAY AS dia
@@ -268,27 +238,25 @@ class CommentService {
         WHERE CUS.id_customer = ${customerId} AND CU.id_customer_user = ${customerUserId}
         GROUP BY fecha.dia
     `;
-            const comentariosPorDia = yield sequelize_1.default.query(query);
-            const diasSemana = [];
-            while (primerDiaSemanaPasada <= ultimoDiaSemanaPasada) {
-                diasSemana.push({
-                    dia: (0, helpers_1.formatDate)(primerDiaSemanaPasada),
-                    cantidad: 0,
-                });
-                primerDiaSemanaPasada.setDate(primerDiaSemanaPasada.getDate() + 1);
-            }
-            const diasFaltantes = diasSemana.filter((dia) => !comentariosPorDia[0].some((r) => r.dia === dia.dia));
-            const resultadosFinales = [...comentariosPorDia[0], ...diasFaltantes];
-            return (0, helpers_1.sortDaysByDate)(resultadosFinales, "dia");
-        });
+        const comentariosPorDia = await sequelize_1.default.query(query);
+        const diasSemana = [];
+        while (primerDiaSemanaPasada <= ultimoDiaSemanaPasada) {
+            diasSemana.push({
+                dia: (0, helpers_1.formatDate)(primerDiaSemanaPasada),
+                cantidad: 0,
+            });
+            primerDiaSemanaPasada.setDate(primerDiaSemanaPasada.getDate() + 1);
+        }
+        const diasFaltantes = diasSemana.filter((dia) => !comentariosPorDia[0].some((r) => r.dia === dia.dia));
+        const resultadosFinales = [...comentariosPorDia[0], ...diasFaltantes];
+        return (0, helpers_1.sortDaysByDate)(resultadosFinales, "dia");
     }
-    getCommentsGroupByGestorWeeklyUser(customerId, customerUserId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
-            const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
-            const query = `
+    async getCommentsGroupByGestorWeeklyUser(customerId, customerUserId) {
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
+        const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
+        const query = `
       SELECT CU.id_customer_user AS id,CU.name AS name, COUNT(C.id_comment) AS cantidad
       FROM COMMENT C
         INNER JOIN CUSTOMER_USER CU ON CU.id_customer_user = C.customer_user_id_customer_user
@@ -297,35 +265,33 @@ class CommentService {
             C.date BETWEEN DATE('${(0, helpers_1.formatDate)(primerDiaSemanaPasada)}') AND DATE('${(0, helpers_1.formatDate)(ultimoDiaSemanaPasada)}')
       GROUP BY CU.id_customer_user
     `;
-            const comentariosPorUsuario = yield sequelize_1.default.query(query);
-            const gestores = yield models.CUSTOMER_USER.findAll({
-                where: { customerId, id: customerUserId },
-            });
-            const newGestores = gestores.map((gestor) => {
-                const gestorFound = comentariosPorUsuario[0].find((gestor2) => gestor2.name === gestor.dataValues.name);
-                if (gestorFound) {
-                    return {
-                        id: gestorFound.id,
-                        name: gestorFound.name,
-                        cantidad: gestorFound.cantidad,
-                    };
-                }
-                return {
-                    id: gestor.dataValues.id,
-                    name: gestor.dataValues.name,
-                    cantidad: 0,
-                };
-            });
-            return newGestores;
+        const comentariosPorUsuario = await sequelize_1.default.query(query);
+        const gestores = await models.CUSTOMER_USER.findAll({
+            where: { customerId, id: customerUserId },
         });
+        const newGestores = gestores.map((gestor) => {
+            const gestorFound = comentariosPorUsuario[0].find((gestor2) => gestor2.name === gestor.dataValues.name);
+            if (gestorFound) {
+                return {
+                    id: gestorFound.id,
+                    name: gestorFound.name,
+                    cantidad: gestorFound.cantidad,
+                };
+            }
+            return {
+                id: gestor.dataValues.id,
+                name: gestor.dataValues.name,
+                cantidad: 0,
+            };
+        });
+        return newGestores;
     }
-    getCommentsGroupByBanksUser(customerId, customerUserId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
-            const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
-            const query = `
+    async getCommentsGroupByBanksUser(customerId, customerUserId) {
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDia = (0, helpers_1.getLastDayOfWeek)();
+        const primerDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 7);
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(ultimoDia, 7);
+        const query = `
       SELECT  B.id_bank AS id, B.name AS name, COUNT(C.id_comment) AS cantidad
         FROM COMMENT C
         INNER JOIN CLIENT CLI ON CLI.id_client = C.client_id_client
@@ -337,31 +303,30 @@ class CommentService {
             AND C.date BETWEEN DATE('${(0, helpers_1.formatDate)(primerDiaSemanaPasada)}') AND DATE('${(0, helpers_1.formatDate)(ultimoDiaSemanaPasada)}')
       GROUP BY B.id_bank
     `;
-            const queryBank = `
+        const queryBank = `
       SELECT B.id_bank AS id, B.name AS name
       FROM BANK B
       INNER JOIN CUSTOMER_HAS_BANK CHB ON B.id_bank = CHB.bank_id_bank
       WHERE CHB.customer_id_customer=${customerId}
     `;
-            const comentariosPorBanco = yield sequelize_1.default.query(query);
-            const banks = yield sequelize_1.default.query(queryBank);
-            const newBanks = banks[0].map((bank) => {
-                const bankFound = comentariosPorBanco[0].find((bank2) => bank2.name === bank.name);
-                if (bankFound) {
-                    return {
-                        id: bankFound.id,
-                        name: bankFound.name,
-                        cantidad: bankFound.cantidad,
-                    };
-                }
+        const comentariosPorBanco = await sequelize_1.default.query(query);
+        const banks = await sequelize_1.default.query(queryBank);
+        const newBanks = banks[0].map((bank) => {
+            const bankFound = comentariosPorBanco[0].find((bank2) => bank2.name === bank.name);
+            if (bankFound) {
                 return {
-                    id: bank.id,
-                    name: bank.name,
-                    cantidad: 0,
+                    id: bankFound.id,
+                    name: bankFound.name,
+                    cantidad: bankFound.cantidad,
                 };
-            });
-            return newBanks;
+            }
+            return {
+                id: bank.id,
+                name: bank.name,
+                cantidad: 0,
+            };
         });
+        return newBanks;
     }
 }
 exports.default = CommentService;

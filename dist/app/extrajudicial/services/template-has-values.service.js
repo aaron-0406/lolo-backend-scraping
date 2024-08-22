@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,82 +8,68 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const { models } = sequelize_1.default;
 class TemplateHasValuesService {
     constructor() { }
-    findAll(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const templates = yield models.TEMPLATE_HAS_VALUES.findAll({
-                where: { templateId: id },
-                attributes: { exclude: ["id_template"] },
-            });
-            const fields = yield models.ECAMPO.findAll({
-                where: { templateId: id },
-            });
-            return { templates, fields };
+    async findAll(id) {
+        const templates = await models.TEMPLATE_HAS_VALUES.findAll({
+            where: { templateId: id },
+            attributes: { exclude: ["id_template"] },
         });
+        const fields = await models.ECAMPO.findAll({
+            where: { templateId: id },
+        });
+        return { templates, fields };
     }
-    findByCustomerId(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const templateHasValues = yield models.TEMPLATE_HAS_VALUES.findAll({
-                include: {
+    async findByCustomerId(id) {
+        const templateHasValues = await models.TEMPLATE_HAS_VALUES.findAll({
+            include: {
+                model: models.TEMPLATE,
+                where: { customerId: id },
+                as: "template",
+            },
+        });
+        return templateHasValues;
+    }
+    async findOneWidthTemplate(id) {
+        const templateHasValues = await models.TEMPLATE_HAS_VALUES.findOne({
+            include: [
+                {
                     model: models.TEMPLATE,
-                    where: { customerId: id },
                     as: "template",
+                    include: [{ model: models.TEMPLATE_IMG, as: "template_imgs" }],
                 },
-            });
-            return templateHasValues;
-        });
-    }
-    findOneWidthTemplate(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const templateHasValues = yield models.TEMPLATE_HAS_VALUES.findOne({
-                include: [
-                    {
-                        model: models.TEMPLATE,
-                        as: "template",
-                        include: [{ model: models.TEMPLATE_IMG, as: "template_imgs" }],
-                    },
-                    {
-                        model: models.VALUES,
-                        as: "values",
-                    },
-                ],
-                where: { id },
-            });
-            if (!templateHasValues)
-                throw boom_1.default.notFound("Plantilla no encontrada");
-            return JSON.parse(JSON.stringify(templateHasValues));
-        });
-    }
-    findOne(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const templateHasValues = yield models.TEMPLATE_HAS_VALUES.findOne({
-                where: {
-                    id,
+                {
+                    model: models.VALUES,
+                    as: "values",
                 },
-            });
-            if (!templateHasValues)
-                throw boom_1.default.notFound("Plantilla no encontrada");
-            return templateHasValues;
+            ],
+            where: { id },
         });
+        if (!templateHasValues)
+            throw boom_1.default.notFound("Plantilla no encontrada");
+        return JSON.parse(JSON.stringify(templateHasValues));
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newTemplateHasValues = yield models.TEMPLATE_HAS_VALUES.create(data);
-            return newTemplateHasValues;
+    async findOne(id) {
+        const templateHasValues = await models.TEMPLATE_HAS_VALUES.findOne({
+            where: {
+                id,
+            },
         });
+        if (!templateHasValues)
+            throw boom_1.default.notFound("Plantilla no encontrada");
+        return templateHasValues;
     }
-    update(id, name) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const templateHasValues = yield this.findOne(id);
-            const rta = yield templateHasValues.update({ name });
-            return rta;
-        });
+    async create(data) {
+        const newTemplateHasValues = await models.TEMPLATE_HAS_VALUES.create(data);
+        return newTemplateHasValues;
     }
-    delete(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const templateHasValues = yield this.findOne(id);
-            yield templateHasValues.destroy();
-            return { id };
-        });
+    async update(id, name) {
+        const templateHasValues = await this.findOne(id);
+        const rta = await templateHasValues.update({ name });
+        return rta;
+    }
+    async delete(id) {
+        const templateHasValues = await this.findOne(id);
+        await templateHasValues.destroy();
+        return { id };
     }
 }
 exports.default = TemplateHasValuesService;

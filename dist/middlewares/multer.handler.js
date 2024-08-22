@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -35,14 +26,14 @@ const storageArchivosBinnacle = multer_1.default.diskStorage({
     },
 });
 // Filter documents
-const filterDocuments = (req, file, cb) => __awaiter(void 0, void 0, void 0, function* () {
+const filterDocuments = async (req, file, cb) => {
     const filetypes = /DOC|doc|DOCX|docx|xls|XLS|XLSX|xlsx|ppt|PPT|PPTX|pptx|PDF|pdf|vnd.ms-excel/;
     const mimetype = filetypes.test(file.mimetype);
     const extname = filetypes.test(path_1.default.extname(file.originalname));
     if (mimetype && extname)
         return cb(null, true);
     cb("Archivo debe ser un documento docx,xlsx,pptx,pdf.");
-});
+};
 // *EXCEL FILES
 // Middleware for files
 const storageExcelArchivos = multer_1.default.diskStorage({
@@ -53,14 +44,14 @@ const storageExcelArchivos = multer_1.default.diskStorage({
     },
 });
 // Filter documents
-const filterExcelDocuments = (req, file, cb) => __awaiter(void 0, void 0, void 0, function* () {
+const filterExcelDocuments = async (req, file, cb) => {
     const filetypes = /xls|XLS|XLSX|xlsx|vnd.ms-excel/;
     const mimetype = filetypes.test(file.mimetype);
     const extname = filetypes.test(path_1.default.extname(file.originalname));
     if (mimetype || extname)
         return cb(null, true);
     cb("Archivo debe ser un documento excel");
-});
+};
 exports.archivos = (0, multer_1.default)({
     storage: storageArchivos,
     fileFilter: filterDocuments,

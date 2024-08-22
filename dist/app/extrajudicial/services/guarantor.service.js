@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,54 +8,42 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const { models } = sequelize_1.default;
 class GuarantorService {
     constructor() { }
-    findAll() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.GUARANTOR.findAll();
-            return rta;
-        });
+    async findAll() {
+        const rta = await models.GUARANTOR.findAll();
+        return rta;
     }
-    findAllByClient(clientID) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.GUARANTOR.findAll({
-                where: {
-                    client_id_client: clientID,
-                },
-            });
-            return rta;
+    async findAllByClient(clientID) {
+        const rta = await models.GUARANTOR.findAll({
+            where: {
+                client_id_client: clientID,
+            },
         });
+        return rta;
     }
-    findByID(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const guarantor = yield models.GUARANTOR.findOne({
-                where: {
-                    id_guarantor: id,
-                },
-            });
-            if (!guarantor) {
-                throw boom_1.default.notFound("Fiador no encontrado");
-            }
-            return guarantor;
+    async findByID(id) {
+        const guarantor = await models.GUARANTOR.findOne({
+            where: {
+                id_guarantor: id,
+            },
         });
+        if (!guarantor) {
+            throw boom_1.default.notFound("Fiador no encontrado");
+        }
+        return guarantor;
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newGuarantor = yield models.GUARANTOR.create(data);
-            return newGuarantor;
-        });
+    async create(data) {
+        const newGuarantor = await models.GUARANTOR.create(data);
+        return newGuarantor;
     }
-    update(id, changes) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const guarantor = yield this.findByID(id);
-            const rta = yield guarantor.update(changes);
-            return rta;
-        });
+    async update(id, changes) {
+        const guarantor = await this.findByID(id);
+        const rta = await guarantor.update(changes);
+        return rta;
     }
-    delete(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.findByID(id);
-            yield client.destroy();
-            return { id };
-        });
+    async delete(id) {
+        const client = await this.findByID(id);
+        await client.destroy();
+        return { id };
     }
 }
 exports.default = GuarantorService;

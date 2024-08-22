@@ -54,7 +54,7 @@ export interface CaseFileNumber {
 
 
 export interface Notification {
-  number: string | null;
+  notificationCode: string | null;
   addressee: string | null;
   shipDate: string | null;
   attachments: string | null;

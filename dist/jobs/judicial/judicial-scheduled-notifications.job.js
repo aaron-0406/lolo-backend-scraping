@@ -22,15 +22,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -51,7 +42,7 @@ const daysOfTheWeek = [
     "Friday",
     "Saturday",
 ];
-const updateCronJobs = () => __awaiter(void 0, void 0, void 0, function* () {
+const updateCronJobs = async () => {
     try {
         const scheduledNotificationsService = new scheduled_notifications_service_1.default();
         const judicialBinnacleService = new judicial_binnacle_service_1.default();
@@ -59,7 +50,7 @@ const updateCronJobs = () => __awaiter(void 0, void 0, void 0, function* () {
             scheduledJobs[key].stop();
         }
         scheduledJobs = {};
-        const scheduledNotifications = yield scheduledNotificationsService.findAll();
+        const scheduledNotifications = await scheduledNotificationsService.findAll();
         scheduledNotifications.forEach((schedule) => {
             const { id, hourTimeToNotify, customerHasBankId, frequencyToNotify, logicKey, state, scheduledNotificationsUsers, daysToNotify, } = schedule.dataValues;
             const now = new Date();
@@ -69,11 +60,11 @@ const updateCronJobs = () => __awaiter(void 0, void 0, void 0, function* () {
             const currentDay = daysOfTheWeek[now.getDay()];
             const cronTime = `${minute} ${hour} * * *`;
             const parseDaysToNotify = JSON.parse(daysToNotify);
-            scheduledJobs[id] = node_cron_1.default.schedule(cronTime, () => __awaiter(void 0, void 0, void 0, function* () {
+            scheduledJobs[id] = node_cron_1.default.schedule(cronTime, async () => {
                 if (logicKey === "key-job-impulse-pending-processes" &&
                     state &&
                     parseDaysToNotify.includes(currentDay)) {
-                    const judicialBinnacles = yield judicialBinnacleService.findAllBinnaclesByCHBJob(customerHasBankId);
+                    const judicialBinnacles = await judicialBinnacleService.findAllBinnaclesByCHBJob(customerHasBankId);
                     const filteredRta = judicialBinnacles.filter((judicialBinnacle) => {
                         const date = moment_1.default.utc(judicialBinnacle.date);
                         const diffDays = moment_1.default.utc().diff(date, "days");
@@ -182,12 +173,12 @@ const updateCronJobs = () => __awaiter(void 0, void 0, void 0, function* () {
                 else {
                     console.log("JOB DISABLED");
                 }
-            }), { timezone: "America/Lima" });
+            }, { timezone: "America/Lima" });
             scheduledJobs[id].start();
         });
     }
     catch (e) {
         console.log("ERROR JOBS: ", e);
     }
-});
+};
 exports.default = updateCronJobs;

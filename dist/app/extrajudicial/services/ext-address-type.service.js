@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,56 +8,44 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const { models } = sequelize_1.default;
 class ExtAddressTypeService {
     constructor() { }
-    findAll() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.EXT_ADDRESS_TYPE.findAll();
-            return rta;
-        });
+    async findAll() {
+        const rta = await models.EXT_ADDRESS_TYPE.findAll();
+        return rta;
     }
-    findAllByChb(chb) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.EXT_ADDRESS_TYPE.findAll({
-                where: {
-                    customer_has_bank_id_customer_has_bank: chb,
-                },
-            });
-            return rta;
+    async findAllByChb(chb) {
+        const rta = await models.EXT_ADDRESS_TYPE.findAll({
+            where: {
+                customer_has_bank_id_customer_has_bank: chb,
+            },
         });
+        return rta;
     }
-    findByID(id, chb) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const address = yield models.EXT_ADDRESS_TYPE.findOne({
-                where: {
-                    id_address_type: id,
-                    customer_has_bank_id_customer_has_bank: chb,
-                },
-            });
-            if (!address)
-                throw boom_1.default.notFound("Tipo de dirección no encontrada");
-            return address;
+    async findByID(id, chb) {
+        const address = await models.EXT_ADDRESS_TYPE.findOne({
+            where: {
+                id_address_type: id,
+                customer_has_bank_id_customer_has_bank: chb,
+            },
         });
+        if (!address)
+            throw boom_1.default.notFound("Tipo de dirección no encontrada");
+        return address;
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newAddress = yield models.EXT_ADDRESS_TYPE.create(data);
-            return newAddress;
-        });
+    async create(data) {
+        const newAddress = await models.EXT_ADDRESS_TYPE.create(data);
+        return newAddress;
     }
-    update(id, changes) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const address = yield this.findByID(id, String(changes.customerHasBankId));
-            const oldAddress = Object.assign({}, address.get());
-            const newAddress = yield address.update(changes);
-            return { oldAddress, newAddress };
-        });
+    async update(id, changes) {
+        const address = await this.findByID(id, String(changes.customerHasBankId));
+        const oldAddress = Object.assign({}, address.get());
+        const newAddress = await address.update(changes);
+        return { oldAddress, newAddress };
     }
-    delete(id, chb) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const address = yield this.findByID(id, chb);
-            const oldAddress = Object.assign({}, address.get());
-            yield address.destroy();
-            return oldAddress;
-        });
+    async delete(id, chb) {
+        const address = await this.findByID(id, chb);
+        const oldAddress = Object.assign({}, address.get());
+        await address.destroy();
+        return oldAddress;
     }
 }
 exports.default = ExtAddressTypeService;

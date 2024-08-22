@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -21,169 +12,165 @@ const util_1 = __importDefault(require("util"));
 const docx_1 = require("docx");
 const fs_1 = __importDefault(require("fs"));
 const docx_2 = require("../../../libs/docx");
-const comment_service_1 = __importDefault(require("../../extrajudicial/services/comment.service"));
-const ext_address_type_service_1 = __importDefault(require("../../extrajudicial/services/ext-address-type.service"));
+const comment_service_1 = __importDefault(require("./comment.service"));
+const ext_address_type_service_1 = __importDefault(require("./ext-address-type.service"));
 const customer_service_1 = __importDefault(require("../../dash/services/customer.service"));
-const goal_service_1 = __importDefault(require("../../extrajudicial/services/goal.service"));
+const goal_service_1 = __importDefault(require("./goal.service"));
 const commentService = new comment_service_1.default();
 const goalService = new goal_service_1.default();
 const serviceAddressType = new ext_address_type_service_1.default();
 class DocumentService {
     constructor() { }
-    generateDocument(templateHasValues, clients) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // Si no hay una plantilla configurada en bd
-            let image;
-            if (templateHasValues.template.templateJson === "")
-                throw boom_1.default.badRequest("No hay una plantilla configurada");
-            // Si la plantilla ya fue descargada
-            const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), templateHasValues.template.templateJson);
-            // Si la plantilla no está guardada, descargarla de aws
+    async generateDocument(templateHasValues, clients) {
+        // Si no hay una plantilla configurada en bd
+        let image;
+        if (templateHasValues.template.templateJson === "")
+            throw boom_1.default.badRequest("No hay una plantilla configurada");
+        // Si la plantilla ya fue descargada
+        const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), templateHasValues.template.templateJson);
+        // Si la plantilla no está guardada, descargarla de aws
+        if (!isStored) {
+            await (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${templateHasValues.template.customerId}/${templateHasValues.template.templateJson}`);
+        }
+        // Si hay una imagen como fondo
+        if (templateHasValues.template.templatePhoto !== "") {
+            // Si ya está descargada
+            const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), templateHasValues.template.templatePhoto);
+            // Si no lo está la descarga
             if (!isStored) {
-                yield (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${templateHasValues.template.customerId}/${templateHasValues.template.templateJson}`);
+                await (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${templateHasValues.template.customerId}/${templateHasValues.template.templatePhoto}`);
             }
-            // Si hay una imagen como fondo
-            if (templateHasValues.template.templatePhoto !== "") {
-                // Si ya está descargada
-                const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), templateHasValues.template.templatePhoto);
-                // Si no lo está la descarga
-                if (!isStored) {
-                    yield (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${templateHasValues.template.customerId}/${templateHasValues.template.templatePhoto}`);
-                }
-                // IMAGEN FONDO
-                image = new docx_1.ImageRun({
-                    floating: {
-                        horizontalPosition: {
-                            offset: 0,
-                        },
-                        verticalPosition: {
-                            offset: -340000,
-                        },
+            // IMAGEN FONDO
+            image = new docx_1.ImageRun({
+                floating: {
+                    horizontalPosition: {
+                        offset: 0,
                     },
-                    data: fs_1.default.readFileSync(path_1.default.join(__dirname, "../../../public/download", templateHasValues.template.templatePhoto)),
-                    transformation: {
-                        width: 793,
-                        height: 1177,
+                    verticalPosition: {
+                        offset: -340000,
                     },
-                });
-            }
-            // Imagenes de la plantilla
-            for (let i = 0; i < templateHasValues.template.template_imgs.length; i++) {
-                const element = templateHasValues.template.template_imgs[i];
-                const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), element.img);
-                // Por si no están guardadas, descargarlas de aws
-                if (!isStored) {
-                    yield (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${templateHasValues.template.customerId}/${element.img}`);
-                }
-            }
-            // Reading the template json file
-            const readFileAsync = util_1.default.promisify(fs_1.default.readFile);
-            const jsonFile = yield readFileAsync(path_1.default.join(__dirname, "../../../public/download", templateHasValues.template.templateJson), "utf8");
-            const plantilla = JSON.parse(jsonFile);
-            let parrafos = [];
-            // Parrafos por cada cliente
-            for (let i = 0; i < clients.length; i++) {
-                // Copy
-                const newPlantilla = JSON.parse(JSON.stringify(plantilla));
-                const element = clients[i];
-                const addressType = yield serviceAddressType.findAllByChb(String(element.customerHasBankId));
-                const texts = this.makeTexts([...newPlantilla.parrafos], templateHasValues.values, templateHasValues.template.template_imgs, element, addressType);
-                // parrafos = [...parrafos, ...texts, ];
-                parrafos = [...parrafos, ...texts];
-                // Salto de pagina
-                if (clients.length !== 1 && i < clients.length - 1) {
-                    parrafos.push((0, docx_2.createParagraph)([], true));
-                }
-            }
-            const document = this.makeDocument(parrafos, image);
-            return document;
-            // Configuración del documento
-        });
-    }
-    generateReport(template_1) {
-        return __awaiter(this, arguments, void 0, function* (template, customerUserId = -1) {
-            // Si no hay una plantilla configurada en bd
-            let image;
-            if (template.templateJson === "")
-                throw boom_1.default.badRequest("No hay una plantilla configurada");
-            // Si la plantilla ya fue descargada
-            const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), template.templateJson);
-            // Si la plantilla no está guardada, descargarla de aws
+                },
+                data: fs_1.default.readFileSync(path_1.default.join(__dirname, "../../../public/download", templateHasValues.template.templatePhoto)),
+                transformation: {
+                    width: 793,
+                    height: 1177,
+                },
+            });
+        }
+        // Imagenes de la plantilla
+        for (let i = 0; i < templateHasValues.template.template_imgs.length; i++) {
+            const element = templateHasValues.template.template_imgs[i];
+            const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), element.img);
+            // Por si no están guardadas, descargarlas de aws
             if (!isStored) {
-                yield (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${template.customerId}/${template.templateJson}`);
+                await (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${templateHasValues.template.customerId}/${element.img}`);
             }
-            // Si hay una imagen como fondo
-            if (template.templatePhoto !== "") {
-                // Si ya está descargada
-                const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), template.templatePhoto);
-                // Si no lo está la descarga
-                if (!isStored) {
-                    yield (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${template.customerId}/${template.templatePhoto}`);
-                }
-                // IMAGEN FONDO
-                image = new docx_1.ImageRun({
-                    floating: {
-                        horizontalPosition: {
-                            offset: 0,
-                        },
-                        verticalPosition: {
-                            offset: -340000,
-                        },
-                    },
-                    data: fs_1.default.readFileSync(path_1.default.join(__dirname, "../../../public/download", template.templatePhoto)),
-                    transformation: {
-                        width: 793,
-                        height: 1177,
-                    },
-                });
-            }
-            const readFileAsync = util_1.default.promisify(fs_1.default.readFile);
-            const jsonFile = yield readFileAsync(path_1.default.join(__dirname, "../../../public/download", template.templateJson), "utf8");
-            const plantilla = JSON.parse(jsonFile);
-            let parrafos = [];
-            const commentsWeekly = customerUserId === -1
-                ? yield commentService.getCommentsGroupByDayWeekly(template.customerId)
-                : yield commentService.getCommentsGroupByDayWeeklyUser(template.customerId, customerUserId);
-            const commentsByUserWeekly = customerUserId === -1
-                ? yield commentService.getCommentsGroupByGestorWeekly(template.customerId)
-                : yield commentService.getCommentsGroupByGestorWeeklyUser(template.customerId, customerUserId);
-            const commentsByBanksWeekly = customerUserId === -1
-                ? yield commentService.getCommentsGroupByBanks(template.customerId)
-                : yield commentService.getCommentsGroupByBanksUser(template.customerId, customerUserId);
-            const customer = yield new customer_service_1.default().findOneByID(template.customerId + "");
-            const primerDia = (0, helpers_1.getFirstDayOfWeek)();
-            const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 1);
-            const goal = yield goalService.finGlobalGoal(template.customerId, ultimoDiaSemanaPasada);
-            const report = {
-                Banks: commentsByBanksWeekly,
-                companyName: customer.dataValues.companyName,
-                Gestores: commentsByUserWeekly,
-                Weeks: commentsWeekly,
-                goal: goal
-                    ? {
-                        dateGoalEnd: goal.dataValues.endDate,
-                        dateGoalStart: goal.dataValues.startDate,
-                        weekNumber: goal.dataValues.week,
-                        totalCommentsGoal: goal.dataValues.total,
-                        totalGoal: goal.dataValues.totalMeta,
-                        percentGoal: goal.dataValues.totalMeta === 0
-                            ? 0
-                            : Number(((Number(goal.dataValues.total) * 100) /
-                                Number(goal.dataValues.totalMeta)).toFixed(2)) >= 100
-                                ? 100
-                                : Number(((Number(goal.dataValues.total) * 100) /
-                                    Number(goal.dataValues.totalMeta)).toFixed(2)),
-                        customerUsers: customerUserId === -1
-                            ? JSON.parse(JSON.stringify(yield goalService.findCustomerUserByGoalId(goal.dataValues.id_goal)))
-                            : JSON.parse(JSON.stringify((yield goalService.findCustomerUserByGoalId(goal.dataValues.id_goal)).filter((item) => item.dataValues.customerUserId === customerUserId))),
-                    }
-                    : undefined,
-            };
-            const texts = this.makeTextsReport([...plantilla.parrafos], report);
+        }
+        // Reading the template json file
+        const readFileAsync = util_1.default.promisify(fs_1.default.readFile);
+        const jsonFile = await readFileAsync(path_1.default.join(__dirname, "../../../public/download", templateHasValues.template.templateJson), "utf8");
+        const plantilla = JSON.parse(jsonFile);
+        let parrafos = [];
+        // Parrafos por cada cliente
+        for (let i = 0; i < clients.length; i++) {
+            // Copy
+            const newPlantilla = JSON.parse(JSON.stringify(plantilla));
+            const element = clients[i];
+            const addressType = await serviceAddressType.findAllByChb(String(element.customerHasBankId));
+            const texts = this.makeTexts([...newPlantilla.parrafos], templateHasValues.values, templateHasValues.template.template_imgs, element, addressType);
+            // parrafos = [...parrafos, ...texts, ];
             parrafos = [...parrafos, ...texts];
-            const document = this.makeDocument(parrafos, image);
-            return document;
-        });
+            // Salto de pagina
+            if (clients.length !== 1 && i < clients.length - 1) {
+                parrafos.push((0, docx_2.createParagraph)([], true));
+            }
+        }
+        const document = this.makeDocument(parrafos, image);
+        return document;
+        // Configuración del documento
+    }
+    async generateReport(template, customerUserId = -1) {
+        // Si no hay una plantilla configurada en bd
+        let image;
+        if (template.templateJson === "")
+            throw boom_1.default.badRequest("No hay una plantilla configurada");
+        // Si la plantilla ya fue descargada
+        const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), template.templateJson);
+        // Si la plantilla no está guardada, descargarla de aws
+        if (!isStored) {
+            await (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${template.customerId}/${template.templateJson}`);
+        }
+        // Si hay una imagen como fondo
+        if (template.templatePhoto !== "") {
+            // Si ya está descargada
+            const isStored = (0, helpers_1.isFileStoredIn)(path_1.default.join(__dirname, "../../../public/download"), template.templatePhoto);
+            // Si no lo está la descarga
+            if (!isStored) {
+                await (0, aws_bucket_1.readFile)(`${config_1.default.AWS_PLANTILLA_PATH}${template.customerId}/${template.templatePhoto}`);
+            }
+            // IMAGEN FONDO
+            image = new docx_1.ImageRun({
+                floating: {
+                    horizontalPosition: {
+                        offset: 0,
+                    },
+                    verticalPosition: {
+                        offset: -340000,
+                    },
+                },
+                data: fs_1.default.readFileSync(path_1.default.join(__dirname, "../../../public/download", template.templatePhoto)),
+                transformation: {
+                    width: 793,
+                    height: 1177,
+                },
+            });
+        }
+        const readFileAsync = util_1.default.promisify(fs_1.default.readFile);
+        const jsonFile = await readFileAsync(path_1.default.join(__dirname, "../../../public/download", template.templateJson), "utf8");
+        const plantilla = JSON.parse(jsonFile);
+        let parrafos = [];
+        const commentsWeekly = customerUserId === -1
+            ? await commentService.getCommentsGroupByDayWeekly(template.customerId)
+            : await commentService.getCommentsGroupByDayWeeklyUser(template.customerId, customerUserId);
+        const commentsByUserWeekly = customerUserId === -1
+            ? await commentService.getCommentsGroupByGestorWeekly(template.customerId)
+            : await commentService.getCommentsGroupByGestorWeeklyUser(template.customerId, customerUserId);
+        const commentsByBanksWeekly = customerUserId === -1
+            ? await commentService.getCommentsGroupByBanks(template.customerId)
+            : await commentService.getCommentsGroupByBanksUser(template.customerId, customerUserId);
+        const customer = await new customer_service_1.default().findOneByID(template.customerId + "");
+        const primerDia = (0, helpers_1.getFirstDayOfWeek)();
+        const ultimoDiaSemanaPasada = (0, helpers_1.restarDias)(primerDia, 1);
+        const goal = await goalService.finGlobalGoal(template.customerId, ultimoDiaSemanaPasada);
+        const report = {
+            Banks: commentsByBanksWeekly,
+            companyName: customer.dataValues.companyName,
+            Gestores: commentsByUserWeekly,
+            Weeks: commentsWeekly,
+            goal: goal
+                ? {
+                    dateGoalEnd: goal.dataValues.endDate,
+                    dateGoalStart: goal.dataValues.startDate,
+                    weekNumber: goal.dataValues.week,
+                    totalCommentsGoal: goal.dataValues.total,
+                    totalGoal: goal.dataValues.totalMeta,
+                    percentGoal: goal.dataValues.totalMeta === 0
+                        ? 0
+                        : Number(((Number(goal.dataValues.total) * 100) /
+                            Number(goal.dataValues.totalMeta)).toFixed(2)) >= 100
+                            ? 100
+                            : Number(((Number(goal.dataValues.total) * 100) /
+                                Number(goal.dataValues.totalMeta)).toFixed(2)),
+                    customerUsers: customerUserId === -1
+                        ? JSON.parse(JSON.stringify(await goalService.findCustomerUserByGoalId(goal.dataValues.id_goal)))
+                        : JSON.parse(JSON.stringify((await goalService.findCustomerUserByGoalId(goal.dataValues.id_goal)).filter((item) => item.dataValues.customerUserId === customerUserId))),
+                }
+                : undefined,
+        };
+        const texts = this.makeTextsReport([...plantilla.parrafos], report);
+        parrafos = [...parrafos, ...texts];
+        const document = this.makeDocument(parrafos, image);
+        return document;
     }
     transformText(text, values, client) {
         if (text === undefined)

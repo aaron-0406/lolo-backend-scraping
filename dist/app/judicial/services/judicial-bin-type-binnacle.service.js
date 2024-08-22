@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,48 +8,38 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const { models } = sequelize_1.default;
 class JudicialBinTypeBinnacleService {
     constructor() { }
-    findAllByCHB(chb) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const rta = yield models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
-                where: { customerHasBankId: chb },
-            });
-            return rta;
+    async findAllByCHB(chb) {
+        const rta = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
+            where: { customerHasBankId: chb },
         });
+        return rta;
     }
-    findByID(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialBinTypeBinnacle = yield models.JUDICIAL_BIN_TYPE_BINNACLE.findOne({
-                where: {
-                    id,
-                },
-            });
-            if (!judicialBinTypeBinnacle) {
-                throw boom_1.default.notFound("Tipo de Bitacora Judicial no encontrada");
-            }
-            return judicialBinTypeBinnacle;
+    async findByID(id) {
+        const judicialBinTypeBinnacle = await models.JUDICIAL_BIN_TYPE_BINNACLE.findOne({
+            where: {
+                id,
+            },
         });
+        if (!judicialBinTypeBinnacle) {
+            throw boom_1.default.notFound("Tipo de Bitacora Judicial no encontrada");
+        }
+        return judicialBinTypeBinnacle;
     }
-    create(data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const newJudicialBinTypeBinnacle = yield models.JUDICIAL_BIN_TYPE_BINNACLE.create(data);
-            return newJudicialBinTypeBinnacle;
-        });
+    async create(data) {
+        const newJudicialBinTypeBinnacle = await models.JUDICIAL_BIN_TYPE_BINNACLE.create(data);
+        return newJudicialBinTypeBinnacle;
     }
-    update(id, changes) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialBinTypeBinnacle = yield this.findByID(id);
-            const oldJudicialBinTypeBinnacle = Object.assign({}, judicialBinTypeBinnacle.get());
-            const newJudicialBinTypeBinnacle = yield judicialBinTypeBinnacle.update(changes);
-            return { oldJudicialBinTypeBinnacle, newJudicialBinTypeBinnacle };
-        });
+    async update(id, changes) {
+        const judicialBinTypeBinnacle = await this.findByID(id);
+        const oldJudicialBinTypeBinnacle = Object.assign({}, judicialBinTypeBinnacle.get());
+        const newJudicialBinTypeBinnacle = await judicialBinTypeBinnacle.update(changes);
+        return { oldJudicialBinTypeBinnacle, newJudicialBinTypeBinnacle };
     }
-    delete(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const judicialBinTypeBinnacle = yield this.findByID(id);
-            const oldJudicialBinTypeBinnacle = Object.assign({}, judicialBinTypeBinnacle.get());
-            yield judicialBinTypeBinnacle.destroy();
-            return oldJudicialBinTypeBinnacle;
-        });
+    async delete(id) {
+        const judicialBinTypeBinnacle = await this.findByID(id);
+        const oldJudicialBinTypeBinnacle = Object.assign({}, judicialBinTypeBinnacle.get());
+        await judicialBinTypeBinnacle.destroy();
+        return oldJudicialBinTypeBinnacle;
     }
 }
 exports.default = JudicialBinTypeBinnacleService;
