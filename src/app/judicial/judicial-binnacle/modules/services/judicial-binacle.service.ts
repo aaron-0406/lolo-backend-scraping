@@ -316,6 +316,8 @@ export class JudicialBinacleService {
             notificacion.notificationPrint = detalles.notificationPrint;
             notificacion.sentCentral = detalles.sentCentral;
             notificacion.centralReceipt = detalles.centralReceipt;
+            notificacion.notificationToRecipientOn = detalles.notificationToRecipientOn;
+            notificacion.chargeReturnedToCourtOn = detalles.chargeReturnedToCourtOn;
           }
 
           if (notificationCode) {
@@ -358,6 +360,8 @@ export class JudicialBinacleService {
         notificationPrint?: string | null;
         sentCentral?: string | null;
         centralReceipt?: string | null;
+        notificationToRecipientOn?: string | null;
+        chargeReturnedToCourtOn?: string | null;
       } | null> {
         const btnMasDetalle = notificacionDiv.querySelector(".btnMasDetalle");
         if (!btnMasDetalle) return null;
@@ -380,6 +384,12 @@ export class JudicialBinacleService {
             : null,
           centralReceipt: extractTextContent(modal, "Recepcionada en la central de Notificación el:")?.length
             ? extractTextContent(modal, "Recepcionada en la central de Notificación el:")
+            : null,
+          notificationToRecipientOn: extractTextContent(modal, "Notificación al destinatario el:")?.length
+            ? extractTextContent(modal, "Notificación al destinatario el:")
+            : null,
+            chargeReturnedToCourtOn: extractTextContent(modal, "Cargo devuelto al juzgado el:")?.length
+            ? extractTextContent(modal, "Cargo devuelto al juzgado el:")
             : null,
         };
 
@@ -495,6 +505,7 @@ export class JudicialBinacleService {
                 index: binnacle.index
               }
             })
+
             if (judicialBinnacle) {
               console.log("La bitacora ya existe"); // TODO: READ NEW NOTIFICATIONS IF THERE EXISTS
               return;
@@ -581,6 +592,33 @@ export class JudicialBinacleService {
                       "YYYY-MM-DD HH:mm:ss"
                     )
                   : null;
+                const centralReceipt =
+                  notification.centralReceipt &&
+                  moment(notification.centralReceipt, "DD/MM/YYYY HH:mm").format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  ) !== "Invalid date"
+                    ? moment(notification.centralReceipt, "DD/MM/YYYY HH:mm").format(
+                        "YYYY-MM-DD HH:mm:ss"
+                      )
+                    : null;
+                const notificationToRecipientOn =
+                  notification.notificationToRecipientOn &&
+                  moment(notification.notificationToRecipientOn, "DD/MM/YYYY HH:mm").format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  ) !== "Invalid date"
+                    ? moment(notification.notificationToRecipientOn, "DD/MM/YYYY HH:mm").format(
+                        "YYYY-MM-DD HH:mm:ss"
+                      )
+                    : null;
+                const chargeReturnedToCourtOn =
+                  notification.chargeReturnedToCourtOn &&
+                  moment(notification.chargeReturnedToCourtOn, "DD/MM/YYYY HH:mm").format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  ) !== "Invalid date"
+                    ? moment(notification.chargeReturnedToCourtOn, "DD/MM/YYYY HH:mm").format(
+                        "YYYY-MM-DD HH:mm:ss"
+                      )
+                    : null;
 
               const judicialBinNotification =
                 await models.JUDICIAL_BIN_NOTIFICATION.create({
@@ -592,7 +630,9 @@ export class JudicialBinacleService {
                   resolutionDate: resolutionDate,
                   notificationPrint: notificationPrint,
                   sentCentral: sentCentral,
-                  centralReceipt: notification.centralReceipt,
+                  centralReceipt: centralReceipt,
+                  notificationToRecipientOn: notificationToRecipientOn,
+                  chargeReturnedToCourtOn: chargeReturnedToCourtOn,
                   idJudicialBinacle: judicialBinnacleData.dataValues.id,
                 });
               console.log("Creado notificacion: ",  judicialBinNotification);

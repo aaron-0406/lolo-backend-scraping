@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { JudicialBinacleService } from './jobs/judicial/judicial-binnacle/modules/services/judicial-binacle.service';
+import { JudicialBinacleService } from './app/judicial/judicial-binnacle/modules/services/judicial-binacle.service';
 import path from 'path';
 
 

@@ -63,6 +63,8 @@ export interface Notification {
   notificationPrint?: string | null;
   sentCentral?: string | null;
   centralReceipt?: string | null;
+  notificationToRecipientOn?: string | null;
+  chargeReturnedToCourtOn?: string | null;
 }
 
 export interface PnlSeguimientoData {
