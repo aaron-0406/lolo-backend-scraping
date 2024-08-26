@@ -1,4 +1,5 @@
 import sequelize from "../../../../../libs/sequelize";
+import { Op } from "sequelize"
 import { CaseFileNumber, CaseFiles, CaseFileScrapingData, Notification, PnlSeguimientoData } from '../types/external-types';
 import {
   JEC_URL,
@@ -32,7 +33,17 @@ export class JudicialBinacleService {
   //? Puppeteer
   async getAllCaseFilesDB() {
     try {
+      const hidalgoCustomersIds = await models.CUSTOMER_HAS_BANK.findAll({
+        where: {
+          customer_id_customer: 1,
+        },
+      });
+
+
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
+        where: {
+          customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)}
+        },
         include: [
           {
             model: models.JUDICIAL_BINNACLE,
@@ -49,7 +60,8 @@ export class JudicialBinacleService {
           }
         ]
       });
-      return caseFiles;
+      console.log("caseFiles", caseFiles)
+      return caseFiles
     } catch (error) {
       console.error("Error en la conexión a la base de datos", error);
       return [];
@@ -102,18 +114,20 @@ export class JudicialBinacleService {
 
     const caseFileExist = await page.evaluate(() => {
       const errElement = document.getElementById("mensajeNoExisteExpedientes");
-      if (!errElement?.style?.display) return true;
-      return false;
+      // if (!errElement?.style?.display) return true;
+      // return false;
+      return errElement?.style["0"];
     });
 
     const isCorrectCaptcha = await page.evaluate(() => {
       const errElement = document.getElementById("codCaptchaError");
-      if (!errElement?.style?.display) return true;
-      return false;
+      // if (!errElement?.style?.display) return true;
+      // return false;
+      return errElement?.style["0"];
     });
 
-    // console.log("existe el case file", caseFileExist);
-    // console.log("es correcto el captcha", isCorrectCaptcha);
+    console.log("Case file previous", caseFileExist);
+    console.log("Captcha previous", isCorrectCaptcha);
 
     // #####################################
 
@@ -182,31 +196,44 @@ export class JudicialBinacleService {
       await page.click("#consultarExpedientes").then(async () => {
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
-        const caseFileExist = await page.evaluate(() =>{
-          const errElement = document.getElementById("mensajeNoExisteExpedientes");
-          if (!errElement?.style?.display) return true;
-          return false;
-        })
+        // await page.waitForSelector("#mensajeNoExisteExpedientes");
+        // await page.waitForSelector("#codCaptchaError");
 
-        const isCorrectCaptcha = await page.evaluate(() => {
-          const errElement = document.getElementById("codCaptchaError");
-          if (!errElement?.style?.display) return true;
-          return false;
-        });
+        // const isCorrectCaptcha = await page.evaluate(() =>{
+        //   const errElement = document.getElementById("codCaptchaError");
+        //   if (errElement?.style["0"] === "display" || !errElement?.style["0"] ) {
+        //     isSolved = true
+        //     return errElement?.style["0"]
+        //   }else{
+        //     isSolved = false;
+        //     return errElement?.style["0"]
+        //   }
+        // })
 
-          // console.log("existe el case file", caseFileExist);
-          // console.log("es correcto el captcha", isCorrectCaptcha);
+        // const caseFileExist = await page.evaluate(() => {
+        //   const errElement = document.getElementById("mensajeNoExisteExpedientes");
+        //   if (errElement?.style["0"] === "display" || !errElement?.style["0"] ) {
+        //     isCasFileTrue = true
+        //     return errElement?.style["0"]
+        //   }else{
+        //     isCasFileTrue = false;
+        //     return errElement?.style["0"]
+        //   }
+        // });
+
+        //   console.log("Case file last", caseFileExist);
+        //   console.log("Captcha last", isCorrectCaptcha);
       });
 
       [isCasFileTrue, isSolved] = await Promise.all([
         page.evaluate(() => {
           const errElement = document.getElementById("mensajeNoExisteExpedientes");
-          if (!errElement) return true;
+          if (errElement?.style["0"] === "display" || !errElement?.style["0"] ) return true;
           return false;
         }),
         page.evaluate(() => {
           const errorCaptcha = document.getElementById("codCaptchaError");
-          if (!errorCaptcha) return true;
+          if (errorCaptcha?.style["0"] === "display" || !errorCaptcha?.style["0"] ) return true;
           return false;
         }),
         // page.evaluate(() => {
@@ -403,8 +430,9 @@ export class JudicialBinacleService {
   }
 
 
-  async main(): Promise<void> {
+  async main(): Promise<number> {
     try {
+      const downloadPath = path.join(__dirname, "../../../../../public/files");
       const caseFiles = await this.getAllCaseFilesDB();
       const browser = await puppeteerExtra.launch({
         headless: false,
@@ -412,7 +440,17 @@ export class JudicialBinacleService {
       });
 
       for (const caseFile of caseFiles) {
+        const page = await browser.newPage();
+
+        const client = await page.target().createCDPSession();
+        await client.send('Page.setDownloadBehavior', {
+          behavior: 'allow',
+          downloadPath: downloadPath,
+        });
+
         try {
+
+          if (!caseFile.dataValues.isScanValid) continue;
 
           const binnacleTypes = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
             where: {
@@ -440,7 +478,6 @@ export class JudicialBinacleService {
           }
 
           let isValidCaseFile = false;
-          const page = await browser.newPage();
           await page.goto(JEC_URL);
           await new Promise((resolve) => setTimeout(resolve, 5000));
 
@@ -469,7 +506,7 @@ export class JudicialBinacleService {
               console.log("isCasFileTrue is false, waiting for navigation");
               isValidCaseFile = false;
               break;
-            } else {
+            } else if (!isSolved) {
               console.log(
                 `Attempt ${attempt + 1} failed, reloading page and retrying...`
               );
@@ -478,7 +515,19 @@ export class JudicialBinacleService {
           }
 
           if (!isValidCaseFile) {
-            // await page.close();
+            const caseFileData = await models.JUDICIAL_CASE_FILE.findOne({
+              where: {
+                numberCaseFile: caseFile.dataValues.numberCaseFile
+              }
+            })
+
+            if (!caseFileData) console.error("Case file not found");
+            else {
+              const judicialCaseFile = await caseFileData.update({
+                isScanValid: false
+              })
+              console.log("Case file not valid", judicialCaseFile);
+            }
             continue;
           }
 
@@ -500,16 +549,49 @@ export class JudicialBinacleService {
 
 
           await Promise.all( newBinnacles.map(async (binnacle:any) => {
-            const judicialBinnacle = await models.JUDICIAL_BINNACLE.findOne({
-              where: {
-                index: binnacle.index
-              }
-            })
 
-            if (judicialBinnacle) {
-              console.log("La bitacora ya existe"); // TODO: READ NEW NOTIFICATIONS IF THERE EXISTS
+            try {
+              const judicialBinnacle = caseFile.dataValues.judicialBinnacle.find((binnacleRegistred:any) => binnacleRegistred.dataValues.index === binnacle.index);
+              console.log("judicialBinnacle", judicialBinnacle);
+
+              if (judicialBinnacle) {
+                // verify if there are new notifications
+                let notificationsCodes = [];
+                const binnacle = newBinnacles.find((binnacle:any) => binnacle.index === judicialBinnacle.dataValues.index);
+                if (judicialBinnacle.dataValues.judicialBinNotifications.length)
+                  notificationsCodes =
+                    judicialBinnacle.dataValues.judicialBinNotifications.map(
+                      (notification: any) => notification.notificationCode
+                    );
+                console.log("binnacle from scraping", binnacle);
+
+                const newNotifications = binnacle.notifications.filter((notification:any) => !notificationsCodes.includes(notification.notificationCode)) ?? [];
+                if (!newNotifications.length) return;
+
+                await Promise.all(newNotifications.map(async (notification:any) => {
+                  const judicialBinNotification = await models.JUDICIAL_BIN_NOTIFICATION.create({
+                    notificationCode: notification.notificationCode,
+                    addressee: notification.addressee,
+                    shipDate: notification.shipDate,
+                    attachments: notification.attachments,
+                    deliveryMethod: notification.deliveryMethod,
+                    resolutionDate: notification.resolutionDate,
+                    notificationPrint: notification.notificationPrint,
+                    sentCentral: notification.sentCentral,
+                    centralReceipt: notification.centralReceipt,
+                    notificationToRecipientOn: notification.notificationToRecipientOn,
+                    chargeReturnedToCourtOn: notification.chargeReturnedToCourtOn,
+                    idJudicialBinacle: judicialBinnacle.dataValues.id,
+                  });
+                  console.log("Creado notificacion: ", judicialBinNotification);
+                }))
+                return;
+              }
+            } catch (error) {
+              console.log("Error en la conexión a la base de datos", error);
               return;
             }
+
 
             const resolutionDate = binnacle.resolutionDate ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
             const entryDate = binnacle.entryDate ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
@@ -524,13 +606,13 @@ export class JudicialBinacleService {
                     binnacleType.dataValues.typeBinnacle === "ESCRITO"
                 );
             const proceduralStage = proceduralStages[0].dataValues.id
-            const folios = typeof binnacle.folios !== "string" ? binnacle.folios : null;
-            const fojas = typeof binnacle.fojas !== "string" ? binnacle.fojas : null;
+            const folios = typeof binnacle.folios === "string" ? Number(binnacle.folios) : null;
+            const fojas = typeof binnacle.fojas === "string" ? Number(binnacle.fojas) : null;
 
             const judicialBinnacleData = await models.JUDICIAL_BINNACLE.create({
               judicialBinProceduralStageId: proceduralStage,
               lastPerformed: binnacle.sumilla,
-              binnacleTypeId: binnacleType?.dataValues.id, //TODO : CREATE A FUNCTION TO RETURN BINNACLE TYPE ID
+              binnacleTypeId: binnacleType?.dataValues.id,
               date: new Date(),
               judicialFileCaseId: caseFile.dataValues.id,
               customerHasBankId: caseFile.dataValues.customerHasBankId,
@@ -552,7 +634,7 @@ export class JudicialBinacleService {
 
             if(!binnacle.notifications.length) return
 
-            await Promise.all(binnacle.notifications.map(async (notification:Notification) => {
+            await Promise.all(binnacle.notifications.map(async (notification:Notification) => {binnacle
               const shipDate =
                 notification.shipDate &&
                 moment(notification.shipDate, "DD/MM/YYYY HH:mm").format(
@@ -637,22 +719,29 @@ export class JudicialBinacleService {
                 });
               console.log("Creado notificacion: ",  judicialBinNotification);
             }))
-          }))
-
+            await caseFile.update({ wasScanned: true, isScanValid: true });
             await page.close();
-
+          }))
         } catch (error) {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`
           );
+          await page.close();
         }
       }
+
+      await browser.close();
+
     } catch (error) {
       console.error(error);
     }
+    const notScanedCaseFiles = await models.JUDICIAL_CASE_FILE.findAll({
+      where: {
+        isScanValid: true,
+        wasScanned: false,
+      },
+    });
 
-
-
-    // await browser.close();
+    return notScanedCaseFiles.length;
   }
 }
