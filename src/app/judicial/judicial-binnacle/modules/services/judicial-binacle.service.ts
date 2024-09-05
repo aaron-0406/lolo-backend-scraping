@@ -14,6 +14,9 @@ import caseFilesData from "../assets/mock/mockCaseFiles.json"
 import path from "path";
 import fs, { writeFileSync } from 'fs';
 import moment from "moment";
+import { renameFile } from "../libs/rename-files";
+import { uploadFile } from "../../../../../libs/aws_bucket";
+import config from "../../../../../config/config";
 // import extractTextContent from "../utils/extract-text-content";
 
 const { models } = sequelize;
@@ -301,135 +304,183 @@ export class JudicialBinacleService {
   }
 
   async extractPnlSeguimientoData(page: Page): Promise<PnlSeguimientoData[]> {
-    const results: PnlSeguimientoData[] = await page.evaluate(async () => {
-      const results: PnlSeguimientoData[] = [];
-      let index = 1;
+    const binnacles: PnlSeguimientoData[] = await page.evaluate(async () => {
+        const results: PnlSeguimientoData[] = [];
+        let index = 1;
 
-      while (true) {
-        const pnlSeguimiento = document.querySelector(`#pnlSeguimiento${index}`);
-        if (!pnlSeguimiento) break;
+        while (true) {
+            const pnlSeguimiento = document.querySelector(`#pnlSeguimiento${index}`);
+            if (!pnlSeguimiento) break;
 
-        const data: PnlSeguimientoData = {
-          index,
-          resolutionDate: extractTextContent(pnlSeguimiento, "Fecha de Resolución:"),
-          entryDate: extractTextContent(pnlSeguimiento, "Fecha de Ingreso:"),
-          resolution: extractTextContent(pnlSeguimiento, "Resolución:") ?? "",
-          notificationType: extractTextContent(pnlSeguimiento, "Tipo de Notificación:") === "Acto:" ? "" : extractTextContent(pnlSeguimiento, "Tipo de Notificación:"),
-          acto: extractTextContent(pnlSeguimiento, "Acto:"),
-          fojas: extractTextContent(pnlSeguimiento, "Fojas:"),
-          folios: extractTextContent(pnlSeguimiento, "Folios:"),
-          proveido: extractTextContent(pnlSeguimiento, "Proveido:"),
-          sumilla: extractTextContent(pnlSeguimiento, "Sumilla:"),
-          userDescription: extractTextContent(pnlSeguimiento, "Descripción de Usuario:"),
-          notifications: [],
-          urlDownload: getEnlaceDescarga(pnlSeguimiento),
-        };
+            const data: PnlSeguimientoData = {
+                index,
+                resolutionDate: extractTextContent(pnlSeguimiento, "Fecha de Resolución:"),
+                entryDate: extractTextContent(pnlSeguimiento, "Fecha de Ingreso:"),
+                resolution: extractTextContent(pnlSeguimiento, "Resolución:") ?? "",
+                notificationType: extractTextContent(pnlSeguimiento, "Tipo de Notificación:") === "Acto:" ? "" : extractTextContent(pnlSeguimiento, "Tipo de Notificación:"),
+                acto: extractTextContent(pnlSeguimiento, "Acto:"),
+                fojas: extractTextContent(pnlSeguimiento, "Fojas:"),
+                folios: extractTextContent(pnlSeguimiento, "Folios:"),
+                proveido: extractTextContent(pnlSeguimiento, "Proveido:"),
+                sumilla: extractTextContent(pnlSeguimiento, "Sumilla:"),
+                userDescription: extractTextContent(pnlSeguimiento, "Descripción de Usuario:"),
+                notifications: [],
+                urlDownload: getEnlaceDescarga(pnlSeguimiento),
+            };
 
-        // Extraer información de notificaciones
-        const notificacionesDivs = pnlSeguimiento.querySelectorAll('.panel-body .borderinf');
-        for (const div of notificacionesDivs) {
-          const notificationCode = extractNotificationCode(div);
-          const notificacion: Notification = {
-            notificationCode: notificationCode,
-            addressee: extractTextContent(div, "Destinatario:"),
-            shipDate: extractTextContent(div, "Fecha de envio:"),
-            attachments: extractTextContent(div, "Anexo(s):"),
-            deliveryMethod: extractTextContent(div, "Forma de entrega:"),
-          };
+            // Extraer información de notificaciones
+            const notificacionesDivs = pnlSeguimiento.querySelectorAll('.panel-body .borderinf');
+            for (const div of notificacionesDivs) {
+                const notificationCode = extractNotificationCode(div);
+                const notificacion: Notification = {
+                    notificationCode: notificationCode,
+                    addressee: extractTextContent(div, "Destinatario:"),
+                    shipDate: extractTextContent(div, "Fecha de envio:"),
+                    attachments: extractTextContent(div, "Anexo(s):"),
+                    deliveryMethod: extractTextContent(div, "Forma de entrega:"),
+                };
 
-          const detalles = await getDetallesAdicionales(div);
-          if (detalles) {
-            notificacion.resolutionDate = detalles.resolutionDate;
-            notificacion.notificationPrint = detalles.notificationPrint;
-            notificacion.sentCentral = detalles.sentCentral;
-            notificacion.centralReceipt = detalles.centralReceipt;
-            notificacion.notificationToRecipientOn = detalles.notificationToRecipientOn;
-            notificacion.chargeReturnedToCourtOn = detalles.chargeReturnedToCourtOn;
-          }
+                const detalles = await getDetallesAdicionales(div);
+                if (detalles) {
+                    notificacion.resolutionDate = detalles.resolutionDate;
+                    notificacion.notificationPrint = detalles.notificationPrint;
+                    notificacion.sentCentral = detalles.sentCentral;
+                    notificacion.centralReceipt = detalles.centralReceipt;
+                    notificacion.notificationToRecipientOn = detalles.notificationToRecipientOn;
+                    notificacion.chargeReturnedToCourtOn = detalles.chargeReturnedToCourtOn;
+                }
 
-          if (notificationCode) {
-            data.notifications.push(notificacion);
-          }
+                if (notificationCode) {
+                    data.notifications.push(notificacion);
+                }
+            }
+
+            results.push(data);
+            index++;
         }
 
-        results.push(data);
-        index++;
-      }
-
-      function extractTextContent(element: Element, label: string): string | null {
-        const labelElement = Array.from(element.querySelectorAll('*')).find(el => el.textContent?.includes(label));
-        if (labelElement) {
-          const textContent = labelElement.textContent || '';
-          const labelIndex = textContent.indexOf(label);
-          if (labelIndex !== -1) {
-            return textContent.substring(labelIndex + label.length).trim().split('\n')[0].trim();
-          }
+        // Funciones auxiliares
+        function extractTextContent(element: Element, label: string): string | null {
+            const labelElement = Array.from(element.querySelectorAll('*')).find(el => el.textContent?.includes(label));
+            if (labelElement) {
+                const textContent = labelElement.textContent || '';
+                const labelIndex = textContent.indexOf(label);
+                if (labelIndex !== -1) {
+                    return textContent.substring(labelIndex + label.length).trim().split('\n')[0].trim();
+                }
+            }
+            return null;
         }
-        return null;
-      }
 
-      function extractNotificationCode(element: Element): string | null {
-        const codeElement = element.querySelector('h5.redb');
-        if (!codeElement) return null;
+        function extractNotificationCode(element: Element): string | null {
+            const codeElement = element.querySelector('h5.redb');
+            if (!codeElement) return null;
 
-        const codeText = codeElement.textContent?.trim().split(' ')[1];
-        return codeText !== undefined ? codeText : null;
-      }
+            const codeText = codeElement.textContent?.trim().split(' ')[1];
+            return codeText !== undefined ? codeText : null;
+        }
 
+        function getEnlaceDescarga(element: Element): string | null {
+            const enlace = element.querySelector('.dBotonDesc a.aDescarg');
+            return enlace ? (enlace as HTMLAnchorElement).href : null;
+        }
 
-      function getEnlaceDescarga(element: Element): string | null {
-        const enlace = element.querySelector('.dBotonDesc a.aDescarg');
-        return enlace ? (enlace as HTMLAnchorElement).href : null;
-      }
+        async function getDetallesAdicionales(notificacionDiv: Element): Promise<{
+            resolutionDate?: string | null;
+            notificationPrint?: string | null;
+            sentCentral?: string | null;
+            centralReceipt?: string | null;
+            notificationToRecipientOn?: string | null;
+            chargeReturnedToCourtOn?: string | null;
+        } | null> {
+            const btnMasDetalle = notificacionDiv.querySelector(".btnMasDetalle");
+            if (!btnMasDetalle) return null;
 
-      async function getDetallesAdicionales(notificacionDiv: Element): Promise<{
-        resolutionDate?: string | null;
-        notificationPrint?: string | null;
-        sentCentral?: string | null;
-        centralReceipt?: string | null;
-        notificationToRecipientOn?: string | null;
-        chargeReturnedToCourtOn?: string | null;
-      } | null> {
-        const btnMasDetalle = notificacionDiv.querySelector(".btnMasDetalle");
-        if (!btnMasDetalle) return null;
+            const modalId = (btnMasDetalle as HTMLButtonElement).getAttribute("data-target");
+            const modal = document.querySelector(modalId ?? "");
+            if (!modal) return null;
 
-        // Abrir el modal y esperar a que se cargue
-        const modalId = (btnMasDetalle as HTMLButtonElement).getAttribute("data-target");
-        const modal = document.querySelector(modalId ?? "");
-        if (!modal) return null;
+            const details = {
+                resolutionDate: extractTextContent(modal, "Fecha de Resolución:")?.length
+                    ? extractTextContent(modal, "Fecha de Resolución:")
+                    : null,
+                notificationPrint: extractTextContent(modal, "Notificación Impresa el:")?.length
+                    ? extractTextContent(modal, "Notificación Impresa el:")
+                    : null,
+                sentCentral: extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")?.length
+                    ? extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")
+                    : null,
+                centralReceipt: extractTextContent(modal, "Recepcionada en la central de Notificación el:")?.length
+                    ? extractTextContent(modal, "Recepcionada en la central de Notificación el:")
+                    : null,
+                notificationToRecipientOn: extractTextContent(modal, "Notificación al destinatario el:")?.length
+                    ? extractTextContent(modal, "Notificación al destinatario el:")
+                    : null,
+                chargeReturnedToCourtOn: extractTextContent(modal, "Cargo devuelto al juzgado el:")?.length
+                    ? extractTextContent(modal, "Cargo devuelto al juzgado el:")
+                    : null,
+            };
 
-        // Extraer la información del modal
-        const details = {
-          resolutionDate: extractTextContent(modal, "Fecha de Resolución:")?.length
-            ? extractTextContent(modal, "Fecha de Resolución:")
-            : null,
-          notificationPrint: extractTextContent(modal, "Notificación Impresa el:")?.length
-            ? extractTextContent(modal, "Notificación Impresa el:")
-            : null,
-          sentCentral: extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")?.length
-            ? extractTextContent(modal, "Enviada a la Central de Notificación o Casilla Electrónica:")
-            : null,
-          centralReceipt: extractTextContent(modal, "Recepcionada en la central de Notificación el:")?.length
-            ? extractTextContent(modal, "Recepcionada en la central de Notificación el:")
-            : null,
-          notificationToRecipientOn: extractTextContent(modal, "Notificación al destinatario el:")?.length
-            ? extractTextContent(modal, "Notificación al destinatario el:")
-            : null,
-            chargeReturnedToCourtOn: extractTextContent(modal, "Cargo devuelto al juzgado el:")?.length
-            ? extractTextContent(modal, "Cargo devuelto al juzgado el:")
-            : null,
-        };
+            return details;
+        }
 
-        return details;
-      }
-
-      return results;
+        return results;
     });
 
-    return results;
-  }
+    let startTime = Date.now();
 
+    for (const data of binnacles) {
+        if (data.urlDownload) {
+            console.log("Descargando archivo dinámico", data.urlDownload);
 
+            await this.clickDynamicAnchor(page, data.urlDownload);
+
+            const downloadPath = path.join(__dirname, "../../../../../public/files");
+
+            const downloadedFilePath = await this.waitForDownload(downloadPath, startTime);
+
+            const newFileName = `binnacle-bot-document-${data.index}.pdf`;
+            await this.renameDownloadedFile(downloadedFilePath, newFileName);
+
+            startTime = Date.now();
+        }
+    }
+
+    return binnacles;
+}
+async  waitForDownload(downloadPath: string, startTime: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+      const interval = setInterval(() => {
+          const files = fs.readdirSync(downloadPath);
+          const newFiles = files.filter((file) => {
+              const filePath = path.join(downloadPath, file);
+              const stats = fs.statSync(filePath);
+              return stats.mtimeMs > startTime && file.endsWith(".pdf");
+          });
+
+          if (newFiles.length > 0) {
+              clearInterval(interval);
+              resolve(path.join(downloadPath, newFiles[0]));
+          }
+      }, 1000);
+  });
+}
+
+async  renameDownloadedFile(oldPath: string, newName: string): Promise<void> {
+  const newPath = path.join(path.dirname(oldPath), newName);
+  fs.renameSync(oldPath, newPath);
+}
+
+async clickDynamicAnchor(page: Page, url: string): Promise<void> {
+  await page.evaluate((url) => {
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.style.display = "none";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+  }, url);
+}
   async main(): Promise<number> {
     try {
       const downloadPath = path.join(__dirname, "../../../../../public/files");
@@ -592,7 +643,6 @@ export class JudicialBinacleService {
               return;
             }
 
-
             const resolutionDate = binnacle.resolutionDate ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
             const entryDate = binnacle.entryDate ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
             const provedioDate = binnacle.proveido ? moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
@@ -631,6 +681,28 @@ export class JudicialBinacleService {
               totalTariff: 0,
               tariffHistory: "[]",
             });
+
+            if(judicialBinnacleData){
+              const filePath = path.join(__dirname, `../public/docs/binnacle-bot-document-${binnacle.index}.pdf`);
+              if (fs.existsSync(filePath)) {
+                const newBinFile = await models.JUDICIAL_BIN_FILE.create({
+                  judicialBinnacleId: judicialBinnacleData.dataValues.id,
+                  originalName: `binnacle-bot-document-${binnacle.index}.pdf`,
+                  nameOriginAws: "",
+                  customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
+                  size: fs.statSync(filePath).size,
+                });
+
+                const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}.pdf`;
+                await renameFile(filePath, path.join(__dirname, `../public/docs/${newFileName}`));
+
+                // await uploadFile(
+                //   { filename: newFileName, path: path.join(__dirname, `../public/docs/${newFileName}`) },
+                //   `${config.AWS_CHB_PATH}${params.idCustomer}/${judicialBinnacleData.dataValues.customerHasBankId}/${params.code}/case-file/${judicialBinnacleData.dataValues.judicialFileCaseId}/binnacle`
+                // );
+
+
+            }}
 
             if(!binnacle.notifications.length) return
 
@@ -719,6 +791,8 @@ export class JudicialBinacleService {
                 });
               console.log("Creado notificacion: ",  judicialBinNotification);
             }))
+
+            console.log("")
             await caseFile.update({ wasScanned: true, isScanValid: true });
             await page.close();
           }))
@@ -745,3 +819,4 @@ export class JudicialBinacleService {
     return notScanedCaseFiles.length;
   }
 }
+
