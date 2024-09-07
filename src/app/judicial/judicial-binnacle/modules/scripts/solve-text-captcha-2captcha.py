@@ -1,10 +1,14 @@
 import sys
 import os
 from twocaptcha import TwoCaptcha
+from dotenv import load_dotenv
+
+load_dotenv()
+
+captcha_api_key = os.getenv('RECAPTCHA_TOKEN')
 
 # Configura la clave API de 2Captcha
-api_key = os.getenv('APIKEY_2CAPTCHA', '381cad2fec56070d12efeefa8d3bcfe2')
-solver = TwoCaptcha(api_key)
+solver = TwoCaptcha(captcha_api_key)
 
 try:
     # Intenta resolver el captcha

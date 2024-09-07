@@ -17,6 +17,9 @@ import moment from "moment";
 import { renameFile } from "../libs/rename-files";
 import { uploadFile } from "../../../../../libs/aws_bucket";
 import config from "../../../../../config/config";
+import { File } from 'formidable';
+import { Readable } from "stream";
+import { deleteFile } from "../../../../../libs/helpers";
 // import extractTextContent from "../utils/extract-text-content";
 
 const { models } = sequelize;
@@ -60,6 +63,20 @@ export class JudicialBinacleService {
                 }
               }
             ]
+          },
+          {
+            model: models.CUSTOMER_HAS_BANK,
+            as: "customerHasBank",
+            include:[
+              {
+                model: models.CUSTOMER,
+                as: "customer",
+              }
+            ]
+          },
+          {
+            model: models.CLIENT,
+            as: "client",
           }
         ]
       });
@@ -188,6 +205,9 @@ export class JudicialBinacleService {
       const { stdout, stderr } = await execAsync(
         `python3 ${PYTHON_SCRIPT_PATH} ${screenshotFile}`
       );
+
+      console.log("stdout", stdout);
+      console.log("stderr", stderr);
       if (stderr) {
         console.error(`Error en el script de Python: ${stderr}`);
         return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
@@ -491,17 +511,18 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
       });
 
       for (const caseFile of caseFiles) {
-        const page = await browser.newPage();
-
-        const client = await page.target().createCDPSession();
-        await client.send('Page.setDownloadBehavior', {
-          behavior: 'allow',
-          downloadPath: downloadPath,
-        });
 
         try {
 
           if (!caseFile.dataValues.isScanValid) continue;
+
+          const page = await browser.newPage();
+
+          const client = await page.target().createCDPSession();
+          await client.send('Page.setDownloadBehavior', {
+            behavior: 'allow',
+            downloadPath: downloadPath,
+          });
 
           const binnacleTypes = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
             where: {
@@ -546,8 +567,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
             console.log(`Number case file: ${numberCaseFile}`);
             await this.fillCaseFileNumber(page, numberCaseFile);
 
-            const { isSolved, isCasFileTrue, isBotDetected } =
-              await this.removeNormalCaptchaV1(page);
+            const { isSolved, isCasFileTrue, isBotDetected } = await this.removeNormalCaptchaV1(page);
             if (isSolved && isCasFileTrue && !isBotDetected) {
               console.log("Solved and is true, waiting for navigation");
               isValidCaseFile = true;
@@ -682,27 +702,60 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
               tariffHistory: "[]",
             });
 
-            if(judicialBinnacleData){
-              const filePath = path.join(__dirname, `../public/docs/binnacle-bot-document-${binnacle.index}.pdf`);
-              if (fs.existsSync(filePath)) {
-                const newBinFile = await models.JUDICIAL_BIN_FILE.create({
-                  judicialBinnacleId: judicialBinnacleData.dataValues.id,
-                  originalName: `binnacle-bot-document-${binnacle.index}.pdf`,
-                  nameOriginAws: "",
-                  customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
-                  size: fs.statSync(filePath).size,
-                });
+            if (judicialBinnacleData) {
+              try {
+                const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${binnacle.index}.pdf`);
 
-                const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}.pdf`;
-                await renameFile(filePath, path.join(__dirname, `../public/docs/${newFileName}`));
+                if (fs.existsSync(originalFilePath)) {
+                  const fileStats = fs.statSync(originalFilePath);
 
-                // await uploadFile(
-                //   { filename: newFileName, path: path.join(__dirname, `../public/docs/${newFileName}`) },
-                //   `${config.AWS_CHB_PATH}${params.idCustomer}/${judicialBinnacleData.dataValues.customerHasBankId}/${params.code}/case-file/${judicialBinnacleData.dataValues.judicialFileCaseId}/binnacle`
-                // );
+                  const newBinFile = await models.JUDICIAL_BIN_FILE.create({
+                    judicialBinnacleId: judicialBinnacleData.dataValues.id,
+                    originalName: `binnacle-bot-document-${binnacle.index}.pdf`,
+                    nameOriginAws: "",
+                    customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
+                    size: fileStats.size,
+                  });
 
+                  const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}-bot.pdf`;
+                  const newFilePath = path.join(__dirname, `../public/docs/files${newFileName}`);
 
-            }}
+                  await renameFile(originalFilePath, newFilePath);
+
+                  const fileBuffer = fs.readFileSync(newFilePath);
+
+                  const fileStream = Readable.from(fileBuffer);
+
+                  const file: Express.Multer.File = {
+                    fieldname: 'document',
+                    originalname: newFileName,
+                    encoding: '7bit',
+                    mimetype: 'application/pdf',
+                    buffer: fileBuffer,
+                    size: fileBuffer.length,
+                    stream: fileStream,
+                    destination: path.join(__dirname, '../../../../../public/files'),
+                    filename: newFileName,
+                    path: newFilePath,
+                  };
+
+                  await uploadFile(
+                    file,
+                    // `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${newFileName}`
+                    `${config.AWS_CHB_PATH}/binnacle/${newFileName}`
+                  );
+
+                  newBinFile.update({
+                    nameOriginAws: newFileName,
+                  });
+
+                  await deleteFile("../../../../../public/files", file.filename);
+
+                }
+              } catch (error) {
+                console.log("File not uploaded", error);
+              }
+            }
 
             if(!binnacle.notifications.length) return
 
@@ -800,7 +853,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`
           );
-          await page.close();
+          await browser.close();
         }
       }
 

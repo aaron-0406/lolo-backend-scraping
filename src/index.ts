@@ -24,7 +24,7 @@ app.listen(process.env.PORT || 3000, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
   //Jobs
   // import("./jobs/cron-jobs").then((cronJobs) => cronJobs.inizializeCronJobs());
-  
+
   (async() => await service.main())();
   cron.schedule('0 6 * * *', async() => {
     console.log('Cron job iniciado: 6 AM');
