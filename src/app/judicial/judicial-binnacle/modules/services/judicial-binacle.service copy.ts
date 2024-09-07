@@ -447,24 +447,24 @@ export class JudicialBinacleService {
         return results;
     });
 
-    let startTime = Date.now();
+    // let startTime = Date.now();
 
-    for (const data of binnacles) {
-        if (data.urlDownload) {
-            console.log("Descargando archivo dinámico", data.urlDownload);
+    // for (const data of binnacles) {
+    //     if (data.urlDownload) {
+    //         console.log("Descargando archivo dinámico", data.urlDownload);
 
-            await this.clickDynamicAnchor(page, data.urlDownload);
+    //         await this.clickDynamicAnchor(page, data.urlDownload);
 
-            const downloadPath = path.join(__dirname, "../../../../../public/files");
+    //         const downloadPath = path.join(__dirname, "../../../../../public/docs");
 
-            const downloadedFilePath = await this.waitForDownload(downloadPath, startTime);
+    //         const downloadedFilePath = await this.waitForDownload(downloadPath, startTime);
 
-            const newFileName = `binnacle-bot-document-${data.index}.pdf`;
-            await this.renameDownloadedFile(downloadedFilePath, newFileName);
+    //         const newFileName = `binnacle-bot-document-${data.index}.pdf`;
+    //         await this.renameDownloadedFile(downloadedFilePath, newFileName);
 
-            startTime = Date.now();
-        }
-    }
+    //         startTime = Date.now();
+    //     }
+    // }
 
     return binnacles;
 }
@@ -503,7 +503,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
 }
   async main(): Promise<number> {
     try {
-      const downloadPath = path.join(__dirname, "../../../../../public/files");
+      const downloadPath = path.join(__dirname, "../../../../../public/docs");
       const caseFiles = await this.getAllCaseFilesDB();
       const browser = await puppeteerExtra.launch({
         headless: false,
@@ -511,16 +511,17 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
       });
 
       for (const caseFile of caseFiles) {
-                  const page = await browser.newPage();
 
-          const client = await page.target().createCDPSession();
-          await client.send('Page.setDownloadBehavior', {
-            behavior: 'allow',
-            downloadPath: downloadPath,
-          });
+        const page = await browser.newPage();
+
+        const client = await page.target().createCDPSession();
+        await client.send('Page.setDownloadBehavior', {
+          behavior: 'allow',
+          downloadPath: downloadPath,
+        });
+
+
         try {
-
-
           if (!caseFile.dataValues.isScanValid) continue;
 
           const binnacleTypes = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
@@ -662,9 +663,33 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
               return;
             }
 
-            const resolutionDate = binnacle.resolutionDate ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-            const entryDate = binnacle.entryDate ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-            const provedioDate = binnacle.proveido ? moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+            const resolutionDate =
+              binnacle.resolutionDate &&
+              moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format(
+                "YYYY-MM-DD HH:mm:ss"
+              ) !== "Invalid date"
+                ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  )
+                : null;
+            const entryDate =
+              binnacle.entryDate &&
+              moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format(
+                "YYYY-MM-DD HH:mm:ss"
+              ) !== "Invalid date"
+                ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  )
+                : null;
+            const provedioDate =
+              binnacle.proveido &&
+              moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format(
+                "YYYY-MM-DD HH:mm:ss"
+              ) !== "Invalid date"
+                ? moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  )
+                : null;
               const binnacleType = binnacle.resolutionDate
               ? binnacleTypes.find(
                   (binnacleType: any) =>
@@ -705,52 +730,57 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
               try {
                 const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${binnacle.index}.pdf`);
 
-                if (fs.existsSync(originalFilePath)) {
-                  const fileStats = fs.statSync(originalFilePath);
+                console.log("originalFilePath", originalFilePath)
+                console.log("Existe?", fs.existsSync(originalFilePath))
 
-                  const newBinFile = await models.JUDICIAL_BIN_FILE.create({
-                    judicialBinnacleId: judicialBinnacleData.dataValues.id,
-                    originalName: `binnacle-bot-document-${binnacle.index}.pdf`,
-                    nameOriginAws: "",
-                    customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
-                    size: fileStats.size,
-                  });
+                console.log("Ready to upload")
 
-                  const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}-bot.pdf`;
-                  const newFilePath = path.join(__dirname, `../public/docs/files${newFileName}`);
+                // if (fs.existsSync(originalFilePath)) {
+                //   const fileStats = fs.statSync(originalFilePath);
 
-                  await renameFile(originalFilePath, newFilePath);
+                //   const newBinFile = await models.JUDICIAL_BIN_FILE.create({
+                //     judicialBinnacleId: judicialBinnacleData.dataValues.id,
+                //     originalName: `binnacle-bot-document-${binnacle.index}.pdf`,
+                //     nameOriginAws: "",
+                //     customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
+                //     size: fileStats.size,
+                //   });
 
-                  const fileBuffer = fs.readFileSync(newFilePath);
+                //   // const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}-bot.pdf`;
+                //   // const newFilePath = path.join(__dirname, `../public/docs/files${newFileName}`);
 
-                  const fileStream = Readable.from(fileBuffer);
+                //   // await renameFile(originalFilePath, newFilePath);
 
-                  const file: Express.Multer.File = {
-                    fieldname: 'document',
-                    originalname: newFileName,
-                    encoding: '7bit',
-                    mimetype: 'application/pdf',
-                    buffer: fileBuffer,
-                    size: fileBuffer.length,
-                    stream: fileStream,
-                    destination: path.join(__dirname, '../../../../../public/files'),
-                    filename: newFileName,
-                    path: newFilePath,
-                  };
+                //   const fileBuffer = fs.readFileSync(originalFilePath);
 
-                  await uploadFile(
-                    file,
-                    // `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${newFileName}`
-                    `${config.AWS_CHB_PATH}/binnacle/${newFileName}`
-                  );
+                //   const fileStream = Readable.from(fileBuffer);
 
-                  newBinFile.update({
-                    nameOriginAws: newFileName,
-                  });
+                //   const file: Express.Multer.File = {
+                //     fieldname: 'document',
+                //     originalname: `binnacle-bot-document-${binnacle.index}.pdf`,
+                //     encoding: '7bit',
+                //     mimetype: 'application/pdf',
+                //     buffer: fileBuffer,
+                //     size: fileBuffer.length,
+                //     stream: fileStream,
+                //     destination: path.join(__dirname, '../public/docs'),
+                //     filename: `binnacle-bot-document-${binnacle.index}.pdf`,
+                //     path: originalFilePath,
+                //   };
 
-                  await deleteFile("../../../../../public/files", file.filename);
+                //   // await uploadFile(
+                //   //   file,
+                //   //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                //   //   // `${config.AWS_CHB_PATH}binnacles`
+                //   // );
 
-                }
+                //   newBinFile.update({
+                //     nameOriginAws: `binnacle-bot-document-${binnacle.index}.pdf`,
+                //   });
+
+                //   // await deleteFile("../public/docs", file.filename);
+
+                // }
               } catch (error) {
                 console.log("File not uploaded", error);
               }
@@ -841,10 +871,9 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                   chargeReturnedToCourtOn: chargeReturnedToCourtOn,
                   idJudicialBinacle: judicialBinnacleData.dataValues.id,
                 });
-              console.log("Creado notificacion: ",  judicialBinNotification);
+              // console.log("Creado notificacion: ",  judicialBinNotification);
             }))
 
-            console.log("")
             await caseFile.update({ wasScanned: true, isScanValid: true });
             await page.close();
           }))
