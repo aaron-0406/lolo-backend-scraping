@@ -25,7 +25,7 @@ app.listen(process.env.PORT || 3000, () => {
 
   let thereAreCaseFilesWithNoScan = true;
 
-  // (async() => await service.main())();
+  (async() => await service.main())();
 
   cron.schedule('0 6 * * *', async () => {
     console.log('Cron job iniciado: 6 AM');
@@ -38,7 +38,7 @@ app.listen(process.env.PORT || 3000, () => {
         console.log("Case files with no scan, retrying in 30 minutes.");
 
         setTimeout(async () => {
-          await processCaseFiles(); 
+          await processCaseFiles();
         }, 30 * 60 * 1000);
       } else {
         console.log("All case files scanned.");

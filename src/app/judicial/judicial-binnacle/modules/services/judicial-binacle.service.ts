@@ -621,6 +621,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
           if (binnaclesIndexs.length) newBinnacles = caseFileBinacles.filter((binnacle:any) => !binnaclesIndexs.includes(binnacle.index));
           else newBinnacles = caseFileBinacles;
 
+          console.log(newBinnacles)
 
           await Promise.all( newBinnacles.map(async (binnacle:any) => {
 
@@ -657,7 +658,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     chargeReturnedToCourtOn: notification.chargeReturnedToCourtOn,
                     idJudicialBinacle: judicialBinnacle.dataValues.id,
                   });
-                  console.log("Creado notificacion: ", judicialBinNotification);
+                  // console.log("Creado notificacion: ", judicialBinNotification);
                 }))
                 return;
               }
@@ -666,9 +667,12 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
               return;
             }
 
-            const resolutionDate = binnacle.resolutionDate ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-            const entryDate = binnacle.entryDate ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
-            const provedioDate = binnacle.proveido ? moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+            const resolutionDate = moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").isValid() ? moment(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+
+            const entryDate = moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").isValid() ? moment(binnacle.entryDate, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+
+            const provedioDate =  moment(binnacle.proveido, "DD/MM/YYYY HH:mm").isValid() ? moment(binnacle.proveido, "DD/MM/YYYY HH:mm").format("YYYY-MM-DD HH:mm:ss") : null;
+
               const binnacleType = binnacle.resolutionDate
               ? binnacleTypes.find(
                   (binnacleType: any) =>
@@ -742,11 +746,11 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     path: originalFilePath,
                   };
 
-                  await uploadFile(
-                    file,
-                    `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                    // `${config.AWS_CHB_PATH}binnacle/`
-                  );
+                  // await uploadFile(
+                  //   file,
+                  //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                  //   // `${config.AWS_CHB_PATH}binnacle/`
+                  // );
 
                   newBinFile.update({
                     nameOriginAws:  `binnacle-bot-document-${binnacle.index}.pdf`,
@@ -830,7 +834,6 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                       )
                     : null;
 
-              const judicialBinNotification =
                 await models.JUDICIAL_BIN_NOTIFICATION.create({
                   notificationCode: notification.notificationCode,
                   addressee: notification.addressee,
@@ -845,18 +848,20 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                   chargeReturnedToCourtOn: chargeReturnedToCourtOn,
                   idJudicialBinacle: judicialBinnacleData.dataValues.id,
                 });
-              console.log("Creado notificacion: ",  judicialBinNotification);
+              // console.log("Creado notificacion: ",  judicialBinNotification);
             }))
-
-            await caseFile.update({ wasScanned: true, isScanValid: true });
-            await page.close();
           }))
+          console.log("Notificaciones creadas correctamente, terminando todo");
+          await page.close();
+
         } catch (error) {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`
           );
           await page.close();
         }
+
+        await caseFile.update({ wasScanned: true, isScanValid: true });
       }
 
       await browser.close();
