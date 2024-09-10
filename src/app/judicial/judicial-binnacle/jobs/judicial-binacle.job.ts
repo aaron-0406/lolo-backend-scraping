@@ -5,7 +5,8 @@ const service = new JudicialBinacleService();
 
 export const JudicialBinacleJob = () => {
   cron.schedule('* * * * *', () => {
-    service.main();
+    const notScanedCaseFiles = service.getAllCaseFilesDB();
+    
   })
 
 }

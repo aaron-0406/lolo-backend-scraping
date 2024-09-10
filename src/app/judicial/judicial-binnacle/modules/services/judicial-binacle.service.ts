@@ -1,5 +1,5 @@
 import sequelize from "../../../../../libs/sequelize";
-import { Op } from "sequelize"
+import { Op, where } from "sequelize"
 import { CaseFileNumber, CaseFiles, CaseFileScrapingData, Notification, PnlSeguimientoData } from '../types/external-types';
 import {
   JEC_URL,
@@ -34,6 +34,10 @@ export class JudicialBinacleService {
 
   async getAllCaseFiles(): Promise<CaseFiles> {
     return caseFilesData as CaseFiles;
+  }
+
+  async resetAllCaseFiles(): Promise<void> {
+    await models.JUDICIAL_CASE_FILE.update({ wasScanned: false }, { where: { isScanValid: true } });
   }
 
   //? Puppeteer
@@ -80,7 +84,6 @@ export class JudicialBinacleService {
           }
         ]
       });
-      console.log("caseFiles", caseFiles)
       return caseFiles
     } catch (error) {
       console.error("Error en la conexión a la base de datos", error);
@@ -455,7 +458,7 @@ export class JudicialBinacleService {
 
             await this.clickDynamicAnchor(page, data.urlDownload);
 
-            const downloadPath = path.join(__dirname, "../../../../../public/files");
+            const downloadPath = path.join(__dirname, "../../../../../public/docs");
 
             const downloadedFilePath = await this.waitForDownload(downloadPath, startTime);
 
@@ -501,9 +504,10 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
       document.body.removeChild(anchor);
   }, url);
 }
+
   async main(): Promise<number> {
     try {
-      const downloadPath = path.join(__dirname, "../../../../../public/files");
+      const downloadPath = path.join(__dirname, "../../../../../public/docs");
       const caseFiles = await this.getAllCaseFilesDB();
       const browser = await puppeteerExtra.launch({
         headless: false,
@@ -716,39 +720,39 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     size: fileStats.size,
                   });
 
-                  const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}-bot.pdf`;
-                  const newFilePath = path.join(__dirname, `../public/docs/files${newFileName}`);
+                  // const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}-bot.pdf`;
+                  // const newFilePath = path.join(__dirname, `../public/docs/files${newFileName}`);
 
-                  await renameFile(originalFilePath, newFilePath);
+                  // await renameFile(originalFilePath, newFilePath);
 
-                  const fileBuffer = fs.readFileSync(newFilePath);
+                  const fileBuffer = fs.readFileSync(originalFilePath);
 
                   const fileStream = Readable.from(fileBuffer);
 
                   const file: Express.Multer.File = {
                     fieldname: 'document',
-                    originalname: newFileName,
+                    originalname: `binnacle-bot-document-${binnacle.index}.pdf`,
                     encoding: '7bit',
                     mimetype: 'application/pdf',
                     buffer: fileBuffer,
                     size: fileBuffer.length,
                     stream: fileStream,
-                    destination: path.join(__dirname, '../../../../../public/files'),
-                    filename: newFileName,
-                    path: newFilePath,
+                    destination: path.join(__dirname, '../../../../../public/docs'),
+                    filename: `binnacle-bot-document-${binnacle.index}.pdf`,
+                    path: originalFilePath,
                   };
 
                   await uploadFile(
                     file,
-                    // `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${newFileName}`
-                    `${config.AWS_CHB_PATH}/binnacle/${newFileName}`
+                    `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    // `${config.AWS_CHB_PATH}binnacle/`
                   );
 
                   newBinFile.update({
-                    nameOriginAws: newFileName,
+                    nameOriginAws:  `binnacle-bot-document-${binnacle.index}.pdf`,
                   });
 
-                  await deleteFile("../../../../../public/files", file.filename);
+                  await deleteFile("../public/docs", file.filename);
 
                 }
               } catch (error) {
@@ -844,7 +848,6 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
               console.log("Creado notificacion: ",  judicialBinNotification);
             }))
 
-            console.log("")
             await caseFile.update({ wasScanned: true, isScanValid: true });
             await page.close();
           }))

@@ -22,20 +22,27 @@ app.use(express.static(path.join(__dirname, "/public/build")));
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
-  //Jobs
-  // import("./jobs/cron-jobs").then((cronJobs) => cronJobs.inizializeCronJobs());
 
-  (async() => await service.main())();
-  cron.schedule('0 6 * * *', async() => {
+  let thereAreCaseFilesWithNoScan = true;
+
+  // (async() => await service.main())();
+
+  cron.schedule('0 6 * * *', async () => {
     console.log('Cron job iniciado: 6 AM');
-    const notScanedCaseFiles = await service.main();
+    await processCaseFiles();
 
-    if (notScanedCaseFiles) {
-        console.log("Case files not scanned", notScanedCaseFiles);
-        setTimeout(async() => await service.main(), 30 * 60 * 1000);
-    }
-    else{
-        console.log("No case files not scanned");
+    async function processCaseFiles() {
+      const notScanedCaseFiles = await service.main();
+
+      if (notScanedCaseFiles) {
+        console.log("Case files with no scan, retrying in 30 minutes.");
+
+        setTimeout(async () => {
+          await processCaseFiles(); 
+        }, 30 * 60 * 1000);
+      } else {
+        console.log("All case files scanned.");
+      }
     }
   });
 
