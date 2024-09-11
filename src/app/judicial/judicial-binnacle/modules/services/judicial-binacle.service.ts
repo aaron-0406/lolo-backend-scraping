@@ -513,10 +513,8 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
         headless: false,
         slowMo: 5,
       });
-
       for (const caseFile of caseFiles) {
-                  const page = await browser.newPage();
-
+        const page = await browser.newPage();
           const client = await page.target().createCDPSession();
           await client.send('Page.setDownloadBehavior', {
             behavior: 'allow',
@@ -746,11 +744,11 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     path: originalFilePath,
                   };
 
-                  // await uploadFile(
-                  //   file,
-                  //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                  //   // `${config.AWS_CHB_PATH}binnacle/`
-                  // );
+                  await uploadFile(
+                    file,
+                    `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    // `${config.AWS_CHB_PATH}binnacle/`
+                  );
 
                   newBinFile.update({
                     nameOriginAws:  `binnacle-bot-document-${binnacle.index}.pdf`,
