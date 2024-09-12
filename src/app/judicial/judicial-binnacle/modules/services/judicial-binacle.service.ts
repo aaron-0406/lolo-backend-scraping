@@ -49,7 +49,6 @@ export class JudicialBinacleService {
         },
       });
 
-
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
           customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)}
@@ -514,16 +513,16 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
         slowMo: 5,
       });
       for (const caseFile of caseFiles) {
-        const page = await browser.newPage();
+        try {
+
+          if (!caseFile.dataValues.isScanValid || caseFile.dataValues.wasScanned) continue;
+
+          const page = await browser.newPage();
           const client = await page.target().createCDPSession();
           await client.send('Page.setDownloadBehavior', {
             behavior: 'allow',
             downloadPath: downloadPath,
           });
-        try {
-
-
-          if (!caseFile.dataValues.isScanValid) continue;
 
           const binnacleTypes = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
             where: {
@@ -619,13 +618,20 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
           if (binnaclesIndexs.length) newBinnacles = caseFileBinacles.filter((binnacle:any) => !binnaclesIndexs.includes(binnacle.index));
           else newBinnacles = caseFileBinacles;
 
-          console.log(newBinnacles)
+          if (!newBinnacles.length){
+            // delete all docs from public/docs
+            Promise.all(caseFile.dataValues.judicialBinnacle.map(async (judicialBinnacle:any) => {
+              const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${judicialBinnacle.dataValues.index}.pdf`);
+              if (fs.existsSync(originalFilePath)) {
+                await deleteFile("../public/docs", `binnacle-bot-document-${judicialBinnacle.dataValues.index}.pdf`);
+              }
+            }))
+          }
 
           await Promise.all( newBinnacles.map(async (binnacle:any) => {
 
             try {
               const judicialBinnacle = caseFile.dataValues.judicialBinnacle.find((binnacleRegistred:any) => binnacleRegistred.dataValues.index === binnacle.index);
-              console.log("judicialBinnacle", judicialBinnacle);
 
               if (judicialBinnacle) {
                 // verify if there are new notifications
@@ -636,7 +642,6 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     judicialBinnacle.dataValues.judicialBinNotifications.map(
                       (notification: any) => notification.notificationCode
                     );
-                console.log("binnacle from scraping", binnacle);
 
                 const newNotifications = binnacle.notifications.filter((notification:any) => !notificationsCodes.includes(notification.notificationCode)) ?? [];
                 if (!newNotifications.length) return;
@@ -658,6 +663,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                   });
                   // console.log("Creado notificacion: ", judicialBinNotification);
                 }))
+
                 return;
               }
             } catch (error) {
@@ -849,6 +855,8 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
               // console.log("Creado notificacion: ",  judicialBinNotification);
             }))
           }))
+          // delete all docs from public/docs
+
           console.log("Notificaciones creadas correctamente, terminando todo");
           await page.close();
 
@@ -856,7 +864,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`
           );
-          await page.close();
+          await browser.close();
         }
 
         await caseFile.update({ wasScanned: true, isScanValid: true });
