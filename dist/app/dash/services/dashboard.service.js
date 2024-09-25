@@ -15,8 +15,6 @@ class DashboardService {
         workbook.eachSheet((sheet, id) => (sheetIds = [...sheetIds, id]));
         const worksheet = workbook.getWorksheet(sheetIds[0]);
         let products = [];
-        if (!worksheet)
-            return [];
         worksheet.eachRow({ includeEmpty: true }, (row, index) => {
             row.eachCell({ includeEmpty: true }, function (cell, colNumber) {
                 if (cell.value === null || cell.value === undefined)

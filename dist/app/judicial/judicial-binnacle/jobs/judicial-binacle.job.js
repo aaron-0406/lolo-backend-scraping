@@ -9,7 +9,7 @@ const judicial_binacle_service_1 = require("../modules/services/judicial-binacle
 const service = new judicial_binacle_service_1.JudicialBinacleService();
 const JudicialBinacleJob = () => {
     node_cron_1.default.schedule('* * * * *', () => {
-        service.main();
+        const notScanedCaseFiles = service.getAllCaseFilesDB();
     });
 };
 exports.JudicialBinacleJob = JudicialBinacleJob;

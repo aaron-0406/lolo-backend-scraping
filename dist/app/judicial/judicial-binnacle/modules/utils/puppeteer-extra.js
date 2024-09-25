@@ -8,7 +8,7 @@ const puppeteer_extra_plugin_recaptcha_1 = __importDefault(require("puppeteer-ex
 puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_recaptcha_1.default)({
     provider: {
         id: "2captcha",
-        token: "381cad2fec56070d12efeefa8d3bcfe2",
+        token: process.env.RECAPTCHA_TOKEN,
     }
 }));
 exports.default = puppeteer_extra_1.default;

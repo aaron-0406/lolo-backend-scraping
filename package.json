@@ -41,7 +41,7 @@
     "cors": "^2.8.5",
     "docx": "^7.8.2",
     "dotenv": "^16.4.5",
-    "exceljs": "^4.3.0",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "formidable": "^3.5.1",
     "fs-extra": "^11.1.0",
