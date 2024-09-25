@@ -20,6 +20,7 @@ import config from "../../../../../config/config";
 import { File } from 'formidable';
 import { Readable } from "stream";
 import { deleteFile } from "../../../../../libs/helpers";
+import { getMimeType } from "../libs/get-nine-types";
 // import extractTextContent from "../utils/extract-text-content";
 
 const { models } = sequelize;
@@ -212,7 +213,7 @@ export class JudicialBinacleService {
       console.log("stderr", stderr);
       if (stderr) {
         console.error(`Error en el script de Python: ${stderr}`);
-        return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
+        return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
       }
       const replaceStdout = stdout.replace(/'/g, '"');
       const parsedStdout = JSON.parse(replaceStdout);
@@ -250,6 +251,10 @@ export class JudicialBinacleService {
         //   console.log("Captcha last", isCorrectCaptcha);
       });
 
+      const delay = (ms:any) => new Promise(resolve => setTimeout(resolve, ms));
+      await delay(2000);
+
+
       [isCasFileTrue, isSolved] = await Promise.all([
         page.evaluate(() => {
           const errElement = document.getElementById("mensajeNoExisteExpedientes");
@@ -272,7 +277,7 @@ export class JudicialBinacleService {
 
     } catch (error: any) {
       console.error(`Error executing Python script: ${error.message}`);
-      return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
+      return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
     }
   }
 
@@ -452,39 +457,53 @@ export class JudicialBinacleService {
     let startTime = Date.now();
 
     for (const data of binnacles) {
+      try{
+
         if (data.urlDownload) {
-            console.log("Descargando archivo dinámico", data.urlDownload);
+          console.log("Descargando archivo dinámico", data.urlDownload);
 
-            await this.clickDynamicAnchor(page, data.urlDownload);
+          await this.clickDynamicAnchor(page, data.urlDownload);
 
-            const downloadPath = path.join(__dirname, "../../../../../public/docs");
+          const downloadPath = path.join(__dirname, "../../../../../public/docs");
 
-            const downloadedFilePath = await this.waitForDownload(downloadPath, startTime);
+          const downloadedFilePath = await this.waitForDownload(downloadPath, startTime);
 
-            const newFileName = `binnacle-bot-document-${data.index}.pdf`;
-            await this.renameDownloadedFile(downloadedFilePath, newFileName);
+          const fileExtension = path.extname(downloadedFilePath);
 
-            startTime = Date.now();
+          const newFileName = `binnacle-bot-document-${data.index}${fileExtension}`;
+          await this.renameDownloadedFile(downloadedFilePath, newFileName);
+
+          startTime = Date.now();
         }
+      } catch(error){
+        console.log("Error al descargar archivos", error);
+        continue
+      }
     }
 
     return binnacles;
 }
-async  waitForDownload(downloadPath: string, startTime: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-          const files = fs.readdirSync(downloadPath);
-          const newFiles = files.filter((file) => {
-              const filePath = path.join(downloadPath, file);
-              const stats = fs.statSync(filePath);
-              return stats.mtimeMs > startTime && file.endsWith(".pdf");
-          });
 
-          if (newFiles.length > 0) {
-              clearInterval(interval);
-              resolve(path.join(downloadPath, newFiles[0]));
-          }
-      }, 1000);
+async waitForDownload(downloadPath: string, startTime: number, timeout: number = 30000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      const files = fs.readdirSync(downloadPath);
+      const newFiles = files.filter((file) => {
+        const filePath = path.join(downloadPath, file);
+        const stats = fs.statSync(filePath);
+        return stats.mtimeMs > startTime && (file.endsWith(".pdf") || file.endsWith(".doc")) && !file.endsWith(".crdownload");
+      });
+
+      if (newFiles.length > 0) {
+        clearInterval(interval);
+        resolve(path.join(downloadPath, newFiles[0]));
+      }
+    }, 1000);
+
+    const timeoutId = setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error("La descarga ha excedido el tiempo límite."));
+    }, timeout);
   });
 }
 
@@ -504,7 +523,8 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
   }, url);
 }
 
-  async main(): Promise<number> {
+  async main(): Promise<{ notScanedCaseFiles: number, errorsCounter: number }> {
+    let errorsCounter:number = 0;
     try {
       const downloadPath = path.join(__dirname, "../../../../../public/docs");
       const caseFiles = await this.getAllCaseFilesDB();
@@ -512,12 +532,19 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
         headless: false,
         slowMo: 5,
       });
+
+      if(errorsCounter > 4) return { notScanedCaseFiles: 0, errorsCounter: errorsCounter };
+
       for (const caseFile of caseFiles) {
+        if (!caseFile.dataValues.isScanValid || caseFile.dataValues.wasScanned) continue;
+
+        const page = await browser.newPage();
+
+        page.on('dialog', async dialog => {
+          await dialog.accept();
+        });
+
         try {
-
-          if (!caseFile.dataValues.isScanValid || caseFile.dataValues.wasScanned) continue;
-
-          const page = await browser.newPage();
           const client = await page.target().createCDPSession();
           await client.send('Page.setDownloadBehavior', {
             behavior: 'allow',
@@ -586,19 +613,10 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
           }
 
           if (!isValidCaseFile) {
-            const caseFileData = await models.JUDICIAL_CASE_FILE.findOne({
-              where: {
-                numberCaseFile: caseFile.dataValues.numberCaseFile
-              }
-            })
-
-            if (!caseFileData) console.error("Case file not found");
-            else {
-              const judicialCaseFile = await caseFileData.update({
+              await caseFile.update({
                 isScanValid: false
               })
-              console.log("Case file not valid", judicialCaseFile);
-            }
+            page.close();
             continue;
           }
 
@@ -715,53 +733,61 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
 
             if (judicialBinnacleData) {
               try {
-                const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${binnacle.index}.pdf`);
+                const extensions = ['.pdf', '.docx'];
+                const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${binnacle.index}`)
 
-                if (fs.existsSync(originalFilePath)) {
-                  const fileStats = fs.statSync(originalFilePath);
+                for (const extension of extensions) {
+                  if (fs.existsSync(originalFilePath + extension)) {
+                    const fileWithExtension = originalFilePath + extension;
+                    const fileStats = fs.statSync(fileWithExtension);
 
-                  const newBinFile = await models.JUDICIAL_BIN_FILE.create({
-                    judicialBinnacleId: judicialBinnacleData.dataValues.id,
-                    originalName: `binnacle-bot-document-${binnacle.index}.pdf`,
-                    nameOriginAws: "",
-                    customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
-                    size: fileStats.size,
-                  });
+                    const fileExtension = path.extname(fileWithExtension);
 
-                  // const newFileName = `${newBinFile.dataValues.id}-${binnacle.index}-bot.pdf`;
-                  // const newFilePath = path.join(__dirname, `../public/docs/files${newFileName}`);
+                    console.log("Creando new bin file");
 
-                  // await renameFile(originalFilePath, newFilePath);
+                    const newBinFile = await models.JUDICIAL_BIN_FILE.create({
+                      judicialBinnacleId: judicialBinnacleData.dataValues.id,
+                      originalName: `binnacle-bot-document-${binnacle.index}${fileExtension}`,
+                      nameOriginAws: "",
+                      customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
+                      size: fileStats.size,
+                    });
 
-                  const fileBuffer = fs.readFileSync(originalFilePath);
+                    console.log("File buffer", newBinFile);
 
-                  const fileStream = Readable.from(fileBuffer);
+                    const fileBuffer = fs.readFileSync(fileWithExtension);
 
-                  const file: Express.Multer.File = {
-                    fieldname: 'document',
-                    originalname: `binnacle-bot-document-${binnacle.index}.pdf`,
-                    encoding: '7bit',
-                    mimetype: 'application/pdf',
-                    buffer: fileBuffer,
-                    size: fileBuffer.length,
-                    stream: fileStream,
-                    destination: path.join(__dirname, '../../../../../public/docs'),
-                    filename: `binnacle-bot-document-${binnacle.index}.pdf`,
-                    path: originalFilePath,
-                  };
+                    // Crea un flujo de lectura para el archivo
+                    const fileStream = Readable.from(fileBuffer);
 
-                  await uploadFile(
-                    file,
-                    `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                    // `${config.AWS_CHB_PATH}binnacle/`
-                  );
+                    // Crea el archivo con la extensión correcta
+                    const file: Express.Multer.File = {
+                      fieldname: 'document',
+                      originalname: `binnacle-bot-document-${binnacle.index}${fileExtension}`,
+                      encoding: '7bit',
+                      mimetype: getMimeType(fileExtension),
+                      buffer: fileBuffer,
+                      size: fileBuffer.length,
+                      stream: fileStream,
+                      destination: path.join(__dirname, '../../../../../public/docs'),
+                      filename: `binnacle-bot-document-${binnacle.index}${fileExtension}`,
+                      path: fileWithExtension,
+                    };
 
-                  newBinFile.update({
-                    nameOriginAws:  `binnacle-bot-document-${binnacle.index}.pdf`,
-                  });
+                    //Sube el archivo a AWS (descomentando cuando sea necesario)
+                    await uploadFile(
+                      file,
+                      `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    );
 
-                  await deleteFile("../public/docs", file.filename);
+                    newBinFile.update({
+                      nameOriginAws: `binnacle-bot-document-${binnacle.index}${fileWithExtension}`,
+                    });
 
+                    await deleteFile("../public/docs", path.basename(file.filename));
+                  }else{
+                    console.log("File not exists", originalFilePath);
+                  }
                 }
               } catch (error) {
                 console.log("File not uploaded", error);
@@ -857,17 +883,33 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
           }))
           // delete all docs from public/docs
 
+
+          Promise.all(newBinnacles.map(async (judicialBinnacle: any) => {
+            const baseFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${judicialBinnacle.index}`);
+
+            const extensions = ['.pdf', '.docx'];
+
+            for (const ext of extensions) {
+              const filePath = `${baseFilePath}${ext}`;
+              console.log("Deleting file", filePath);
+              if (fs.existsSync(filePath)) {
+                await deleteFile("../public/docs", path.basename(filePath));
+              }
+            }
+          }));
+
           console.log("Notificaciones creadas correctamente, terminando todo");
           await page.close();
+          await caseFile.update({ wasScanned: true, isScanValid: true });
 
         } catch (error) {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`
           );
-          await browser.close();
+          await page.close();
+          errorsCounter++;
         }
 
-        await caseFile.update({ wasScanned: true, isScanValid: true });
       }
 
       await browser.close();
@@ -882,7 +924,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
       },
     });
 
-    return notScanedCaseFiles.length;
+    return { notScanedCaseFiles: notScanedCaseFiles.length, errorsCounter: errorsCounter };
   }
 }
 
