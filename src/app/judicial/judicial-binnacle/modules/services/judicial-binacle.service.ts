@@ -181,11 +181,17 @@ export class JudicialBinacleService {
     const boundingBox = await imageElement.boundingBox();
     if (!boundingBox) throw new Error("No captcha bounding box found");
 
+    const captchaDir = path.resolve(__dirname, '../../../../../public/captchas');
+
+    // Verifica si la carpeta existe, si no, la crea
+    if (!fs.existsSync(captchaDir)) {
+      fs.mkdirSync(captchaDir, { recursive: true });
+    }
+
+    const screenshotFile = path.join(captchaDir, `captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`);
+
     await page.screenshot({
-      path: path.join(
-        __dirname,
-        `../../../../../public/captchas/captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`
-      ),
+      path: screenshotFile,
       clip: {
         x: boundingBox.x,
         y: boundingBox.y + boundingBox.y / 2,
@@ -193,11 +199,6 @@ export class JudicialBinacleService {
         height: boundingBox.height,
       },
     });
-
-    const screenshotFile = path.resolve(
-      __dirname,
-      `../../../../../public/captchas/captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`
-    );
 
     if (!fs.existsSync(screenshotFile)) {
       console.log("No captured screenshot");
