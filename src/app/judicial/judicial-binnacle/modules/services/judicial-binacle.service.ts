@@ -530,6 +530,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
       const caseFiles = await this.getAllCaseFilesDB();
       const browser = await puppeteerExtra.launch({
         headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
         slowMo: 5,
       });
 
@@ -591,7 +592,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
             const numberCaseFile = caseFileNumberDecoder(
               caseFile.dataValues.numberCaseFile
             );
-            console.log(`Number case file: ${numberCaseFile}`);
+            console.log(`Number case file: ${caseFile.dataValues.numberCaseFile}`);
             await this.fillCaseFileNumber(page, numberCaseFile);
 
             const { isSolved, isCasFileTrue, isBotDetected } = await this.removeNormalCaptchaV1(page);
@@ -775,13 +776,13 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     };
 
                     //Sube el archivo a AWS (descomentando cuando sea necesario)
-                    // await uploadFile(
-                    //   file,
-                    //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                    // );
+                    await uploadFile(
+                      file,
+                      `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    );
 
                     newBinFile.update({
-                      nameOriginAws: `binnacle-bot-document-${binnacle.index}${fileWithExtension}`,
+                      nameOriginAws: `binnacle-bot-document-${binnacle.index}${path.extname(fileWithExtension)}`,
                     });
 
                     await deleteFile("../public/docs", path.basename(file.filename));
