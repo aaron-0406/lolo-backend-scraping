@@ -529,7 +529,7 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
       const downloadPath = path.join(__dirname, "../../../../../public/docs");
       const caseFiles = await this.getAllCaseFilesDB();
       const browser = await puppeteerExtra.launch({
-        headless: false,
+        headless: true,
         slowMo: 5,
       });
 
@@ -775,10 +775,10 @@ async clickDynamicAnchor(page: Page, url: string): Promise<void> {
                     };
 
                     //Sube el archivo a AWS (descomentando cuando sea necesario)
-                    await uploadFile(
-                      file,
-                      `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                    );
+                    // await uploadFile(
+                    //   file,
+                    //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    // );
 
                     newBinFile.update({
                       nameOriginAws: `binnacle-bot-document-${binnacle.index}${fileWithExtension}`,

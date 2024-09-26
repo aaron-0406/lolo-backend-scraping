@@ -14,8 +14,6 @@ const mockCaseFiles_json_1 = __importDefault(require("../assets/mock/mockCaseFil
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const moment_1 = __importDefault(require("moment"));
-const aws_bucket_1 = require("../../../../../libs/aws_bucket");
-const config_1 = __importDefault(require("../../../../../config/config"));
 const stream_1 = require("stream");
 const helpers_1 = require("../../../../../libs/helpers");
 const get_nine_types_1 = require("../libs/get-nine-types");
@@ -442,7 +440,7 @@ class JudicialBinacleService {
             const downloadPath = path_1.default.join(__dirname, "../../../../../public/docs");
             const caseFiles = await this.getAllCaseFilesDB();
             const browser = await puppeteer_extra_1.default.launch({
-                headless: false,
+                headless: true,
                 slowMo: 5,
             });
             if (errorsCounter > 4)
@@ -639,7 +637,10 @@ class JudicialBinacleService {
                                             path: fileWithExtension,
                                         };
                                         //Sube el archivo a AWS (descomentando cuando sea necesario)
-                                        await (0, aws_bucket_1.uploadFile)(file, `${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`);
+                                        // await uploadFile(
+                                        //   file,
+                                        //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                                        // );
                                         newBinFile.update({
                                             nameOriginAws: `binnacle-bot-document-${binnacle.index}${fileWithExtension}`,
                                         });
