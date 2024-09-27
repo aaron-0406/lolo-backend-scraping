@@ -14,6 +14,8 @@ const mockCaseFiles_json_1 = __importDefault(require("../assets/mock/mockCaseFil
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const moment_1 = __importDefault(require("moment"));
+const aws_bucket_1 = require("../../../../../libs/aws_bucket");
+const config_1 = __importDefault(require("../../../../../config/config"));
 const stream_1 = require("stream");
 const helpers_1 = require("../../../../../libs/helpers");
 const get_nine_types_1 = require("../libs/get-nine-types");
@@ -144,8 +146,14 @@ class JudicialBinacleService {
         const boundingBox = await imageElement.boundingBox();
         if (!boundingBox)
             throw new Error("No captcha bounding box found");
+        const captchaDir = path_1.default.resolve(__dirname, '../../../../../public/captchas');
+        // Verifica si la carpeta existe, si no, la crea
+        if (!fs_1.default.existsSync(captchaDir)) {
+            fs_1.default.mkdirSync(captchaDir, { recursive: true });
+        }
+        const screenshotFile = path_1.default.join(captchaDir, `captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`);
         await page.screenshot({
-            path: path_1.default.join(__dirname, `../../../../../public/captchas/captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`),
+            path: screenshotFile,
             clip: {
                 x: boundingBox.x,
                 y: boundingBox.y + boundingBox.y / 2,
@@ -153,7 +161,6 @@ class JudicialBinacleService {
                 height: boundingBox.height,
             },
         });
-        const screenshotFile = path_1.default.resolve(__dirname, `../../../../../public/captchas/captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`);
         if (!fs_1.default.existsSync(screenshotFile)) {
             console.log("No captured screenshot");
             return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
@@ -441,6 +448,7 @@ class JudicialBinacleService {
             const caseFiles = await this.getAllCaseFilesDB();
             const browser = await puppeteer_extra_1.default.launch({
                 headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
                 slowMo: 5,
             });
             if (errorsCounter > 4)
@@ -487,7 +495,7 @@ class JudicialBinacleService {
                         if (currentUrl !== judicial_binacle_constants_1.JEC_URL)
                             await this.removeHCaptcha(page);
                         const numberCaseFile = (0, case_file_decoder_1.caseFileNumberDecoder)(caseFile.dataValues.numberCaseFile);
-                        console.log(`Number case file: ${numberCaseFile}`);
+                        console.log(`Number case file: ${caseFile.dataValues.numberCaseFile}`);
                         await this.fillCaseFileNumber(page, numberCaseFile);
                         const { isSolved, isCasFileTrue, isBotDetected } = await this.removeNormalCaptchaV1(page);
                         if (isSolved && isCasFileTrue && !isBotDetected) {
@@ -637,12 +645,9 @@ class JudicialBinacleService {
                                             path: fileWithExtension,
                                         };
                                         //Sube el archivo a AWS (descomentando cuando sea necesario)
-                                        // await uploadFile(
-                                        //   file,
-                                        //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                                        // );
+                                        await (0, aws_bucket_1.uploadFile)(file, `${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`);
                                         newBinFile.update({
-                                            nameOriginAws: `binnacle-bot-document-${binnacle.index}${fileWithExtension}`,
+                                            nameOriginAws: `binnacle-bot-document-${binnacle.index}${path_1.default.extname(fileWithExtension)}`,
                                         });
                                         await (0, helpers_1.deleteFile)("../public/docs", path_1.default.basename(file.filename));
                                     }
