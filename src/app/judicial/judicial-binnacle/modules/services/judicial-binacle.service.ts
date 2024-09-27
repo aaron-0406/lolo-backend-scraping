@@ -8,7 +8,7 @@ import {
 import { Page } from "puppeteer";
 import { caseFileNumberDecoder } from "../utils/case-file-decoder";
 import { execAsync } from '../../../../../utils/python/exec-async';
-import puppeteerExtra from "../utils/puppeteer-extra"
+import { solver, puppeteerExtra } from "../utils/puppeteer-extra"
 
 import caseFilesData from "../assets/mock/mockCaseFiles.json"
 import path from "path";
@@ -92,6 +92,7 @@ export class JudicialBinacleService {
   }
 
   async removeHCaptcha(page: Page): Promise<boolean> {
+
     let attempt = 0;
     while (true) {
       try {
@@ -206,20 +207,32 @@ export class JudicialBinacleService {
     }
 
     try {
-      const { stdout, stderr } = await execAsync(
-        `python3 ${PYTHON_SCRIPT_PATH} ${screenshotFile}`
-      );
+      // const { stdout, stderr } = await execAsync(
+      //   `python3 ${PYTHON_SCRIPT_PATH} ${screenshotFile}`
+      // );
 
-      console.log("stdout", stdout);
-      console.log("stderr", stderr);
-      if (stderr) {
-        console.error(`Error en el script de Python: ${stderr}`);
+      // console.log("stdout", stdout);
+      // console.log("stderr", stderr);
+
+      const imageBuffer = fs.readFileSync(screenshotFile);
+
+      // Convierte el Buffer a base64 y añade el prefijo
+      const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+
+      const { data, id } = await solver.imageCaptcha({
+        body: base64Image,  // Pasa la imagen codificada en base64
+        numeric: 4,
+        min_len: 4,
+        max_len: 5
+      })
+      if (!data) {
+        console.error(`Error en el script de Python: ${!data}`);
         return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
       }
-      const replaceStdout = stdout.replace(/'/g, '"');
-      const parsedStdout = JSON.parse(replaceStdout);
+      // const replaceStdout = data.replace(/'/g, '"');
+      // const parsedStdout = JSON.parse(replaceStdout);
 
-      await page.locator('input[id="codigoCaptcha"]').fill(parsedStdout.code);
+      await page.locator('input[id="codigoCaptcha"]').fill(data);
       await page.click("#consultarExpedientes").then(async () => {
         await new Promise((resolve) => setTimeout(resolve, 3000));
 

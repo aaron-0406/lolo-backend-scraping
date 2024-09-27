@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/aaron-0406/lolo-backend-scraping#readme",
   "dependencies": {
+    "@2captcha/captcha-solver": "^1.2.0",
     "@aws-sdk/client-dynamodb": "^3.245.0",
     "@aws-sdk/client-s3": "^3.245.0",
     "@hapi/boom": "^10.0.0",
@@ -76,7 +77,7 @@
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.7",
     "@types/node": "^20.12.13",
-    "@types/node-cron": "^3.0.7",
+    "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.7",
     "@types/passport": "^1.0.11",
     "@types/passport-jwt": "^3.0.8",
