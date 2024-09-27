@@ -8,8 +8,7 @@ const sequelize_1 = __importDefault(require("../../../../../libs/sequelize"));
 const sequelize_2 = require("sequelize");
 const judicial_binacle_constants_1 = require("../constants/judicial-binacle.constants");
 const case_file_decoder_1 = require("../utils/case-file-decoder");
-const exec_async_1 = require("../../../../../utils/python/exec-async");
-const puppeteer_extra_1 = __importDefault(require("../utils/puppeteer-extra"));
+const puppeteer_extra_1 = require("../utils/puppeteer-extra");
 const mockCaseFiles_json_1 = __importDefault(require("../assets/mock/mockCaseFiles.json"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
@@ -166,16 +165,27 @@ class JudicialBinacleService {
             return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
         }
         try {
-            const { stdout, stderr } = await (0, exec_async_1.execAsync)(`python3 ${judicial_binacle_constants_1.PYTHON_SCRIPT_PATH} ${screenshotFile}`);
-            console.log("stdout", stdout);
-            console.log("stderr", stderr);
-            if (stderr) {
-                console.error(`Error en el script de Python: ${stderr}`);
+            // const { stdout, stderr } = await execAsync(
+            //   `python3 ${PYTHON_SCRIPT_PATH} ${screenshotFile}`
+            // );
+            // console.log("stdout", stdout);
+            // console.log("stderr", stderr);
+            const imageBuffer = fs_1.default.readFileSync(screenshotFile);
+            // Convierte el Buffer a base64 y añade el prefijo
+            const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+            const { data, id } = await puppeteer_extra_1.solver.imageCaptcha({
+                body: base64Image, // Pasa la imagen codificada en base64
+                numeric: 4,
+                min_len: 4,
+                max_len: 5
+            });
+            if (!data) {
+                console.error(`Error en el script de Python: ${!data}`);
                 return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
             }
-            const replaceStdout = stdout.replace(/'/g, '"');
-            const parsedStdout = JSON.parse(replaceStdout);
-            await page.locator('input[id="codigoCaptcha"]').fill(parsedStdout.code);
+            // const replaceStdout = data.replace(/'/g, '"');
+            // const parsedStdout = JSON.parse(replaceStdout);
+            await page.locator('input[id="codigoCaptcha"]').fill(data);
             await page.click("#consultarExpedientes").then(async () => {
                 await new Promise((resolve) => setTimeout(resolve, 3000));
                 // await page.waitForSelector("#mensajeNoExisteExpedientes");
@@ -446,7 +456,7 @@ class JudicialBinacleService {
         try {
             const downloadPath = path_1.default.join(__dirname, "../../../../../public/docs");
             const caseFiles = await this.getAllCaseFilesDB();
-            const browser = await puppeteer_extra_1.default.launch({
+            const browser = await puppeteer_extra_1.puppeteerExtra.launch({
                 headless: true,
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
                 slowMo: 5,
