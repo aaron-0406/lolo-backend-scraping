@@ -25,7 +25,7 @@ app.listen(process.env.PORT || 3000, () => {
 
   let thereAreCaseFilesWithNoScan = true;
 
-  (async() => await service.main())();
+  //(async() => await service.main())();
 
   cron.schedule('0 6 * * *', async () => {
     await service.resetAllCaseFiles();

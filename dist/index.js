@@ -20,7 +20,7 @@ app.use(express_1.default.static(path_1.default.join(__dirname, "/public/build")
 app.listen(process.env.PORT || 3000, () => {
     console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
     let thereAreCaseFilesWithNoScan = true;
-    (async () => await service.main())();
+    //(async() => await service.main())();
     node_cron_1.default.schedule('0 6 * * *', async () => {
         await service.resetAllCaseFiles();
         console.log('Cron job iniciado: 6 AM');
