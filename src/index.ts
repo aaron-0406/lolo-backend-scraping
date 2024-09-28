@@ -23,9 +23,7 @@ app.use(express.static(path.join(__dirname, "/public/build")));
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
 
-  let thereAreCaseFilesWithNoScan = true;
-
-  //(async() => await service.main())();
+  (async() => await service.main())();
 
   cron.schedule('0 6 * * *', async () => {
     await service.resetAllCaseFiles();
