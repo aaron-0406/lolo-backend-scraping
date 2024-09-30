@@ -2,7 +2,7 @@ import { Page } from "puppeteer";
 import path from "path";
 import fs from "fs";
 
-export async function removeNormalCaptchaV1(
+export async function removeNormalCaptchaV2SR(
 { page, solver }: { page: Page, solver: any }
 ): Promise<{ isSolved: boolean; isCasFileTrue: boolean; isBotDetected: boolean }> {
   let isBotDetected = false;
@@ -18,56 +18,43 @@ export async function removeNormalCaptchaV1(
   const boundingBox = await imageElement.boundingBox();
   if (!boundingBox) throw new Error("No captcha bounding box found");
 
-  const captchaDir = path.resolve(__dirname, '../../../../../public/captchas');
+  const captchaDir = path.resolve(__dirname, '../../../../../public/audio-captchas');
 
   // Verifica si la carpeta existe, si no, la crea
   if (!fs.existsSync(captchaDir)) {
     fs.mkdirSync(captchaDir, { recursive: true });
   }
 
-  const screenshotFile = path.join(captchaDir, `captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`);
 
-  await page.screenshot({
-    path: screenshotFile,
-    clip: {
-      x: boundingBox.x,
-      y: boundingBox.y + boundingBox.y / 2,
-      width: boundingBox.width,
-      height: boundingBox.height,
-    },
-  });
-
-  if (!fs.existsSync(screenshotFile)) {
-    console.log("No captured screenshot");
-    return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
-  }
 
   try {
-    // const { stdout, stderr } = await execAsync(
-    //   `python3 ${PYTHON_SCRIPT_PATH} ${screenshotFile}`
-    // );
+    const data = "";
+    // click on the speachAudio button #btnRepro
+  // Esperar a que el botón de reproducción esté visible
+  await page.waitForSelector('#btnRepro', { visible: true });
 
-    // console.log("stdout", stdout);
-    // console.log("stderr", stderr);
+  // Hacer clic en el botón de reproducción
+  await page.click('#btnRepro');
 
-    const imageBuffer = fs.readFileSync(screenshotFile);
+  // Esperar un momento para que el audio se procese y el input aparezca
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Convierte el Buffer a base64 y añade el prefijo
-    const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+  // Esperar el input que tiene el valor del captcha usando el XPath
+  try {
+    await page.waitForSelector('#1zirobotz0', { visible: true, timeout: 60000 }); // Aumenta el timeout a 60 segundos
 
-    const { data, id } = await solver.imageCaptcha({
-      body: base64Image,  // Pasa la imagen codificada en base64
-      numeric: 4,
-      min_len: 4,
-      max_len: 5
-    })
-    if (!data) {
-      console.error(`Error en el script de Python: ${!data}`);
-      return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
-    }
-    // const replaceStdout = data.replace(/'/g, '"');
-    // const parsedStdout = JSON.parse(replaceStdout);
+    // Obtener el valor del input
+  const value = await page.evaluate(() => {
+    const inputElement = document.querySelector<HTMLInputElement>('#1zirobotz0');
+    return inputElement ? inputElement.value : null; // Devuelve el valor o null si no se encuentra
+  });
 
+
+    // Mostrar el valor en consola
+    console.log(`El valor del captcha es: ${value}`);
+  } catch (error) {
+    console.error('Error al esperar el selector del input:', error);
+  }
     await page.locator('input[id="codigoCaptcha"]').fill(data);
     await page.click("#consultarExpedientes").then(async () => {
       await new Promise((resolve) => setTimeout(resolve, 3000));

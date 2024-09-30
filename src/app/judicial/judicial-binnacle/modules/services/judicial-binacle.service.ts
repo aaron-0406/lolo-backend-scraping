@@ -45,7 +45,8 @@ export class JudicialBinacleService {
 
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
-          customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)}
+          customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)},
+          number_case_file:"02373-2021-0-1601-JR-CI-07"
         },
         include: [
           {
@@ -108,9 +109,8 @@ export class JudicialBinacleService {
         )
           continue;
 
-        const page = await browser.newPage();
-
-        try {
+          const page = await browser.newPage();
+          try {
           const client = await page.target().createCDPSession();
 
           await client.send('Page.setDownloadBehavior', {
@@ -151,7 +151,9 @@ export class JudicialBinacleService {
               await caseFile.update({
                 isScanValid: false
               })
-            page.close();
+              if (!page.isClosed()) {
+                await page.close();
+              }
             continue;
           }
 
@@ -184,44 +186,62 @@ export class JudicialBinacleService {
           await Promise.all( newBinnacles.map(async (binnacle:any) => {
 
             try {
-              const judicialBinnacle = caseFile.dataValues.judicialBinnacle.find((binnacleRegistred:any) => binnacleRegistred.dataValues.index === binnacle.index);
+              const existingJudicialBinnacle = caseFile.dataValues.judicialBinnacle.find(
+                (registeredBinnacle: any) => registeredBinnacle.dataValues.index === binnacle.index
+              );
 
-              if (judicialBinnacle) {
-                // verify if there are new notifications
-                let notificationsCodes = [];
-                const binnacle = newBinnacles.find((binnacle:any) => binnacle.index === judicialBinnacle.dataValues.index);
-                if (judicialBinnacle.dataValues.judicialBinNotifications.length)
-                  notificationsCodes =
-                    judicialBinnacle.dataValues.judicialBinNotifications.map(
-                      (notification: any) => notification.notificationCode
-                    );
+              if (existingJudicialBinnacle) {
 
-                const newNotifications = binnacle.notifications.filter((notification:any) => !notificationsCodes.includes(notification.notificationCode)) ?? [];
+                console.log("Verificando si hay nuevas notificaciones... 🔔");
+
+                let registeredNotificationCodes: string[] = [];
+                const matchedBinnacle = newBinnacles.find(
+                  (binnacle: any) => binnacle.index === existingJudicialBinnacle.dataValues.index
+                );
+
+                if (existingJudicialBinnacle.dataValues.judicialBinNotifications.length) {
+                  registeredNotificationCodes = existingJudicialBinnacle.dataValues.judicialBinNotifications.map(
+                    (notification: any) => notification.dataValues.notificationCode
+                  );
+                }
+
+                const newNotifications = matchedBinnacle.notifications.filter(
+                  (notification: any) => !registeredNotificationCodes.includes(notification.notificationCode)
+                ) ?? [];
+
                 if (!newNotifications.length) return;
 
-                await Promise.all(newNotifications.map(async (notification:any) => {
-                  await models.JUDICIAL_BIN_NOTIFICATION.create({
-                    notificationCode: notification.notificationCode,
-                    addressee: notification.addressee,
-                    shipDate: notification.shipDate,
-                    attachments: notification.attachments,
-                    deliveryMethod: notification.deliveryMethod,
-                    resolutionDate: notification.resolutionDate,
-                    notificationPrint: notification.notificationPrint,
-                    sentCentral: notification.sentCentral,
-                    centralReceipt: notification.centralReceipt,
-                    notificationToRecipientOn: notification.notificationToRecipientOn,
-                    chargeReturnedToCourtOn: notification.chargeReturnedToCourtOn,
-                    idJudicialBinacle: judicialBinnacle.dataValues.id,
-                  });
-                  // console.log("Creado notificacion: ", judicialBinNotification);
-                }))
-
-                return;
+                await Promise.all(
+                  newNotifications.map(async (notification: any) => {
+                    try {
+                      await models.JUDICIAL_BIN_NOTIFICATION.create({
+                        notificationCode: notification.notificationCode,
+                        addressee: notification.addressee,
+                        shipDate: notification.shipDate,
+                        attachments: notification.attachments,
+                        deliveryMethod: notification.deliveryMethod,
+                        resolutionDate: notification.resolutionDate,
+                        notificationPrint: notification.notificationPrint,
+                        sentCentral: notification.sentCentral,
+                        centralReceipt: notification.centralReceipt,
+                        notificationToRecipientOn: notification.notificationToRecipientOn,
+                        chargeReturnedToCourtOn: notification.chargeReturnedToCourtOn,
+                        idJudicialBinnacle: existingJudicialBinnacle.dataValues.id,
+                      });
+                      console.log(`Notificación creada: ${notification.notificationCode}`);
+                    } catch (error) {
+                      console.error(
+                        `Error al crear notificación con código ${notification.notificationCode}:`,
+                        error
+                      );
+                    }
+                  })
+                );
+                console.log("Verificación de notificaciones terminada... 🔔");
+                return
               }
             } catch (error) {
-              console.log("Error en la conexión a la base de datos", error);
-              return;
+              console.error("Error en la conexión a la base de datos o en el proceso:", error);
             }
 
             const resolutionDate = moment(
@@ -331,10 +351,10 @@ export class JudicialBinacleService {
                     };
 
                     //Sube el archivo a AWS (descomentando cuando sea necesario)
-                    await uploadFile(
-                      file,
-                      `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                    );
+                    // await uploadFile(
+                    //   file,
+                    //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    // );
 
                     newBinFile.update({
                       nameOriginAws: `binnacle-bot-document-${binnacle.index}${path.extname(fileWithExtension)}`,
@@ -466,14 +486,18 @@ export class JudicialBinacleService {
           }));
 
           console.log("Notificaciones creadas correctamente, terminando todo");
-          await page.close();
+          if (!page.isClosed()) {
+            await page.close();
+          }
           await caseFile.update({ wasScanned: true, isScanValid: true });
 
         } catch (error) {
           console.error(
             `Error processing case file ${caseFile.dataValues.numberCaseFile}: ${error}`
           );
-          await page.close();
+          if (!page.isClosed()) {
+            await page.close();
+          }
           errorsCounter++;
         }
 
