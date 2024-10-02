@@ -25,36 +25,27 @@ export async function removeNormalCaptchaV2SR(
     fs.mkdirSync(captchaDir, { recursive: true });
   }
 
-
-
   try {
-    const data = "";
-    // click on the speachAudio button #btnRepro
-  // Esperar a que el botón de reproducción esté visible
-  await page.waitForSelector('#btnRepro', { visible: true });
+    let  data = "";
+    try {
+      const value = await page.locator("#btnRepro").scroll({
+        scrollTop: -30,
+      }).then(async()=>{
+        await page.locator("#btnRepro").click();
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        const valueCaptcha = await page.evaluate(() => {
+          const inputAudio = document.getElementById("1zirobotz0") as HTMLInputElement;
+          return inputAudio?.value;
+        })
+        return valueCaptcha;
+      });
 
-  // Hacer clic en el botón de reproducción
-  await page.click('#btnRepro');
+      data = value !== "NULL" ? value : 'NOT FOUND';
 
-  // Esperar un momento para que el audio se procese y el input aparezca
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  // Esperar el input que tiene el valor del captcha usando el XPath
-  try {
-    await page.waitForSelector('#1zirobotz0', { visible: true, timeout: 60000 }); // Aumenta el timeout a 60 segundos
-
-    // Obtener el valor del input
-  const value = await page.evaluate(() => {
-    const inputElement = document.querySelector<HTMLInputElement>('#1zirobotz0');
-    return inputElement ? inputElement.value : null; // Devuelve el valor o null si no se encuentra
-  });
-
-
-    // Mostrar el valor en consola
-    console.log(`El valor del captcha es: ${value}`);
-  } catch (error) {
-    console.error('Error al esperar el selector del input:', error);
-  }
+      console.log(`El valor del captcha es: ${value}`);
+    } catch (error) {
+      console.error('Error al esperar el selector del input:', error);
+    }
     await page.locator('input[id="codigoCaptcha"]').fill(data);
     await page.click("#consultarExpedientes").then(async () => {
       await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -120,7 +111,7 @@ export async function removeNormalCaptchaV2SR(
           !(typeof errElement?.style === "object") &&
           !(typeof errorCaptcha?.style === "object")
         ) {
-          return [true, true, true];
+          return [true, true, false];
         };
         if (
           typeof errElement?.style === "object" &&
@@ -137,7 +128,7 @@ export async function removeNormalCaptchaV2SR(
         ) {
           return [false, true, false];
         }
-        else return [true, true, true];
+        else return [true, true, false];
       }),
       // page.evaluate(() => {
       //   const botDetected = document.getElementById("captcha-bot-detected");

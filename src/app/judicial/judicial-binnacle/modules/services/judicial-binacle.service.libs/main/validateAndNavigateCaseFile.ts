@@ -19,8 +19,8 @@ export async function validateAndNavigateCaseFile(page: Page, caseFile: any): Pr
     const numberCaseFile = caseFileNumberDecoder(caseFile.dataValues.numberCaseFile);
     await fillCaseFileNumber(page, numberCaseFile);
 
-    // const { isSolved: isSolvedSR, isCasFileTrue: isCasFileTrueSR, isBotDetected: isBotDetectedSR } = await removeNormalCaptchaV2SR({ page, solver });
-    const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV1({ page, solver });
+    const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV2SR({ page, solver });
+    // const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV1({ page, solver });
 
     if (isSolved && isCasFileTrue && !isBotDetected) {
       return true;

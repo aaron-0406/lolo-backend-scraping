@@ -46,7 +46,7 @@ export class JudicialBinacleService {
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
           customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)},
-          number_case_file:"02373-2021-0-1601-JR-CI-07"
+          // number_case_file:"02373-2021-0-1601-JR-CI-07"
         },
         include: [
           {
@@ -111,6 +111,13 @@ export class JudicialBinacleService {
 
           const page = await browser.newPage();
           try {
+            page.on('dialog', async (dialog) => {
+              console.log('Diálogo detectado:', dialog.message());
+
+              await dialog.accept();
+            });
+
+
           const client = await page.target().createCDPSession();
 
           await client.send('Page.setDownloadBehavior', {
@@ -172,16 +179,6 @@ export class JudicialBinacleService {
 
           if (binnaclesIndexs.length) newBinnacles = caseFileBinacles.filter((binnacle:any) => !binnaclesIndexs.includes(binnacle.index));
           else newBinnacles = caseFileBinacles;
-
-          if (!newBinnacles.length){
-            // delete all docs from public/docs
-            Promise.all(caseFile.dataValues.judicialBinnacle.map(async (judicialBinnacle:any) => {
-              const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${judicialBinnacle.dataValues.index}.pdf`);
-              if (fs.existsSync(originalFilePath)) {
-                await deleteFile("../public/docs", `binnacle-bot-document-${judicialBinnacle.dataValues.index}.pdf`);
-              }
-            }))
-          }
 
           await Promise.all( newBinnacles.map(async (binnacle:any) => {
 
