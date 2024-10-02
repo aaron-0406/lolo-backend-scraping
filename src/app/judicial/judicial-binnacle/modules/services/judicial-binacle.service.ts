@@ -15,6 +15,8 @@ import config from "../../../../../config/config";
 import { Notification } from "../types/external-types";
 import { getMimeType } from "../libs/get-nine-types";
 import { deleteFolderContents } from "./judicial-binacle.service.libs/main/deleteFolderContents";
+// import { nanoid } from "nanoid";
+import { v4 } from "uuid";
 // import extractTextContent from "../utils/extract-text-content";
 
 const { models } = sequelize;
@@ -47,7 +49,7 @@ export class JudicialBinacleService {
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
           customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)},
-          // number_case_file:"02373-2021-0-1601-JR-CI-07"
+          number_case_file:"01331-2024-0-1601-JP-CI-05"
         },
         include: [
           {
@@ -174,12 +176,39 @@ export class JudicialBinacleService {
 
           let newBinnacles:any[] = []
 
-          const binnaclesIndexs = caseFile.dataValues.judicialBinnacle
+
+          let prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
             .filter((binnacle: any) => binnacle.dataValues.index !== null)
             .map((binnacle: any) => binnacle.dataValues.index);
 
-          if (binnaclesIndexs.length) newBinnacles = caseFileBinacles.filter((binnacle:any) => !binnaclesIndexs.includes(binnacle.index));
+          const newBinnaclesIndex = caseFileBinacles.map((binnacle:any) => binnacle.index);
+
+          if(newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
+            const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
+            // update prevBinnaclesIndexs
+            const prevBinnacles = caseFile.dataValues.judicialBinnacle
+            .filter((binnacle: any) => binnacle.dataValues.index !== null)
+            .map((binnacle: any) => binnacle);
+
+            await Promise.all(prevBinnacles.map(async (prevBinnacle:any) => {
+              prevBinnacle.update({
+                index:prevBinnacle.dataValues.index + contNewBinnacles
+              })
+            }))
+
+            prevBinnaclesIndexs = prevBinnaclesIndexs.map((index:number)=>{
+              return index + contNewBinnacles
+            })
+          }
+
+          console.log("Case file binnacles", caseFileBinacles)
+
+
+          if (prevBinnaclesIndexs.length) newBinnacles = caseFileBinacles.filter((binnacle:any) => !prevBinnaclesIndexs.includes(binnacle.index));
           else newBinnacles = caseFileBinacles;
+
+          console.log("Prev binnacles", prevBinnaclesIndexs)
+          console.log("New binnacles", newBinnacles)
 
           await Promise.all( newBinnacles.map(async (binnacle:any) => {
 
@@ -305,66 +334,76 @@ export class JudicialBinacleService {
               tariffHistory: "[]",
             });
 
+
             if (judicialBinnacleData) {
               try {
-                const extensions = ['.pdf', '.docx'];
-                const originalFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${binnacle.index}`)
+                const extensions = [".pdf", ".docx"];
+                const originalFilePath = path.join(
+                  __dirname,
+                  `../../../../../public/docs/binnacle-bot-document-${binnacle.index}`
+                );
 
+                const newBinnacleName = `[BBD]-${v4()}`;
                 for (const extension of extensions) {
-                  if (fs.existsSync(originalFilePath + extension)) {
-                    const fileWithExtension = originalFilePath + extension;
-                    const fileStats = fs.statSync(fileWithExtension);
+                  const fileWithExtension = `${originalFilePath}${extension}`;
 
+                  if (fs.existsSync(fileWithExtension)) {
+                    console.log("Archivo encontrado:", fileWithExtension);
+
+                    const fileStats = fs.statSync(fileWithExtension);
                     const fileExtension = path.extname(fileWithExtension);
 
-                    console.log("Creando new bin file");
+                    // **Renombrar el archivo localmente**
+                    const newLocalFilePath = path.join(
+                      __dirname,
+                      `../../../../../public/docs/${newBinnacleName}${fileExtension}`
+                    );
+                    fs.renameSync(fileWithExtension, newLocalFilePath);
+
+                    console.log("Archivo renombrado localmente:", newLocalFilePath);
 
                     const newBinFile = await models.JUDICIAL_BIN_FILE.create({
                       judicialBinnacleId: judicialBinnacleData.dataValues.id,
-                      originalName: `binnacle-bot-document-${binnacle.index}${fileExtension}`,
+                      originalName: `${newBinnacleName}${fileExtension}`,
                       nameOriginAws: "",
                       customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
                       size: fileStats.size,
                     });
 
-                    console.log("File buffer", newBinFile);
-
-                    const fileBuffer = fs.readFileSync(fileWithExtension);
-
-                    // Crea un flujo de lectura para el archivo
+                    const fileBuffer = fs.readFileSync(newLocalFilePath);
                     const fileStream = Readable.from(fileBuffer);
 
-                    // Crea el archivo con la extensión correcta
                     const file: Express.Multer.File = {
-                      fieldname: 'document',
-                      originalname: `binnacle-bot-document-${binnacle.index}${fileExtension}`,
-                      encoding: '7bit',
+                      fieldname: "document",
+                      originalname: `${newBinnacleName}${fileExtension}`,
+                      encoding: "7bit",
                       mimetype: getMimeType(fileExtension),
                       buffer: fileBuffer,
                       size: fileBuffer.length,
                       stream: fileStream,
-                      destination: path.join(__dirname, '../../../../../public/docs'),
-                      filename: `binnacle-bot-document-${binnacle.index}${fileExtension}`,
-                      path: fileWithExtension,
+                      destination: path.join(__dirname, "../../../../../public/docs"),
+                      filename: `${newBinnacleName}${fileExtension}`,
+                      path: newLocalFilePath,
                     };
 
-                    //Sube el archivo a AWS (descomentando cuando sea necesario)
-                    // await uploadFile(
-                    //   file,
-                    //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                    // );
+                    await uploadFile(
+                      file,
+                      `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                    );
 
-                    newBinFile.update({
-                      nameOriginAws: `binnacle-bot-document-${binnacle.index}${path.extname(fileWithExtension)}`,
+                    await newBinFile.update({
+                      nameOriginAws: `${newBinnacleName}${fileExtension}`,
                     });
 
                     await deleteFile("../public/docs", path.basename(file.filename));
-                  }else{
-                    console.log("File not exists", originalFilePath);
+
+                    console.log("Archivo renombrado, subido y eliminado localmente.");
+                  } else {
+                    console.log("El archivo no existe:", fileWithExtension);
                   }
                 }
               } catch (error) {
-                console.log("File not uploaded", error);
+                console.log("Error al subir el archivo:", error);
               }
             }
 
