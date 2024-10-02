@@ -14,6 +14,7 @@ import { uploadFile } from "../../../../../libs/aws_bucket";
 import config from "../../../../../config/config";
 import { Notification } from "../types/external-types";
 import { getMimeType } from "../libs/get-nine-types";
+import { deleteFolderContents } from "./judicial-binacle.service.libs/main/deleteFolderContents";
 // import extractTextContent from "../utils/extract-text-content";
 
 const { models } = sequelize;
@@ -467,20 +468,23 @@ export class JudicialBinacleService {
           }))
           // delete all docs from public/docs
 
+          const docsPath = path.join(__dirname, `../../../../../public/docs`);
 
-          Promise.all(newBinnacles.map(async (judicialBinnacle: any) => {
-            const baseFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${judicialBinnacle.index}`);
+          await deleteFolderContents(docsPath);
 
-            const extensions = ['.pdf', '.docx'];
+          // Promise.all(newBinnacles.map(async (judicialBinnacle: any) => {
+          //   const baseFilePath = path.join(__dirname, `../../../../../public/docs/binnacle-bot-document-${judicialBinnacle.index}`);
 
-            for (const ext of extensions) {
-              const filePath = `${baseFilePath}${ext}`;
-              console.log("Deleting file", filePath);
-              if (fs.existsSync(filePath)) {
-                await deleteFile("../public/docs", path.basename(filePath));
-              }
-            }
-          }));
+          //   const extensions = ['.pdf', '.docx'];
+
+          //   for (const ext of extensions) {
+          //     const filePath = `${baseFilePath}${ext}`;
+          //     console.log("Deleting file", filePath);
+          //     if (fs.existsSync(filePath)) {
+          //       await deleteFile("../public/docs", path.basename(filePath));
+          //     }
+          //   }
+          // }));
 
           console.log("Notificaciones creadas correctamente, terminando todo");
           if (!page.isClosed()) {
