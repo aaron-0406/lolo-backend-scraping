@@ -11,11 +11,13 @@ import { setupBrowser } from "./judicial-binacle.service.libs/main/setupBrowser"
 import { validateAndNavigateCaseFile } from "./judicial-binacle.service.libs/main/validateAndNavigateCaseFile";
 import { deleteFile } from "../../../../../libs/helpers";
 import { uploadFile } from "../../../../../libs/aws_bucket";
-import config from "../../../../../config/config";
-import { Notification } from "../types/external-types";
 import { getMimeType } from "../libs/get-nine-types";
+import { Notification } from "../types/external-types";
 import { deleteFolderContents } from "./judicial-binacle.service.libs/main/deleteFolderContents";
 import { v4 } from "uuid";
+import config from "../../../../../config/config";
+import * as nodemailer from 'nodemailer';
+import { generateHtmlStructureToNewBinnacle } from "../assets/html-templates/generateHtmlStructureToNewBinnacle";
 
 const { models } = sequelize;
 
@@ -76,9 +78,18 @@ export class JudicialBinacleService {
           {
             model: models.CLIENT,
             as: "client",
+          },
+          {
+            model: models.CUSTOMER_USER,
+            as: "customerUser",
           }
         ]
       });
+      console.log(
+        caseFiles.map(
+          (caseFileData: any) => caseFileData.dataValues.customerUser.dataValues.email
+        )
+      );
 
       return caseFiles
     } catch (error) {
@@ -187,44 +198,40 @@ export class JudicialBinacleService {
 
           const newBinnaclesIndex = caseFileBinacles.map((binnacle:any) => binnacle.index);
 
-          console.log("New binnacles index", newBinnaclesIndex, "Prev binnacles index", prevBinnaclesIndexs)
-
-          if(newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
+          if (newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
             const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
-            // update prevBinnaclesIndexs
+
+            // Actualizar los índices de las bitácoras previas
             const prevBinnacles = caseFile.dataValues.judicialBinnacle
-            .filter((binnacle: any) => binnacle.dataValues.index !== null)
-            .map((binnacle: any) => binnacle);
+              .filter((binnacle: any) => binnacle.dataValues.index !== null)
+              .map((binnacle: any) => binnacle);
 
-            await Promise.all(prevBinnacles.map(async (prevBinnacle:any) => {
-              prevBinnacle.update({
-                index:prevBinnacle.dataValues.index + contNewBinnacles
-              })
-            }))
+            await Promise.all(prevBinnacles.map(async (prevBinnacle: any) => {
+              await prevBinnacle.update({
+                index: prevBinnacle.dataValues.index + contNewBinnacles
+              });
+            }));
 
-            prevBinnaclesIndexs = prevBinnaclesIndexs.map((index:number)=>{
-              return index + contNewBinnacles
-            })
+            // Actualizar los índices previos en memoria
+            prevBinnaclesIndexs = prevBinnaclesIndexs.map((index: number) => index + contNewBinnacles);
+
+            // Obtener las bitácoras nuevas desde la base de datos filtrando por índice
+            binnaclesFromDB = await models.JUDICIAL_BINNACLE.findAll({
+              where: {
+                judicial_file_case_id_judicial_file_case: caseFile.dataValues.id,
+              },
+              include: [
+                {
+                  model: models.JUDICIAL_BIN_NOTIFICATION,
+                  as: "judicialBinNotifications",
+                  attributes: {
+                    exclude: ["judicialBinnacleId"]
+                  }
+                }
+              ]
+            });
 
           }
-          binnaclesFromDB = await models.JUDICIAL_BINNACLE.findAll({
-            where: {
-              judicial_file_case_id_judicial_file_case: caseFile.dataValues.id,
-              index: { [Op.ne]: null }
-            },
-            include: [
-              {
-                model: models.JUDICIAL_BIN_NOTIFICATION,
-                as: "judicialBinNotifications",
-                attributes:{
-                  exclude: ["judicialBinnacleId"]
-                }
-              }
-            ]
-          });
-
-          // binnaclesFromDB = caseFile.dataValues.judicialBinnacle.filter((binnacle: any) => binnacle.dataValues.index !== null)
-          console.log("prevBinnaclesIndexs actualizado", prevBinnaclesIndexs)
           newBinnaclesFound = caseFileBinacles.filter(
             (binnacle: any) => !prevBinnaclesIndexs.includes(binnacle.index)
           )
@@ -471,6 +478,43 @@ export class JudicialBinacleService {
                 // console.log("Creado notificacion: ",  judicialBinNotification);
               }))
             }))
+            // Test account created: {
+            //   user: 'jblyf2ftfkgyv32f@ethereal.email',
+            //   pass: '5StqmXTdVgdcHc7afv',
+            //   smtp: { host: 'smtp.ethereal.email', port: 587, secure: false },
+            //   imap: { host: 'imap.ethereal.email', port: 993, secure: true },
+            //   pop3: { host: 'pop3.ethereal.email', port: 995, secure: true },
+            //   web: 'https://ethereal.email',
+            //   mxEnabled: false
+            // }
+            newBinnaclesFound.map(async(binnacle:any) => {
+
+              const transporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: {
+                  user: 'jblyf2ftfkgyv32f@ethereal.email',
+                  pass: '5StqmXTdVgdcHc7afv',
+                },
+              })
+
+              const message = {
+                from: 'jblyf2ftfkgyv32f@ethereal.email',
+                to: 'luis.silva@gmail.com',
+                subject: "Notificación de PNL",
+                text: "Notificación de PNL",
+                html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+              }
+
+              const info = await transporter.sendMail(message)
+
+              const previewUrl = nodemailer.getTestMessageUrl(info);
+              console.log("Preview URL:", previewUrl);
+            })
+
+              // // ! Send email to addressee
+
           }
           // ! Read binnacles from DB to create new notifications
           if (binnaclesFromDB.length) {
@@ -486,7 +530,9 @@ export class JudicialBinacleService {
                     (data: any) => data.index === binnacle.index
                   );
                   console.log("binnacle", binnacle)
+                  console.log("binnacle notifications", binnacle.judicialBinNotifications.map((Notification:any) => Notification.dataValues))
                   console.log("matchedBinnacle", matchedBinnacle)
+                  console.log("matchedBinnacle notifications", matchedBinnacle?.notifications)
 
                 notificationsFound = matchedBinnacle?.notifications ?? []
 
@@ -497,7 +543,7 @@ export class JudicialBinacleService {
                   // console.log("Notifications found", notificationsFound.map((notification:any) => notification.notificationCode))
                   // const notificationsCodesFound = notificationsFound.map((notification:any) => notification.notificationCode)
                   const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
-                  if(!newNotifications.length) return
+                  if(!newNotifications.length || !matchedBinnacle) return
                   await Promise.all(newNotifications.map(async (notification:any) => {
                     try {
                       const shipDate = notification.shipDate && moment(notification.shipDate, "DD/MM/YYYY HH:mm").isValid() ? moment.tz(notification.shipDate, "DD/MM/YYYY HH:mm", "America/Lima").format("YYYY-MM-DD HH:mm:ss") : null;
@@ -530,6 +576,29 @@ export class JudicialBinacleService {
                       );
                     }
                   }))
+
+                  const transporter = nodemailer.createTransport({
+                    host: "smtp.ethereal.email",
+                    port: 587,
+                    secure: false,
+                    auth: {
+                      user: 'jblyf2ftfkgyv32f@ethereal.email',
+                      pass: '5StqmXTdVgdcHc7afv',
+                    },
+                  })
+
+                  const message = {
+                    from: 'jblyf2ftfkgyv32f@ethereal.email',
+                    to: 'luis.silva@gmail.com',
+                    subject: "Notificación de PNL",
+                    text: "Notificación de PNL",
+                    html: generateHtmlStructureToNewBinnacle({...matchedBinnacle, notifications:newNotifications}, "Nuevas notificaciones registradas")
+                  }
+
+                  const info = await transporter.sendMail(message)
+
+                  const previewUrl = nodemailer.getTestMessageUrl(info);
+                  console.log("Preview URL:", previewUrl);
                 }
               } catch (error) {
                 console.error("Error during creation of judicial notifications:", error);

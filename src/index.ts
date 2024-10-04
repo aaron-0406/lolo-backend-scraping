@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { JudicialBinacleService } from './app/judicial/judicial-binnacle/modules/services/judicial-binacle.service';
 import path from 'path';
 import cron from 'node-cron';
-
+import * as nodemailer from 'nodemailer';
 
 const service = new JudicialBinacleService();
 
@@ -16,6 +16,10 @@ app.use(express.json());
 app.get("/ping", (_req, res) => {
   res.send("Hello World! 2");
 });
+
+// nodemailer.createTestAccount().then((account) => {
+//   console.log("Test account created:", account);
+// });
 
 app.use(express.static(path.join(__dirname, "/public")));
 app.use(express.static(path.join(__dirname, "/public/build")));
