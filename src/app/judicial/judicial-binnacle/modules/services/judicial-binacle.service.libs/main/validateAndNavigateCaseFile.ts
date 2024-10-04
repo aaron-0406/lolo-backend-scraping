@@ -16,17 +16,14 @@ export async function validateAndNavigateCaseFile(page: Page, caseFile: any): Pr
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (page.url() !== JEC_URL) {
       await removeHCaptcha(page);
-      new Promise((resolve) => setTimeout(resolve, 2000));
     }
-
 
     const numberCaseFile = caseFileNumberDecoder(
       caseFile.dataValues.numberCaseFile
     );
     await fillCaseFileNumber(page, numberCaseFile);
 
-    const { isSolved, isCasFileTrue, isBotDetected } =
-      await removeNormalCaptchaV2SR({ page, solver });
+    const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV2SR({ page, solver });
     // const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV1({ page, solver });
 
     if (isSolved && isCasFileTrue && !isBotDetected) {

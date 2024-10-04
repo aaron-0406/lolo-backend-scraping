@@ -16,6 +16,9 @@ export async function fillCaseFileNumber(
 
 // #####################################
 
+  await page.waitForSelector("#mensajeNoExisteExpedientes")
+  await page.waitForSelector("#codCaptchaError")
+  
   const caseFileExist = await page.evaluate(() => {
     const errElement = document.getElementById("mensajeNoExisteExpedientes");
     // if (!errElement?.style?.display) return true;
