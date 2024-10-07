@@ -529,27 +529,27 @@ export class JudicialBinacleService {
             // }))
 
             { /** ! PROD SEND EMAILS */}
-            // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
-            //   const transporter = nodemailer.createTransport({
-            //     host: config.AWS_EMAIL_HOST,
-            //     port: 587,
-            //     secure: false,
-            //     auth: {
-            //       user: config.AWS_EMAIL_USER,
-            //       pass: config.AWS_EMAIL_PASSWORD,
-            //     },
-            //   })
+            await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
+              const transporter = nodemailer.createTransport({
+                host: config.AWS_EMAIL_HOST,
+                port: 587,
+                secure: false,
+                auth: {
+                  user: config.AWS_EMAIL_USER,
+                  pass: config.AWS_EMAIL_PASSWORD,
+                },
+              })
 
-            //   const message = {
-            //     from: config.AWS_EMAIL,
-            //     to: [...caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
-            //     subject: "Notificación de PNL",
-            //     text: "Notificación de PNL",
-            //     html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
-            //   }
+              const message = {
+                from: config.AWS_EMAIL,
+                to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                subject: "Notificación de PNL",
+                text: "Notificación de PNL",
+                html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+              }
 
-            //   await transporter.sendMail(message)
-            // }))
+              await transporter.sendMail(message)
+            }))
 
           }
           // ! Read binnacles from DB to create new notifications
@@ -637,25 +637,25 @@ export class JudicialBinacleService {
                   // console.log("Preview URL to new notifications:", previewUrl);
 
                   {/** ! PROD SEND EMAILS WITH NEW NOTIFICATIONS */}
-                  // const transporter = nodemailer.createTransport({
-                  //   host: config.AWS_EMAIL_HOST,
-                  //   port: 587,
-                  //   secure: false,
-                  //   auth: {
-                  //     user: config.AWS_EMAIL_USER,
-                  //     pass: config.AWS_EMAIL_PASSWORD,
-                  //   },
-                  // })
+                  const transporter = nodemailer.createTransport({
+                    host: config.AWS_EMAIL_HOST,
+                    port: 587,
+                    secure: false,
+                    auth: {
+                      user: config.AWS_EMAIL_USER,
+                      pass: config.AWS_EMAIL_PASSWORD,
+                    },
+                  })
 
-                  // const message = {
-                  //   from: config.AWS_EMAIL,
-                  //   to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
-                  //   subject: "Notificación de PNL",
-                  //   text: "Notificación de PNL",
-                  //   html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
-                  // }
+                  const message = {
+                    from: config.AWS_EMAIL,
+                    to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                    subject: "Notificación de PNL",
+                    text: "Notificación de PNL",
+                    html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+                  }
 
-                  // await transporter.sendMail(message)
+                  await transporter.sendMail(message)
                 }
               } catch (error) {
                 console.error("Error during creation of judicial notifications:", error);
