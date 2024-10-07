@@ -48,8 +48,17 @@ export class JudicialBinacleService {
 
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
-          customer_has_bank_id: {[Op.in]: hidalgoCustomersIds.map((customer) => customer.dataValues.id)},
-          number_case_file:"01331-2024-0-1601-JP-CI-05"
+          customer_has_bank_id: {
+            [Op.in]: hidalgoCustomersIds.map(
+              (customer) => customer.dataValues.id
+            ),
+          },
+          [Op.and]: [
+            { is_scan_valid: true }, // caseFile.dataValues.isScanValid
+            { was_scanned: false }, // caseFile.dataValues.wasScanned
+            { process_status:"Activo" }, // caseFile.dataValues.processStatus
+          ]
+          // number_case_file:"01331-2024-0-1601-JP-CI-05"
         },
         include: [
           {
@@ -59,21 +68,21 @@ export class JudicialBinacleService {
               {
                 model: models.JUDICIAL_BIN_NOTIFICATION,
                 as: "judicialBinNotifications",
-                attributes:{
-                  exclude: ["judicialBinnacleId"]
-                }
-              }
-            ]
+                attributes: {
+                  exclude: ["judicialBinnacleId"],
+                },
+              },
+            ],
           },
           {
             model: models.CUSTOMER_HAS_BANK,
             as: "customerHasBank",
-            include:[
+            include: [
               {
                 model: models.CUSTOMER,
                 as: "customer",
-              }
-            ]
+              },
+            ],
           },
           {
             model: models.CLIENT,
@@ -82,14 +91,14 @@ export class JudicialBinacleService {
           {
             model: models.CUSTOMER_USER,
             as: "customerUser",
-          }
-        ]
+          },
+        ],
       });
-      console.log(
-        caseFiles.map(
-          (caseFileData: any) => caseFileData.dataValues.customerUser.dataValues.email
-        )
-      );
+      // console.log(
+      //   caseFiles.map(
+      //     (caseFileData: any) => caseFileData.dataValues.customerUser.dataValues.email
+      //   )
+      // );
 
       return caseFiles
     } catch (error) {
@@ -230,6 +239,11 @@ export class JudicialBinacleService {
                 }
               ]
             });
+          }
+
+          if(newBinnaclesIndex.length < prevBinnaclesIndexs.length){
+            const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
+            // Find the eliminated binnacle by index
 
           }
           newBinnaclesFound = caseFileBinacles.filter(
@@ -487,33 +501,55 @@ export class JudicialBinacleService {
             //   web: 'https://ethereal.email',
             //   mxEnabled: false
             // }
-            newBinnaclesFound.map(async(binnacle:any) => {
+            {/** ! TEST SEND EMAILS */}
+            // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
 
-              const transporter = nodemailer.createTransport({
-                host: "smtp.ethereal.email",
-                port: 587,
-                secure: false,
-                auth: {
-                  user: 'jblyf2ftfkgyv32f@ethereal.email',
-                  pass: '5StqmXTdVgdcHc7afv',
-                },
-              })
+            //   const transporter = nodemailer.createTransport({
+            //     host: "smtp.ethereal.email",
+            //     port: 587,
+            //     secure: false,
+            //     auth: {
+            //       user: 'jblyf2ftfkgyv32f@ethereal.email',
+            //       pass: '5StqmXTdVgdcHc7afv',
+            //     },
+            //   })
 
-              const message = {
-                from: 'jblyf2ftfkgyv32f@ethereal.email',
-                to: 'luis.silva@gmail.com',
-                subject: "Notificación de PNL",
-                text: "Notificación de PNL",
-                html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
-              }
+            //   const message = {
+            //     from: 'jblyf2ftfkgyv32f@ethereal.email',
+            //     to: 'luis.silva@gmail.com',
+            //     subject: "Notificación de PNL",
+            //     text: "Notificación de PNL",
+            //     html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+            //   }
 
-              const info = await transporter.sendMail(message)
+            //   const info = await transporter.sendMail(message)
 
-              const previewUrl = nodemailer.getTestMessageUrl(info);
-              console.log("Preview URL:", previewUrl);
-            })
+            //   const previewUrl = nodemailer.getTestMessageUrl(info);
+            //   console.log("Preview URL to new binnacle:", previewUrl);
+            // }))
 
-              // // ! Send email to addressee
+            { /** ! PROD SEND EMAILS */}
+            // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
+            //   const transporter = nodemailer.createTransport({
+            //     host: config.AWS_EMAIL_HOST,
+            //     port: 587,
+            //     secure: false,
+            //     auth: {
+            //       user: config.AWS_EMAIL_USER,
+            //       pass: config.AWS_EMAIL_PASSWORD,
+            //     },
+            //   })
+
+            //   const message = {
+            //     from: config.AWS_EMAIL,
+            //     to: [...caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+            //     subject: "Notificación de PNL",
+            //     text: "Notificación de PNL",
+            //     html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+            //   }
+
+            //   await transporter.sendMail(message)
+            // }))
 
           }
           // ! Read binnacles from DB to create new notifications
@@ -529,10 +565,10 @@ export class JudicialBinacleService {
                   const matchedBinnacle = caseFileBinacles.find(
                     (data: any) => data.index === binnacle.index
                   );
-                  console.log("binnacle", binnacle)
-                  console.log("binnacle notifications", binnacle.judicialBinNotifications.map((Notification:any) => Notification.dataValues))
-                  console.log("matchedBinnacle", matchedBinnacle)
-                  console.log("matchedBinnacle notifications", matchedBinnacle?.notifications)
+                  // console.log("binnacle", binnacle)
+                  // console.log("binnacle notifications", binnacle.judicialBinNotifications.map((Notification:any) => Notification.dataValues))
+                  // console.log("matchedBinnacle", matchedBinnacle)
+                  // console.log("matchedBinnacle notifications", matchedBinnacle?.notifications)
 
                 notificationsFound = matchedBinnacle?.notifications ?? []
 
@@ -576,29 +612,50 @@ export class JudicialBinacleService {
                       );
                     }
                   }))
+                  {/** ! TEST SEND EMAILS WITH NEW NOTIFICATIONS */}
+                  // const transporter = nodemailer.createTransport({
+                  //   host: "smtp.ethereal.email",
+                  //   port: 587,
+                  //   secure: false,
+                  //   auth: {
+                  //     user: 'jblyf2ftfkgyv32f@ethereal.email',
+                  //     pass: '5StqmXTdVgdcHc7afv',
+                  //   },
+                  // })
 
-                  const transporter = nodemailer.createTransport({
-                    host: "smtp.ethereal.email",
-                    port: 587,
-                    secure: false,
-                    auth: {
-                      user: 'jblyf2ftfkgyv32f@ethereal.email',
-                      pass: '5StqmXTdVgdcHc7afv',
-                    },
-                  })
+                  // const message = {
+                  //   from: 'jblyf2ftfkgyv32f@ethereal.email',
+                  //   to: 'luis.silva@gmail.com',
+                  //   subject: "Notificación de PNL",
+                  //   text: "Notificación de PNL",
+                  //   html: generateHtmlStructureToNewBinnacle({...matchedBinnacle, notifications:newNotifications}, "Nuevas notificaciones registradas")
+                  // }
 
-                  const message = {
-                    from: 'jblyf2ftfkgyv32f@ethereal.email',
-                    to: 'luis.silva@gmail.com',
-                    subject: "Notificación de PNL",
-                    text: "Notificación de PNL",
-                    html: generateHtmlStructureToNewBinnacle({...matchedBinnacle, notifications:newNotifications}, "Nuevas notificaciones registradas")
-                  }
+                  // const info = await transporter.sendMail(message)
 
-                  const info = await transporter.sendMail(message)
+                  // const previewUrl = nodemailer.getTestMessageUrl(info);
+                  // console.log("Preview URL to new notifications:", previewUrl);
 
-                  const previewUrl = nodemailer.getTestMessageUrl(info);
-                  console.log("Preview URL:", previewUrl);
+                  {/** ! PROD SEND EMAILS WITH NEW NOTIFICATIONS */}
+                  // const transporter = nodemailer.createTransport({
+                  //   host: config.AWS_EMAIL_HOST,
+                  //   port: 587,
+                  //   secure: false,
+                  //   auth: {
+                  //     user: config.AWS_EMAIL_USER,
+                  //     pass: config.AWS_EMAIL_PASSWORD,
+                  //   },
+                  // })
+
+                  // const message = {
+                  //   from: config.AWS_EMAIL,
+                  //   to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                  //   subject: "Notificación de PNL",
+                  //   text: "Notificación de PNL",
+                  //   html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+                  // }
+
+                  // await transporter.sendMail(message)
                 }
               } catch (error) {
                 console.error("Error during creation of judicial notifications:", error);

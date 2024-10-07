@@ -4,6 +4,8 @@ exports.fillCaseFileNumber = fillCaseFileNumber;
 async function fillCaseFileNumber(page, numberCaseFileDecoder) {
     const { codeExp, codeAnio, codeIncidente, codeDistprov, codeOrgano, codEspecialidad, codInstancia, } = numberCaseFileDecoder;
     // #####################################
+    await page.waitForSelector("#mensajeNoExisteExpedientes");
+    await page.waitForSelector("#codCaptchaError");
     const caseFileExist = await page.evaluate(() => {
         const errElement = document.getElementById("mensajeNoExisteExpedientes");
         // if (!errElement?.style?.display) return true;

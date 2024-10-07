@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeNormalCaptchaV1 = removeNormalCaptchaV1;
+exports.removeNormalCaptchaV2SR = removeNormalCaptchaV2SR;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-async function removeNormalCaptchaV1({ page, solver }) {
+async function removeNormalCaptchaV2SR({ page, solver }) {
     let isBotDetected = false;
     let isCasFileTrue = false;
     let isSolved = false;
@@ -19,46 +19,31 @@ async function removeNormalCaptchaV1({ page, solver }) {
     const boundingBox = await imageElement.boundingBox();
     if (!boundingBox)
         throw new Error("No captcha bounding box found");
-    const captchaDir = path_1.default.resolve(__dirname, '../../../../../public/captchas');
+    const captchaDir = path_1.default.resolve(__dirname, '../../../../../public/audio-captchas');
     // Verifica si la carpeta existe, si no, la crea
     if (!fs_1.default.existsSync(captchaDir)) {
         fs_1.default.mkdirSync(captchaDir, { recursive: true });
     }
-    const screenshotFile = path_1.default.join(captchaDir, `captcha-${boundingBox.x}-${boundingBox.y}-${boundingBox.width}-${boundingBox.height}.png`);
-    await page.screenshot({
-        path: screenshotFile,
-        clip: {
-            x: boundingBox.x,
-            y: boundingBox.y + boundingBox.y / 2,
-            width: boundingBox.width,
-            height: boundingBox.height,
-        },
-    });
-    if (!fs_1.default.existsSync(screenshotFile)) {
-        console.log("No captured screenshot");
-        return { isSolved: false, isCasFileTrue: false, isBotDetected: false };
-    }
     try {
-        // const { stdout, stderr } = await execAsync(
-        //   `python3 ${PYTHON_SCRIPT_PATH} ${screenshotFile}`
-        // );
-        // console.log("stdout", stdout);
-        // console.log("stderr", stderr);
-        const imageBuffer = fs_1.default.readFileSync(screenshotFile);
-        // Convierte el Buffer a base64 y añade el prefijo
-        const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
-        const { data, id } = await solver.imageCaptcha({
-            body: base64Image, // Pasa la imagen codificada en base64
-            numeric: 4,
-            min_len: 4,
-            max_len: 5
-        });
-        if (!data) {
-            console.error(`Error en el script de Python: ${!data}`);
-            return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
+        let data = "";
+        try {
+            const value = await page.locator("#btnRepro").scroll({
+                scrollTop: -30,
+            }).then(async () => {
+                await page.locator("#btnRepro").click();
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                const valueCaptcha = await page.evaluate(() => {
+                    const inputAudio = document.getElementById("1zirobotz0");
+                    return inputAudio === null || inputAudio === void 0 ? void 0 : inputAudio.value;
+                });
+                return valueCaptcha;
+            });
+            data = value !== "NULL" ? value : 'NOT FOUND';
+            console.log(`El valor del captcha es: ${value}`);
         }
-        // const replaceStdout = data.replace(/'/g, '"');
-        // const parsedStdout = JSON.parse(replaceStdout);
+        catch (error) {
+            console.error('Error al esperar el selector del input:', error);
+        }
         await page.locator('input[id="codigoCaptcha"]').fill(data);
         await page.click("#consultarExpedientes").then(async () => {
             await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -115,7 +100,7 @@ async function removeNormalCaptchaV1({ page, solver }) {
             const errorCaptcha = document.getElementById("codCaptchaError");
             if (!(typeof (errElement === null || errElement === void 0 ? void 0 : errElement.style) === "object") &&
                 !(typeof (errorCaptcha === null || errorCaptcha === void 0 ? void 0 : errorCaptcha.style) === "object")) {
-                return [true, true, true];
+                return [true, true, false];
             }
             ;
             if (typeof (errElement === null || errElement === void 0 ? void 0 : errElement.style) === "object" &&
@@ -130,7 +115,7 @@ async function removeNormalCaptchaV1({ page, solver }) {
                 return [false, true, false];
             }
             else
-                return [true, true, true];
+                return [true, true, false];
         }),
             // page.evaluate(() => {
             //   const botDetected = document.getElementById("captcha-bot-detected");

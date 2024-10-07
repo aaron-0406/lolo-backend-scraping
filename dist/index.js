@@ -15,6 +15,9 @@ app.use(express_1.default.json());
 app.get("/ping", (_req, res) => {
     res.send("Hello World! 2");
 });
+// nodemailer.createTestAccount().then((account) => {
+//   console.log("Test account created:", account);
+// });
 app.use(express_1.default.static(path_1.default.join(__dirname, "/public")));
 app.use(express_1.default.static(path_1.default.join(__dirname, "/public/build")));
 app.listen(process.env.PORT || 3000, () => {
