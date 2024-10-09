@@ -520,7 +520,7 @@ class JudicialBinacleService {
                                         to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                                         subject: "Notificación de PNL",
                                         text: "Notificación de PNL",
-                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(Object.assign(Object.assign({}, binnacle), { notifications: newNotifications }), "Nuevas notificaciones registradas")
+                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(Object.assign(Object.assign({}, matchedBinnacle), { notifications: newNotifications }), "Nuevas notificaciones registradas")
                                     };
                                     await transporter.sendMail(message);
                                 }

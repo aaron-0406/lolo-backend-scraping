@@ -650,7 +650,7 @@ export class JudicialBinacleService {
                     to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                     subject: "Notificación de PNL",
                     text: "Notificación de PNL",
-                    html: generateHtmlStructureToNewBinnacle({...binnacle, notifications: newNotifications}, "Nuevas notificaciones registradas")
+                    html: generateHtmlStructureToNewBinnacle({...matchedBinnacle, notifications: newNotifications}, "Nuevas notificaciones registradas")
                   }
 
                   await transporter.sendMail(message)
