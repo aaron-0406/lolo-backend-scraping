@@ -575,10 +575,8 @@ export class JudicialBinacleService {
                 if(previousNotifications.length === notificationsFound.length) return
                 else{
                   const notificationsCodesPrevious = previousNotifications.map((notification:any) => notification.notificationCode)
-                  // console.log("Notifications previus", notificationsCodesPrevious)
-                  // console.log("Notifications found", notificationsFound.map((notification:any) => notification.notificationCode))
-                  // const notificationsCodesFound = notificationsFound.map((notification:any) => notification.notificationCode)
                   const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
+                  console.log("New notifications found 🔔", newNotifications)
                   if(!newNotifications.length || !matchedBinnacle) return
                   await Promise.all(newNotifications.map(async (notification:any) => {
                     try {
@@ -652,7 +650,7 @@ export class JudicialBinacleService {
                     to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                     subject: "Notificación de PNL",
                     text: "Notificación de PNL",
-                    html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+                    html: generateHtmlStructureToNewBinnacle({...binnacle, notifications: newNotifications}, "Nuevas notificaciones registradas")
                   }
 
                   await transporter.sendMail(message)

@@ -452,10 +452,8 @@ class JudicialBinacleService {
                                     return;
                                 else {
                                     const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
-                                    // console.log("Notifications previus", notificationsCodesPrevious)
-                                    // console.log("Notifications found", notificationsFound.map((notification:any) => notification.notificationCode))
-                                    // const notificationsCodesFound = notificationsFound.map((notification:any) => notification.notificationCode)
                                     const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
+                                    console.log("New notifications found 🔔", newNotifications);
                                     if (!newNotifications.length || !matchedBinnacle)
                                         return;
                                     await Promise.all(newNotifications.map(async (notification) => {
@@ -522,7 +520,7 @@ class JudicialBinacleService {
                                         to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                                         subject: "Notificación de PNL",
                                         text: "Notificación de PNL",
-                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(binnacle, "Nueva bitácora registrada")
+                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(Object.assign(Object.assign({}, binnacle), { notifications: newNotifications }), "Nuevas notificaciones registradas")
                                     };
                                     await transporter.sendMail(message);
                                 }
