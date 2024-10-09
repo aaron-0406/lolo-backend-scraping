@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -20,6 +43,8 @@ const get_nine_types_1 = require("../libs/get-nine-types");
 const deleteFolderContents_1 = require("./judicial-binacle.service.libs/main/deleteFolderContents");
 const uuid_1 = require("uuid");
 const config_1 = __importDefault(require("../../../../../config/config"));
+const nodemailer = __importStar(require("nodemailer"));
+const generateHtmlStructureToNewBinnacle_1 = require("../assets/html-templates/generateHtmlStructureToNewBinnacle");
 const { models } = sequelize_2.default;
 // ! THINGS TO FIX
 // 1. detect if normar captcha is solved
@@ -388,25 +413,25 @@ class JudicialBinacleService {
                         //   console.log("Preview URL to new binnacle:", previewUrl);
                         // }))
                         { /** ! PROD SEND EMAILS */ }
-                        // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
-                        //   const transporter = nodemailer.createTransport({
-                        //     host: config.AWS_EMAIL_HOST,
-                        //     port: 587,
-                        //     secure: false,
-                        //     auth: {
-                        //       user: config.AWS_EMAIL_USER,
-                        //       pass: config.AWS_EMAIL_PASSWORD,
-                        //     },
-                        //   })
-                        //   const message = {
-                        //     from: config.AWS_EMAIL,
-                        //     to: [...caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
-                        //     subject: "Notificación de PNL",
-                        //     text: "Notificación de PNL",
-                        //     html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
-                        //   }
-                        //   await transporter.sendMail(message)
-                        // }))
+                        await Promise.all(newBinnaclesFound.map(async (binnacle) => {
+                            const transporter = nodemailer.createTransport({
+                                host: config_1.default.AWS_EMAIL_HOST,
+                                port: 587,
+                                secure: false,
+                                auth: {
+                                    user: config_1.default.AWS_EMAIL_USER,
+                                    pass: config_1.default.AWS_EMAIL_PASSWORD,
+                                },
+                            });
+                            const message = {
+                                from: config_1.default.AWS_EMAIL,
+                                to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                                subject: "Notificación de PNL",
+                                text: "Notificación de PNL",
+                                html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(binnacle, "Nueva bitácora registrada")
+                            };
+                            await transporter.sendMail(message);
+                        }));
                     }
                     // ! Read binnacles from DB to create new notifications
                     if (binnaclesFromDB.length) {
@@ -483,23 +508,23 @@ class JudicialBinacleService {
                                     // const previewUrl = nodemailer.getTestMessageUrl(info);
                                     // console.log("Preview URL to new notifications:", previewUrl);
                                     { /** ! PROD SEND EMAILS WITH NEW NOTIFICATIONS */ }
-                                    // const transporter = nodemailer.createTransport({
-                                    //   host: config.AWS_EMAIL_HOST,
-                                    //   port: 587,
-                                    //   secure: false,
-                                    //   auth: {
-                                    //     user: config.AWS_EMAIL_USER,
-                                    //     pass: config.AWS_EMAIL_PASSWORD,
-                                    //   },
-                                    // })
-                                    // const message = {
-                                    //   from: config.AWS_EMAIL,
-                                    //   to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
-                                    //   subject: "Notificación de PNL",
-                                    //   text: "Notificación de PNL",
-                                    //   html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
-                                    // }
-                                    // await transporter.sendMail(message)
+                                    const transporter = nodemailer.createTransport({
+                                        host: config_1.default.AWS_EMAIL_HOST,
+                                        port: 587,
+                                        secure: false,
+                                        auth: {
+                                            user: config_1.default.AWS_EMAIL_USER,
+                                            pass: config_1.default.AWS_EMAIL_PASSWORD,
+                                        },
+                                    });
+                                    const message = {
+                                        from: config_1.default.AWS_EMAIL,
+                                        to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                                        subject: "Notificación de PNL",
+                                        text: "Notificación de PNL",
+                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(binnacle, "Nueva bitácora registrada")
+                                    };
+                                    await transporter.sendMail(message);
                                 }
                             }
                             catch (error) {
