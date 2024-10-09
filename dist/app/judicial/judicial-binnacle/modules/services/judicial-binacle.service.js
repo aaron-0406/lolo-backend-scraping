@@ -425,7 +425,7 @@ class JudicialBinacleService {
                             });
                             const message = {
                                 from: config_1.default.AWS_EMAIL,
-                                to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                                to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                                 subject: "Notificación de PNL",
                                 text: "Notificación de PNL",
                                 html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(binnacle, "Nueva bitácora registrada")
@@ -519,7 +519,7 @@ class JudicialBinacleService {
                                     });
                                     const message = {
                                         from: config_1.default.AWS_EMAIL,
-                                        to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                                        to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                                         subject: "Notificación de PNL",
                                         text: "Notificación de PNL",
                                         html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(binnacle, "Nueva bitácora registrada")

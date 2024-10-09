@@ -542,7 +542,7 @@ export class JudicialBinacleService {
 
               const message = {
                 from: config.AWS_EMAIL,
-                to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                 subject: "Notificación de PNL",
                 text: "Notificación de PNL",
                 html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
@@ -649,7 +649,7 @@ export class JudicialBinacleService {
 
                   const message = {
                     from: config.AWS_EMAIL,
-                    to: [caseFile.dataValues.customerUser.dataValues.email, "luisarmandoballadares@gmail.com"],
+                    to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
                     subject: "Notificación de PNL",
                     text: "Notificación de PNL",
                     html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
