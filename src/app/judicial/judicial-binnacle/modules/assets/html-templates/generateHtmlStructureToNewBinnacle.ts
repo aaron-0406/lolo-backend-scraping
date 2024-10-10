@@ -2,7 +2,7 @@ import { PnlSeguimientoData } from "../../types/external-types";
 import fs from "fs";
 import path from "path";
 
-const imagePath = path.join(__dirname, "/src/public/img", "logo.png");
+const imagePath = path.join(__dirname, "../../../../../../public/img", "logo.png");
 const imageBuffer = fs.readFileSync(imagePath);
 export const logoDataURL = `data:image/png;base64,${imageBuffer}`;
 

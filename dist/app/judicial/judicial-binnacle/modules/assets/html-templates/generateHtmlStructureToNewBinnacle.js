@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateHtmlStructureToNewBinnacle = exports.logoDataURL = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const imagePath = path_1.default.join(__dirname, "/src/public/img", "logo.png");
+const imagePath = path_1.default.join(__dirname, "../../../../../../public/img", "logo.png");
 const imageBuffer = fs_1.default.readFileSync(imagePath);
 exports.logoDataURL = `data:image/png;base64,${imageBuffer}`;
 const generateHtmlStructureToNewBinnacle = ({ data, titleDescription = "", numberCaseFile = "", }) => {
