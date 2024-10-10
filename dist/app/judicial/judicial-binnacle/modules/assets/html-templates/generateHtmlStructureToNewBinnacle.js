@@ -105,11 +105,6 @@ const generateHtmlStructureToNewBinnacle = ({ data, titleDescription = "", numbe
       </head>
       <body>
         <header class="page-header">
-          <img
-            class="page-header__logo"
-            src=${exports.logoDataURL}
-            alt="Logo Lolo Bank"
-          />
           <h1 class="page-header__title">Lolo Bank [${titleDescription}] - ${numberCaseFile}</h1>
         </header>
         <main>
