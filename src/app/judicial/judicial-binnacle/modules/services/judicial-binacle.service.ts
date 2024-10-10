@@ -542,15 +542,19 @@ export class JudicialBinacleService {
 
               const message = {
                 from: config.AWS_EMAIL,
-                to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                to: `luisarmandoballadares@gmail.com`,
                 subject: "Notificación de PNL",
-                text: "Notificación de PNL",
-                html: generateHtmlStructureToNewBinnacle(binnacle, "Nueva bitácora registrada")
+                text: "Nueva bitácora registrada",
+                html: generateHtmlStructureToNewBinnacle({
+                  data: binnacle,
+                  titleDescription:"Nueva bitácora registrada",
+                  numberCaseFile:caseFile.dataValues.numberCaseFile
+                })
               }
 
               await transporter.sendMail(message)
             }))
-
           }
           // ! Read binnacles from DB to create new notifications
           if (binnaclesFromDB.length) {
@@ -565,10 +569,6 @@ export class JudicialBinacleService {
                   const matchedBinnacle = caseFileBinacles.find(
                     (data: any) => data.index === binnacle.index
                   );
-                  // console.log("binnacle", binnacle)
-                  // console.log("binnacle notifications", binnacle.judicialBinNotifications.map((Notification:any) => Notification.dataValues))
-                  // console.log("matchedBinnacle", matchedBinnacle)
-                  // console.log("matchedBinnacle notifications", matchedBinnacle?.notifications)
 
                 notificationsFound = matchedBinnacle?.notifications ?? []
 
@@ -647,10 +647,15 @@ export class JudicialBinacleService {
 
                   const message = {
                     from: config.AWS_EMAIL,
-                    to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                    // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                    to: `luisarmandoballadares@gmail.com`,
                     subject: "Notificación de PNL",
-                    text: "Notificación de PNL",
-                    html: generateHtmlStructureToNewBinnacle({...matchedBinnacle, notifications: newNotifications}, "Nuevas notificaciones registradas")
+                    text: "Nueva notificación registrada",
+                    html: generateHtmlStructureToNewBinnacle({
+                      data: {...matchedBinnacle, notifications: newNotifications},
+                      titleDescription:"Nuevas notificaciones registradas",
+                      numberCaseFile: caseFile.dataValues.numberCaseFile
+                    })
                   }
 
                   await transporter.sendMail(message)

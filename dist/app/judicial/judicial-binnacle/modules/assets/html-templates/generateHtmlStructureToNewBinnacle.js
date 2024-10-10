@@ -1,7 +1,15 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateHtmlStructureToNewBinnacle = void 0;
-const generateHtmlStructureToNewBinnacle = (data, titleDescription) => {
+exports.generateHtmlStructureToNewBinnacle = exports.logoDataURL = void 0;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const imagePath = path_1.default.join(__dirname, "/src/public/img", "logo.png");
+const imageBuffer = fs_1.default.readFileSync(imagePath);
+exports.logoDataURL = `data:image/png;base64,${imageBuffer}`;
+const generateHtmlStructureToNewBinnacle = ({ data, titleDescription = "", numberCaseFile = "", }) => {
     let html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -26,6 +34,8 @@ const generateHtmlStructureToNewBinnacle = (data, titleDescription) => {
             width: 70px;
             height: auto;
             margin-right: 20px;
+            max-width: 100%;
+            display: block;
           }
 
           .page-header__title {
@@ -97,10 +107,10 @@ const generateHtmlStructureToNewBinnacle = (data, titleDescription) => {
         <header class="page-header">
           <img
             class="page-header__logo"
-            src="https://lolobank.com/static/media/logo.9e20fd599f165b852995.png"
+            src=${exports.logoDataURL}
             alt="Logo Lolo Bank"
           />
-          <h1 class="page-header__title">Lolo Bank [${titleDescription}]</h1>
+          <h1 class="page-header__title">Lolo Bank [${titleDescription}] - ${numberCaseFile}</h1>
         </header>
         <main>
           <div class="binnacle">

@@ -425,10 +425,15 @@ class JudicialBinacleService {
                             });
                             const message = {
                                 from: config_1.default.AWS_EMAIL,
-                                to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                                // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                                to: `luisarmandoballadares@gmail.com`,
                                 subject: "Notificación de PNL",
-                                text: "Notificación de PNL",
-                                html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(binnacle, "Nueva bitácora registrada")
+                                text: "Nueva bitácora registrada",
+                                html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)({
+                                    data: binnacle,
+                                    titleDescription: "Nueva bitácora registrada",
+                                    numberCaseFile: caseFile.dataValues.numberCaseFile
+                                })
                             };
                             await transporter.sendMail(message);
                         }));
@@ -443,10 +448,6 @@ class JudicialBinacleService {
                                 let notificationsFound = [];
                                 console.log("Verify if there are new notifications... 🔔");
                                 const matchedBinnacle = caseFileBinacles.find((data) => data.index === binnacle.index);
-                                // console.log("binnacle", binnacle)
-                                // console.log("binnacle notifications", binnacle.judicialBinNotifications.map((Notification:any) => Notification.dataValues))
-                                // console.log("matchedBinnacle", matchedBinnacle)
-                                // console.log("matchedBinnacle notifications", matchedBinnacle?.notifications)
                                 notificationsFound = (_a = matchedBinnacle === null || matchedBinnacle === void 0 ? void 0 : matchedBinnacle.notifications) !== null && _a !== void 0 ? _a : [];
                                 if (previousNotifications.length === notificationsFound.length)
                                     return;
@@ -517,10 +518,15 @@ class JudicialBinacleService {
                                     });
                                     const message = {
                                         from: config_1.default.AWS_EMAIL,
-                                        to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                                        // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                                        to: `luisarmandoballadares@gmail.com`,
                                         subject: "Notificación de PNL",
-                                        text: "Notificación de PNL",
-                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)(Object.assign(Object.assign({}, matchedBinnacle), { notifications: newNotifications }), "Nuevas notificaciones registradas")
+                                        text: "Nueva notificación registrada",
+                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)({
+                                            data: Object.assign(Object.assign({}, matchedBinnacle), { notifications: newNotifications }),
+                                            titleDescription: "Nuevas notificaciones registradas",
+                                            numberCaseFile: caseFile.dataValues.numberCaseFile
+                                        })
                                     };
                                     await transporter.sendMail(message);
                                 }

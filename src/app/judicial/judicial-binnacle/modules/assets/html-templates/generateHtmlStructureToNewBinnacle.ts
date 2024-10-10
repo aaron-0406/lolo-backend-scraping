@@ -1,6 +1,20 @@
 import { PnlSeguimientoData } from "../../types/external-types";
+import fs from "fs";
+import path from "path";
 
-export const  generateHtmlStructureToNewBinnacle = (data:PnlSeguimientoData, titleDescription:string) => {
+const imagePath = path.join(__dirname, "/src/public/img", "logo.png");
+const imageBuffer = fs.readFileSync(imagePath);
+export const logoDataURL = `data:image/png;base64,${imageBuffer}`;
+
+export const generateHtmlStructureToNewBinnacle = ({
+  data,
+  titleDescription = "",
+  numberCaseFile = "",
+}: {
+  data: PnlSeguimientoData;
+  titleDescription: string;
+  numberCaseFile?: string;
+}) => {
   let html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -25,6 +39,8 @@ export const  generateHtmlStructureToNewBinnacle = (data:PnlSeguimientoData, tit
             width: 70px;
             height: auto;
             margin-right: 20px;
+            max-width: 100%;
+            display: block;
           }
 
           .page-header__title {
@@ -96,10 +112,10 @@ export const  generateHtmlStructureToNewBinnacle = (data:PnlSeguimientoData, tit
         <header class="page-header">
           <img
             class="page-header__logo"
-            src="https://lolobank.com/static/media/logo.9e20fd599f165b852995.png"
+            src=${logoDataURL}
             alt="Logo Lolo Bank"
           />
-          <h1 class="page-header__title">Lolo Bank [${titleDescription}]</h1>
+          <h1 class="page-header__title">Lolo Bank [${titleDescription}] - ${numberCaseFile}</h1>
         </header>
         <main>
           <div class="binnacle">
@@ -109,9 +125,7 @@ export const  generateHtmlStructureToNewBinnacle = (data:PnlSeguimientoData, tit
                   ? `Fecha de Resolución: ${data.resolutionDate}`
                   : `Fecha de Ingreso: ${data.entryDate}`
               }</h1>
-              <p class="binnacle__header-rs">Resolución: ${
-                data.resolution
-              }</p>
+              <p class="binnacle__header-rs">Resolución: ${data.resolution}</p>
               <p class="binnacle__header-ff">${
                 data.resolutionDate
                   ? `Fojas: ${data.fojas}`
@@ -135,7 +149,7 @@ export const  generateHtmlStructureToNewBinnacle = (data:PnlSeguimientoData, tit
             </div>
   `;
 
-  data.notifications.forEach((notification:any) => {
+  data.notifications.forEach((notification: any) => {
     html += `
             <div class="binnacle__section">
               <h2 class="binnacle__section-title">NOTIFICACIÓN ${notification.notificationCode}</h2>
@@ -156,5 +170,4 @@ export const  generateHtmlStructureToNewBinnacle = (data:PnlSeguimientoData, tit
   `;
 
   return html;
-}
-
+};
