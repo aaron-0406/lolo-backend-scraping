@@ -7,8 +7,8 @@ exports.generateHtmlStructureToNewBinnacle = exports.logoDataURL = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const imagePath = path_1.default.join(__dirname, "../../../../../../public/img", "logo.png");
-const imageBuffer = fs_1.default.readFileSync(imagePath);
-exports.logoDataURL = `data:image/png;base64,${imageBuffer}`;
+const logoBase64 = fs_1.default.readFileSync(imagePath).toString('base64');
+exports.logoDataURL = `data:image/png;base64,${logoBase64}`;
 const generateHtmlStructureToNewBinnacle = ({ data, titleDescription = "", numberCaseFile = "", }) => {
     let html = `
     <!DOCTYPE html>
@@ -105,6 +105,11 @@ const generateHtmlStructureToNewBinnacle = ({ data, titleDescription = "", numbe
       </head>
       <body>
         <header class="page-header">
+          <img
+            class="page-header__logo"
+            src=${exports.logoDataURL}
+            alt="Logo Lolo Bank"
+          />
           <h1 class="page-header__title">Lolo Bank [${titleDescription}] - ${numberCaseFile}</h1>
         </header>
         <main>

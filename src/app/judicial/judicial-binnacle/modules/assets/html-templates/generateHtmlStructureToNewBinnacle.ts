@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 const imagePath = path.join(__dirname, "../../../../../../public/img", "logo.png");
-const imageBuffer = fs.readFileSync(imagePath);
-export const logoDataURL = `data:image/png;base64,${imageBuffer}`;
+const logoBase64 = fs.readFileSync(imagePath).toString('base64');
+export const logoDataURL = `data:image/png;base64,${logoBase64}`;
 
 export const generateHtmlStructureToNewBinnacle = ({
   data,
@@ -110,6 +110,11 @@ export const generateHtmlStructureToNewBinnacle = ({
       </head>
       <body>
         <header class="page-header">
+          <img
+            class="page-header__logo"
+            src=${logoDataURL}
+            alt="Logo Lolo Bank"
+          />
           <h1 class="page-header__title">Lolo Bank [${titleDescription}] - ${numberCaseFile}</h1>
         </header>
         <main>
