@@ -1,8 +1,8 @@
 {
-  "name": "lolo-backend-scraping",
+  "name": "lolo-backend",
   "version": "1.0.0",
-  "description": "scrapping microservice",
-  "main": "index.js",
+  "description": "",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts --exec ts-node",
     "lint": "eslint",
@@ -22,65 +22,58 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aaron-0406/lolo-backend-scraping.git"
+    "url": "git+https://github.com/aaron-0406/lolo-backend.git"
   },
-  "author": "",
+  "author": "Aaron Paredes Cabrera",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/aaron-0406/lolo-backend-scraping/issues"
+    "url": "https://github.com/aaron-0406/lolo-backend/issues"
   },
-  "homepage": "https://github.com/aaron-0406/lolo-backend-scraping#readme",
+  "homepage": "https://github.com/aaron-0406/lolo-backend#readme",
   "dependencies": {
     "@2captcha/captcha-solver": "^1.2.0",
     "@aws-sdk/client-dynamodb": "^3.245.0",
     "@aws-sdk/client-s3": "^3.245.0",
     "@hapi/boom": "^10.0.0",
-    "@types/formidable": "^3.4.5",
     "@types/qrcode": "^1.5.5",
     "aws-sdk": "^2.1348.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "docx": "^7.8.2",
-    "dotenv": "^16.4.5",
-    "exceljs": "^4.4.0",
-    "express": "^4.19.2",
-    "formidable": "^3.5.1",
+    "dotenv": "^16.0.3",
+    "exceljs": "^4.3.0",
+    "express": "^4.18.2",
     "fs-extra": "^11.1.0",
     "joi": "^17.4.2",
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.4",
-    "moment-timezone": "^0.5.45",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^2.3.3",
-    "nanoid": "^5.0.7",
     "node-cron": "^3.0.0",
     "nodemailer": "^6.9.1",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "pm2": "^5.4.2",
-    "puppeteer": "^22.15.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-recaptcha": "^3.6.8",
     "qrcode": "^1.5.3",
-    "request": "^2.88.2",
     "sequelize": "^6.26.0",
     "speakeasy": "^2.0.0",
-    "ts-node": "^10.9.2",
-    "uuid": "^9.0.1"
+    "ts-node": "^10.9.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
     "@types/bcryptjs": "^2.4.2",
     "@types/cors": "^2.8.12",
-    "@types/express": "^4.17.21",
+    "@types/express": "^4.17.14",
     "@types/fs-extra": "^11.0.0",
     "@types/jsonwebtoken": "^9.0.1",
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.7",
-    "@types/node": "^20.12.13",
-    "@types/node-cron": "^3.0.11",
+    "@types/node": "^18.11.10",
+    "@types/node-cron": "^3.0.7",
     "@types/nodemailer": "^6.4.7",
     "@types/passport": "^1.0.11",
     "@types/passport-jwt": "^3.0.8",
@@ -93,7 +86,6 @@
     "nodemon": "^2.0.12",
     "prettier": "^2.3.2",
     "sequelize-cli": "^6.5.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.4.5"
+    "typescript": "^4.9.3"
   }
 }

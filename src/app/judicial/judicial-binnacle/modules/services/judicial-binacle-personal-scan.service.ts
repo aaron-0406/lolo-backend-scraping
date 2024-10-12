@@ -21,25 +21,12 @@ import { generateHtmlStructureToNewBinnacle } from "../assets/html-templates/gen
 
 const { models } = sequelize;
 
-// ! THINGS TO FIX
-  // 1. detect if normar captcha is solved
-  // 2. detect if bot is detected where it shouldn't be
-  // 3. detect if case file is valid
-
 export class JudicialBinacleService {
+
   constructor() {}
 
-  // async getAllCaseFiles(): Promise<CaseFiles> {
-  //   return caseFilesData as CaseFiles;
-  // }
-
-  async resetAllCaseFiles(): Promise<void> {
-    await models.JUDICIAL_CASE_FILE.update({ wasScanned: false }, { where: { isScanValid: true } });
-  }
-  //? Puppeteer
   async getAllCaseFilesDB() {
     try {
-
       const activeCustomersIds = await models.CUSTOMER.findAll({
         where: {
           is_scrapper_active: true,
@@ -143,7 +130,7 @@ export class JudicialBinacleService {
 
           const page = await browser.newPage();
           try {
-            page.on('dialog', async (dialog: any) => {
+            page.on('dialog', async (dialog) => {
               console.log('Dialog detected:', dialog.message());
 
               await dialog.accept();
