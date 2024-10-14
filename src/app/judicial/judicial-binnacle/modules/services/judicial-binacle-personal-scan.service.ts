@@ -18,107 +18,158 @@ import { v4 } from "uuid";
 import config from "../../../../../config/config";
 import * as nodemailer from 'nodemailer';
 import { generateHtmlStructureToNewBinnacle } from "../assets/html-templates/generateHtmlStructureToNewBinnacle";
+import boom from "@hapi/boom";
 
 const { models } = sequelize;
 
-export class JudicialBinacleService {
+export class JudicialBinaclePersonalScanService {
 
   constructor() {}
 
-  async getAllCaseFilesDB() {
-    try {
-      const activeCustomersIds = await models.CUSTOMER.findAll({
-        where: {
-          is_scrapper_active: true,
-        },
-        attributes: ["id_customer"]
-      });
-
-      const customerHasBanksIds = await models.CUSTOMER_HAS_BANK.findAll({
-        where: {
-          customer_id_customer: {
-            [Op.in]: activeCustomersIds.map(
-              (customer) => customer.dataValues.id_customer
-            ),
-          },
-        },
-      });
-
-      const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
-        where: {
-          customer_has_bank_id: {
-            [Op.in]: customerHasBanksIds.map(
-              (customer) => customer.dataValues.id
-            ),
-          },
-          [Op.and]: [
-            { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-            { was_scanned: false }, // caseFile.dataValues.wasScanned
-            { process_status:"Activo" }, // caseFile.dataValues.processStatus
-          ]
-          // number_case_file:"01331-2024-0-1601-JP-CI-05"
-        },
-        include: [
-          {
-            model: models.JUDICIAL_BINNACLE,
-            as: "judicialBinnacle",
-            include: [
-              {
-                model: models.JUDICIAL_BIN_NOTIFICATION,
-                as: "judicialBinNotifications",
-                attributes: {
-                  exclude: ["judicialBinnacleId"],
-                },
+  async findCaseFileByNumber (caseFileId: number) {
+    const caseFile = models.JUDICIAL_CASE_FILE.findOne({
+      where:{
+        id_judicial_case_file: caseFileId,
+        [Op.and]: [
+          { is_scan_valid: true }, // caseFile.dataValues.isScanValid
+          { was_scanned: false }, // caseFile.dataValues.wasScanned
+          { process_status:"Activo" }, // caseFile.dataValues.processStatus
+        ]
+      },
+      include: [
+        {
+          model: models.JUDICIAL_BINNACLE,
+          as: "judicialBinnacle",
+          include: [
+            {
+              model: models.JUDICIAL_BIN_NOTIFICATION,
+              as: "judicialBinNotifications",
+              attributes: {
+                exclude: ["judicialBinnacleId"],
               },
-            ],
-          },
-          {
-            model: models.CUSTOMER_HAS_BANK,
-            as: "customerHasBank",
-            include: [
-              {
-                model: models.CUSTOMER,
-                as: "customer",
-              },
-            ],
-          },
-          {
-            model: models.CLIENT,
-            as: "client",
-          },
-          {
-            model: models.CUSTOMER_USER,
-            as: "customerUser",
-          },
-        ],
-      });
-      // console.log(
-      //   caseFiles.map(
-      //     (caseFileData: any) => caseFileData.dataValues.customerUser.dataValues.email
-      //   )
-      // );
+            },
+          ],
+        },
+        {
+          model: models.CUSTOMER_HAS_BANK,
+          as: "customerHasBank",
+          include: [
+            {
+              model: models.CUSTOMER,
+              as: "customer",
+            },
+          ],
+        },
+        {
+          model: models.CLIENT,
+          as: "client",
+        },
+        {
+          model: models.CUSTOMER_USER,
+          as: "customerUser",
+        },
+      ],
+    })
+    if (!caseFile) throw boom.notFound("expediente no encontrado");
+    else return caseFile;
+  }
 
-      return caseFiles
-    } catch (error) {
-      console.error("Error during connection to database", error);
-      return [];
-    }
+  async findAllBinnaclesTypes (customerHasBankId: number) {
+    const binnacleTypes = await models.JUDICIAL_BIN_TYPE_BINNACLE.findAll({
+      where: {
+        customer_has_bank_id_customer_has_bank: customerHasBankId,
+      },
+    });
+
+    if (!binnacleTypes || !binnacleTypes.length) throw boom.notFound("Binnacles types not found");
+    return binnacleTypes
+  }
+
+  async findAllproceduralStages(customerHasBankId:number){
+    const proceduralStages = await models.JUDICIAL_BIN_PROCEDURAL_STAGE.findAll({
+      where: {
+        customer_has_bank_id_customer_has_bank:customerHasBankId,
+      },
+    });
+
+    if(!proceduralStages || !proceduralStages.length) throw boom.notFound("Procedural stages not found");
+    else return proceduralStages
   }
 
 
-  async main(): Promise<{ notScanedCaseFiles: number, errorsCounter: number }> {
+  async main(caseFileId: number, binncleId:number) {
     let errorsCounter:number = 0;
     try {
       const downloadPath = path.join(__dirname, "../../../../../public/docs");
-
       if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
-
-      const caseFiles = await this.getAllCaseFilesDB();
 
       const { browser } = await setupBrowser(downloadPath);
 
-      if(errorsCounter > 4) return { notScanedCaseFiles: 0, errorsCounter: errorsCounter };
+      const caseFile = await this.findCaseFileByNumber(caseFileId)
+      if (!caseFile) throw boom.notFound("Case file not found");
 
+      //? BLOCK 1
+
+        try {
+          if (!caseFile.dataValues.isScanValid || caseFile.dataValues.wasScanned || !caseFile.dataValues.processStatus || caseFile.dataValues.processStatus === "Concluido" ) return;
+
+          let isValidCaseFile:boolean;
+          let binnaclesFromDB: any[] = [];
+          let prevBinnaclesIndexs: any[]= []
+          let newBinnaclesFound: any[] = [];
+
+          const binnacleTypes = this.findAllBinnaclesTypes(caseFile.dataValues.customerHasBankId)
+          if (!binnacleTypes) throw boom.notFound("Binnacles types not found");
+          const proceduralStages = this.findAllproceduralStages(caseFile.dataValues.customerHasBankId)
+          if (!proceduralStages) throw boom.notFound("Procedural stages not found");
+
+          const page = await browser.newPage();
+
+          // Check dialog
+          page.on('dialog', async (dialog) => {
+            console.log('Dialog detected:', dialog.message());
+            await dialog.accept();
+          });
+
+          const client = await page.target().createCDPSession();
+
+          await client.send('Page.setDownloadBehavior', {
+            behavior: 'allow',
+            downloadPath: downloadPath,
+          });
+
+          isValidCaseFile = await validateAndNavigateCaseFile(page, caseFile);
+
+          if (!isValidCaseFile) {
+            await caseFile.update({
+              isScanValid: false,
+            });
+            if (!page.isClosed()) {
+              await page.close();
+            }
+            throw boom.notFound("Case file is not valid");
+          }
+
+          await page.waitForSelector("#command > button");
+          await page.click("#command > button");
+
+
+          const caseFileInfo = await getCaseFileInfo(page);
+          const caseFileBinacles = await extractPnlSeguimientoData(page);
+
+          prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
+            .filter((binnacle: any) => binnacle.dataValues.index !== null)
+            .map((binnacle: any) => binnacle.dataValues.index);
+          binnaclesFromDB = caseFile.dataValues.judicialBinnacle
+            .filter((binnacle: any) => binnacle.dataValues.index !== null)
+            .map((binnacle: any) => binnacle);
+
+        } catch (error) {
+          throw boom.notFound("Error to proccess case file");
+        }
+
+      if(errorsCounter > 4) return { notScanedCaseFiles: 0, errorsCounter: errorsCounter };
+      const caseFiles:any = []
       for (const caseFile of caseFiles) {
         if (
           !caseFile.dataValues.isScanValid ||

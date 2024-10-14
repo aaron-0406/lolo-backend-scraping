@@ -124,7 +124,10 @@ export class JudicialBinacleService {
     try {
       const downloadPath = path.join(__dirname, "../../../../../public/docs");
 
-      if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
+      if (!fs.existsSync(downloadPath)) {
+        console.log("Create a folder to save files")
+        fs.mkdirSync(downloadPath);
+      }
 
       const caseFiles = await this.getAllCaseFilesDB();
 
