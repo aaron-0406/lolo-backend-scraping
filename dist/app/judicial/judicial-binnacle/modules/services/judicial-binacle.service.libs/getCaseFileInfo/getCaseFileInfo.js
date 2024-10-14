@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCaseFileInfo = getCaseFileInfo;
+exports.getCaseFileInfo = void 0;
 async function getCaseFileInfo(page) {
     await page.waitForSelector(".panel.panel-default");
     const data = await page.evaluate(() => {
@@ -47,3 +47,4 @@ async function getCaseFileInfo(page) {
     });
     return data;
 }
+exports.getCaseFileInfo = getCaseFileInfo;

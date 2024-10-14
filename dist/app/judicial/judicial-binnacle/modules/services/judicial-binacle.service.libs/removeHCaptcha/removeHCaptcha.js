@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeHCaptcha = removeHCaptcha;
+exports.removeHCaptcha = void 0;
 async function removeHCaptcha(page) {
     let attempt = 0;
     while (true) {
@@ -26,3 +26,4 @@ async function removeHCaptcha(page) {
         }
     }
 }
+exports.removeHCaptcha = removeHCaptcha;

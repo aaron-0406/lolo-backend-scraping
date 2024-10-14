@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateAndNavigateCaseFile = validateAndNavigateCaseFile;
+exports.validateAndNavigateCaseFile = void 0;
 const judicial_binacle_constants_1 = require("../../../constants/judicial-binacle.constants");
 const removeHCaptcha_1 = require("../removeHCaptcha/removeHCaptcha");
 const case_file_decoder_1 = require("../../../utils/case-file-decoder");
@@ -32,3 +32,4 @@ async function validateAndNavigateCaseFile(page, caseFile) {
     }
     return false;
 }
+exports.validateAndNavigateCaseFile = validateAndNavigateCaseFile;

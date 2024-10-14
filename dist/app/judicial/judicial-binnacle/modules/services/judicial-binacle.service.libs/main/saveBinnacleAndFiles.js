@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveBinnacleAndFiles = saveBinnacleAndFiles;
+exports.saveBinnacleAndFiles = void 0;
 const sequelize_1 = __importDefault(require("../../../../../../../libs/sequelize"));
 const { models } = sequelize_1.default;
 const moment_timezone_1 = __importDefault(require("moment-timezone"));
@@ -49,3 +49,4 @@ async function saveBinnacleAndFiles(caseFile, binnacle, binnacleTypes, procedura
         await (0, processAndUploadFiles_1.processAndUploadFiles)(judicialBinnacleData, binnacle.index);
     }
 }
+exports.saveBinnacleAndFiles = saveBinnacleAndFiles;

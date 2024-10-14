@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeNormalCaptchaV1 = removeNormalCaptchaV1;
+exports.removeNormalCaptchaV1 = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 async function removeNormalCaptchaV1({ page, solver }) {
@@ -48,7 +48,7 @@ async function removeNormalCaptchaV1({ page, solver }) {
         // Convierte el Buffer a base64 y añade el prefijo
         const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
         const { data, id } = await solver.imageCaptcha({
-            body: base64Image, // Pasa la imagen codificada en base64
+            body: base64Image,
             numeric: 4,
             min_len: 4,
             max_len: 5
@@ -145,3 +145,4 @@ async function removeNormalCaptchaV1({ page, solver }) {
         return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
     }
 }
+exports.removeNormalCaptchaV1 = removeNormalCaptchaV1;

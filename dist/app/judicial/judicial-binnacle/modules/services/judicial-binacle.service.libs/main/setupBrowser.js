@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setupBrowser = setupBrowser;
+exports.setupBrowser = void 0;
 const puppeteer_extra_1 = require("../../../utils/puppeteer-extra");
 async function setupBrowser(downloadPath) {
     const browser = await puppeteer_extra_1.puppeteerExtra.launch({
@@ -10,3 +10,4 @@ async function setupBrowser(downloadPath) {
     });
     return { browser };
 }
+exports.setupBrowser = setupBrowser;

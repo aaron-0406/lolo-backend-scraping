@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.waitForDownload = waitForDownload;
+exports.waitForDownload = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 async function waitForDownload(downloadPath, startTime, timeout = 30000) {
@@ -26,3 +26,4 @@ async function waitForDownload(downloadPath, startTime, timeout = 30000) {
         }, timeout);
     });
 }
+exports.waitForDownload = waitForDownload;

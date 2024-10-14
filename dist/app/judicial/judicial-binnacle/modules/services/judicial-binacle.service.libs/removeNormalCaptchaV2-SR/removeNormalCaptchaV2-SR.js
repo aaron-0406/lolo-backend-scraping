@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeNormalCaptchaV2SR = removeNormalCaptchaV2SR;
+exports.removeNormalCaptchaV2SR = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 async function removeNormalCaptchaV2SR({ page, solver }) {
@@ -130,3 +130,4 @@ async function removeNormalCaptchaV2SR({ page, solver }) {
         return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
     }
 }
+exports.removeNormalCaptchaV2SR = removeNormalCaptchaV2SR;

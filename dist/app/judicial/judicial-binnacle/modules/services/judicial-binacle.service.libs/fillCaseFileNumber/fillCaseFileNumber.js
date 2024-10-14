@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fillCaseFileNumber = fillCaseFileNumber;
+exports.fillCaseFileNumber = void 0;
 async function fillCaseFileNumber(page, numberCaseFileDecoder) {
     const { codeExp, codeAnio, codeIncidente, codeDistprov, codeOrgano, codEspecialidad, codInstancia, } = numberCaseFileDecoder;
     // #####################################
@@ -31,3 +31,4 @@ async function fillCaseFileNumber(page, numberCaseFileDecoder) {
         await page.locator('input[id="cod_especialidad"]').fill(codEspecialidad),
         await page.locator('input[id="cod_instancia"]').fill(codInstancia);
 }
+exports.fillCaseFileNumber = fillCaseFileNumber;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clickDynamicAnchor = clickDynamicAnchor;
+exports.clickDynamicAnchor = void 0;
 async function clickDynamicAnchor(page, url) {
     await page.evaluate((url) => {
         const anchor = document.createElement("a");
@@ -11,3 +11,4 @@ async function clickDynamicAnchor(page, url) {
         document.body.removeChild(anchor);
     }, url);
 }
+exports.clickDynamicAnchor = clickDynamicAnchor;

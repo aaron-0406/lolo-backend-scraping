@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMimeType = getMimeType;
+exports.getMimeType = void 0;
 function getMimeType(extension) {
     switch (extension) {
         case '.pdf': return 'application/pdf';
@@ -11,3 +11,4 @@ function getMimeType(extension) {
         default: return 'application/octet-stream';
     }
 }
+exports.getMimeType = getMimeType;

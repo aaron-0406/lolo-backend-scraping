@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extractPnlSeguimientoData = extractPnlSeguimientoData;
+exports.extractPnlSeguimientoData = void 0;
 const path_1 = __importDefault(require("path"));
 const waitForDownload_1 = require("./waitForDownload");
 const clickDynamicAnchor_1 = require("./clickDynamicAnchor");
@@ -137,3 +137,4 @@ async function extractPnlSeguimientoData(page) {
     }
     return binnacles;
 }
+exports.extractPnlSeguimientoData = extractPnlSeguimientoData;
