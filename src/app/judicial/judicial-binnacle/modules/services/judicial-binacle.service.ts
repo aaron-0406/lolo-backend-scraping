@@ -540,32 +540,32 @@ export class JudicialBinacleService {
             // }))
 
             { /** ! PROD SEND EMAILS */}
-            await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
-              const transporter = nodemailer.createTransport({
-                host: config.AWS_EMAIL_HOST,
-                port: 587,
-                secure: false,
-                auth: {
-                  user: config.AWS_EMAIL_USER,
-                  pass: config.AWS_EMAIL_PASSWORD,
-                },
-              })
+            // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
+            //   const transporter = nodemailer.createTransport({
+            //     host: config.AWS_EMAIL_HOST,
+            //     port: 587,
+            //     secure: false,
+            //     auth: {
+            //       user: config.AWS_EMAIL_USER,
+            //       pass: config.AWS_EMAIL_PASSWORD,
+            //     },
+            //   })
 
-              const message = {
-                from: config.AWS_EMAIL,
-                // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
-                to: `luisarmandoballadares@gmail.com`,
-                subject: "Notificación de PNL",
-                text: "Nueva bitácora registrada",
-                html: generateHtmlStructureToNewBinnacle({
-                  data: binnacle,
-                  titleDescription:"Nueva bitácora registrada",
-                  numberCaseFile:caseFile.dataValues.numberCaseFile
-                })
-              }
+            //   const message = {
+            //     from: config.AWS_EMAIL,
+            //     // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+            //     to: `luisarmandoballadares@gmail.com`,
+            //     subject: "Notificación de PNL",
+            //     text: "Nueva bitácora registrada",
+            //     html: generateHtmlStructureToNewBinnacle({
+            //       data: binnacle,
+            //       titleDescription:"Nueva bitácora registrada",
+            //       numberCaseFile:caseFile.dataValues.numberCaseFile
+            //     })
+            //   }
 
-              await transporter.sendMail(message)
-            }))
+            //   await transporter.sendMail(message)
+            // }))
           }
           // ! Read binnacles from DB to create new notifications
           if (binnaclesFromDB.length) {
@@ -646,30 +646,30 @@ export class JudicialBinacleService {
                   // console.log("Preview URL to new notifications:", previewUrl);
 
                   {/** ! PROD SEND EMAILS WITH NEW NOTIFICATIONS */}
-                  const transporter = nodemailer.createTransport({
-                    host: config.AWS_EMAIL_HOST,
-                    port: 587,
-                    secure: false,
-                    auth: {
-                      user: config.AWS_EMAIL_USER,
-                      pass: config.AWS_EMAIL_PASSWORD,
-                    },
-                  })
+                  // const transporter = nodemailer.createTransport({
+                  //   host: config.AWS_EMAIL_HOST,
+                  //   port: 587,
+                  //   secure: false,
+                  //   auth: {
+                  //     user: config.AWS_EMAIL_USER,
+                  //     pass: config.AWS_EMAIL_PASSWORD,
+                  //   },
+                  // })
 
-                  const message = {
-                    from: config.AWS_EMAIL,
-                    // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
-                    to: `luisarmandoballadares@gmail.com`,
-                    subject: "Notificación de PNL",
-                    text: "Nueva notificación registrada",
-                    html: generateHtmlStructureToNewBinnacle({
-                      data: {...matchedBinnacle, notifications: newNotifications},
-                      titleDescription:"Nuevas notificaciones registradas",
-                      numberCaseFile: caseFile.dataValues.numberCaseFile
-                    })
-                  }
+                  // const message = {
+                  //   from: config.AWS_EMAIL,
+                  //   // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
+                  //   to: `luisarmandoballadares@gmail.com`,
+                  //   subject: "Notificación de PNL",
+                  //   text: "Nueva notificación registrada",
+                  //   html: generateHtmlStructureToNewBinnacle({
+                  //     data: {...matchedBinnacle, notifications: newNotifications},
+                  //     titleDescription:"Nuevas notificaciones registradas",
+                  //     numberCaseFile: caseFile.dataValues.numberCaseFile
+                  //   })
+                  // }
 
-                  await transporter.sendMail(message)
+                  // await transporter.sendMail(message)
                 }
               } catch (error) {
                 console.error("Error during creation of judicial notifications:", error);
