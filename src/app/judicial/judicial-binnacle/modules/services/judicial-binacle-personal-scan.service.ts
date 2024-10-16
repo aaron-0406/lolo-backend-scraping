@@ -117,6 +117,7 @@ export class JudicialBinaclePersonalScanService {
           let binnaclesFromDB: any[] = [];
           let prevBinnaclesIndexs: any[]= []
           let scrapingBinnaclesIndex: any[] = [];
+          let newBinnaclesFound: any[] = [];
 
           console.log("Getting binnacle types");
           const binnacleTypes = await this.findAllBinnaclesTypes(caseFile.dataValues.customerHasBankId)
@@ -168,15 +169,12 @@ export class JudicialBinaclePersonalScanService {
 
           scrapingBinnaclesIndex = caseFileBinacles.map((binnacle:any) => binnacle.index);
 
+          console.log("CASE 1: there are new binnacles added");
           // ! Case 1: there are new binnacles added
           if (prevBinnaclesIndexs.length < scrapingBinnaclesIndex.length) {
             const countBinnaclesAdded = scrapingBinnaclesIndex.length - prevBinnaclesIndexs.length;
 
-            // Find the new binnacle by index
-            const newBinnacles = caseFileBinacles.filter((binnacle:any) => !prevBinnaclesIndexs.includes(binnacle.index))
-            console.log("New binnacles found 📁", newBinnacles)
-            if(newBinnacles.length){
-              // Update prev binnacles indexs
+            // Update prev binnacles indexs
 
               const prevBinnacles = caseFile.dataValues.judicialBinnacle
               .filter((binnacle: any) => binnacle.dataValues.index !== null)
@@ -196,7 +194,7 @@ export class JudicialBinaclePersonalScanService {
 
             binnaclesFromDB = await models.JUDICIAL_BINNACLE.findAll({
               where: {
-                judicial_file_case_id_judicial_file_case: caseFile.dataValues.id,
+                judicial_file_case_id_judicial_file_case: caseFileId,
               },
               include: [
                 {
@@ -208,14 +206,265 @@ export class JudicialBinaclePersonalScanService {
                 }
               ]
             });
+          }
+            // Find the binnacle by index
+
+            newBinnaclesFound = caseFileBinacles.filter(
+              (binnacle: any) => !prevBinnaclesIndexs.includes(binnacle.index)
+            )
+
+            // create new binnacles
+            console.log("New binnacles found 📁", newBinnaclesFound)
+
+            if(newBinnaclesFound.length){
+              await Promise.all(newBinnaclesFound.map(async (binnacle:any) => {
+
+                console.log("Adding binnacles to database... 📁");
+
+                const resolutionDate = moment(
+                  binnacle.resolutionDate,
+                  "DD/MM/YYYY HH:mm"
+                ).isValid()
+                  ? moment
+                      .tz(binnacle.resolutionDate, "DD/MM/YYYY HH:mm","America/Lima")
+                      .format("YYYY-MM-DD HH:mm:ss")
+                  : null;
+
+                const entryDate = moment(
+                  binnacle.entryDate,
+                  "DD/MM/YYYY HH:mm"
+                ).isValid()
+                  ? moment
+                      .tz(binnacle.entryDate, "DD/MM/YYYY HH:mm", "America/Lima")
+                      .format("YYYY-MM-DD HH:mm:ss")
+                  : null;
+
+                const provedioDate = moment(
+                  binnacle.proveido,
+                  "DD/MM/YYYY HH:mm"
+                ).isValid()
+                  ? moment
+                      .tz(binnacle.proveido, "DD/MM/YYYY HH:mm", "America/Lima")
+                      .format("YYYY-MM-DD HH:mm:ss")
+                  : null;
+
+                  const binnacleType = binnacle.resolutionDate
+                  ? binnacleTypes.find(
+                      (binnacleType: any) =>
+                        binnacleType.dataValues.typeBinnacle === "RESOLUCION"
+                    )
+                  : binnacleTypes.find(
+                      (binnacleType: any) =>
+                        binnacleType.dataValues.typeBinnacle === "ESCRITO"
+                    );
+                const proceduralStage = proceduralStages[0].dataValues.id
+                const folios = typeof binnacle.folios === "string" ? Number(binnacle.folios) : null;
+                const fojas = typeof binnacle.fojas === "string" ? Number(binnacle.fojas) : null;
+
+                const judicialBinnacleData = await models.JUDICIAL_BINNACLE.create({
+                  judicialBinProceduralStageId: proceduralStage,
+                  lastPerformed: binnacle.sumilla ?? '',
+                  binnacleTypeId: binnacleType?.dataValues.id,
+                  date: new Date(),
+                  judicialFileCaseId: caseFile.dataValues.id,
+                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+
+                  index: binnacle.index,
+                  resolutionDate: resolutionDate,
+                  entryDate: entryDate,
+                  notificationType: binnacle.notificationType,
+                  acto: binnacle.acto,
+                  fojas: fojas,
+                  folios: folios,
+                  provedioDate: provedioDate,
+                  userDescription: binnacle.userDescription,
+                  createdBy: "BOT",
+
+                  totalTariff: 0,
+                  tariffHistory: "[]",
+                });
+
+
+                if (judicialBinnacleData) {
+                  try {
+                    const extensions = [".pdf", ".docx"];
+                    const originalFilePath = path.join(
+                      __dirname,
+                      `../../../../../public/docs/binnacle-bot-document-${binnacle.index}`
+                    );
+
+                    const newBinnacleName = `[BBD]-${v4()}`;
+                    for (const extension of extensions) {
+                      const fileWithExtension = `${originalFilePath}${extension}`;
+
+                      if (fs.existsSync(fileWithExtension)) {
+                        console.log("Archivo encontrado:", fileWithExtension);
+
+                        const fileStats = fs.statSync(fileWithExtension);
+                        const fileExtension = path.extname(fileWithExtension);
+
+                        // **Renombrar el archivo localmente**
+                        const newLocalFilePath = path.join(
+                          __dirname,
+                          `../../../../../public/docs/${newBinnacleName}${fileExtension}`
+                        );
+                        fs.renameSync(fileWithExtension, newLocalFilePath);
+
+                        console.log("Archivo renombrado localmente:", newLocalFilePath);
+
+                        const newBinFile = await models.JUDICIAL_BIN_FILE.create({
+                          judicialBinnacleId: judicialBinnacleData.dataValues.id,
+                          originalName: `${newBinnacleName}${fileExtension}`,
+                          nameOriginAws: "",
+                          customerHasBankId: judicialBinnacleData.dataValues.customerHasBankId,
+                          size: fileStats.size,
+                        });
+
+                        const fileBuffer = fs.readFileSync(newLocalFilePath);
+                        const fileStream = Readable.from(fileBuffer);
+
+                        const file: Express.Multer.File = {
+                          fieldname: "document",
+                          originalname: `${newBinnacleName}${fileExtension}`,
+                          encoding: "7bit",
+                          mimetype: getMimeType(fileExtension),
+                          buffer: fileBuffer,
+                          size: fileBuffer.length,
+                          stream: fileStream,
+                          destination: path.join(__dirname, "../../../../../public/docs"),
+                          filename: `${newBinnacleName}${fileExtension}`,
+                          path: newLocalFilePath,
+                        };
+
+                        await uploadFile(
+                          file,
+                          `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                        );
+
+                        await newBinFile.update({
+                          nameOriginAws: `${newBinnacleName}${fileExtension}`,
+                        });
+
+                        await deleteFile("../public/docs", path.basename(file.filename));
+
+                        console.log("Archivo renombrado, subido y eliminado localmente.");
+                      } else {
+                        console.log("El archivo no existe:", fileWithExtension);
+                      }
+                    }
+                  } catch (error) {
+                    console.log("Error al subir el archivo:", error);
+                  }
+                }
+
+                if(!binnacle.notifications.length) return
+
+                await Promise.all(binnacle.notifications.map(async (notification:Notification) => {binnacle
+                  const shipDate =
+                    notification.shipDate &&
+                    moment(notification.shipDate, "DD/MM/YYYY HH:mm").isValid()
+                      ? moment.tz(notification.shipDate, "DD/MM/YYYY HH:mm", "America/Lima").format(
+                          "YYYY-MM-DD HH:mm:ss"
+                        )
+                      : null;
+                  const resolutionDate =
+                    notification.resolutionDate &&
+                    moment(notification.resolutionDate, "DD/MM/YYYY HH:mm").isValid()
+                      ? moment.tz(
+                          notification.resolutionDate,
+                          "DD/MM/YYYY HH:mm",
+                          "America/Lima"
+                        ).format("YYYY-MM-DD HH:mm:ss")
+                      : null;
+                  const notificationPrint =
+                    notification.notificationPrint &&
+                    moment(
+                      notification.notificationPrint,
+                      "DD/MM/YYYY HH:mm"
+                    ).isValid()
+                      ? moment.tz(
+                          notification.notificationPrint,
+                          "DD/MM/YYYY HH:mm",
+                          "America/Lima"
+                        ).format("YYYY-MM-DD HH:mm:ss")
+                      : null;
+                  const sentCentral =
+                    notification.sentCentral &&
+                    moment(notification.sentCentral, "DD/MM/YYYY HH:mm").isValid()
+                      ? moment
+                          .tz(
+                            notification.sentCentral,
+                            "DD/MM/YYYY HH:mm",
+                            "America/Lima"
+                          )
+                          .format("YYYY-MM-DD HH:mm:ss")
+                      : null;
+                    const centralReceipt =
+                      notification.centralReceipt &&
+                      moment(
+                        notification.centralReceipt,
+                        "DD/MM/YYYY HH:mm"
+                      ).isValid()
+                        ? moment.tz(
+                            notification.centralReceipt,
+                            "DD/MM/YYYY HH:mm",
+                            "America/Lima"
+                          ).format("YYYY-MM-DD HH:mm:ss")
+                        : null;
+                    const notificationToRecipientOn =
+                      notification.notificationToRecipientOn &&
+                      moment(
+                        notification.notificationToRecipientOn,
+                        "DD/MM/YYYY HH:mm"
+                      ).isValid()
+                        ? moment.tz(
+                            notification.notificationToRecipientOn,
+                            "DD/MM/YYYY HH:mm",
+                            "America/Lima"
+                          ).format("YYYY-MM-DD HH:mm:ss")
+                        : null;
+                    const chargeReturnedToCourtOn =
+                      notification.chargeReturnedToCourtOn &&
+                      moment(
+                        notification.chargeReturnedToCourtOn,
+                        "DD/MM/YYYY HH:mm"
+                      ).isValid()
+                        ? moment
+                            .tz(
+                              notification.chargeReturnedToCourtOn,
+                              "DD/MM/YYYY HH:mm",
+                              "America/Lima"
+                            )
+                            .format("YYYY-MM-DD HH:mm:ss")
+                        : null;
+
+                    await models.JUDICIAL_BIN_NOTIFICATION.create({
+                      notificationCode: notification.notificationCode,
+                      addressee: notification.addressee,
+                      shipDate: shipDate,
+                      attachments: notification.attachments,
+                      deliveryMethod: notification.deliveryMethod,
+                      resolutionDate: resolutionDate,
+                      notificationPrint: notificationPrint,
+                      sentCentral: sentCentral,
+                      centralReceipt: centralReceipt,
+                      notificationToRecipientOn: notificationToRecipientOn,
+                      chargeReturnedToCourtOn: chargeReturnedToCourtOn,
+                      idJudicialBinacle: judicialBinnacleData.dataValues.id,
+                    });
+                  // console.log("Creado notificacion: ",  judicialBinNotification);
+                }))
+              }))
             }
 
-            // Find the binnacle by index
             // TODO: Find binnacle and id and index
 
-            const binnacleToUpadteFromDB = binnaclesFromDB.find((binnacle: any) => {
-              binnacle.dataValues.id === binnacleId
-            })
+            console.log("binnacles from db", binnaclesFromDB)
+            console.log("binnalce id", binnacleId)
+
+            const binnacleToUpadteFromDB = binnaclesFromDB.find((binnacle: any) => binnacle.dataValues.id === binnacleId)
+
+            console.log("Binnacle form db", binnacleToUpadteFromDB)
 
             const binncleToUpdateFromScraping = caseFileBinacles.find((binnacle: any)=> binnacle.index === binnacleToUpadteFromDB.dataValues.index)
             if(!binncleToUpdateFromScraping) throw boom.notFound("Binnacle to update form scraping not found")
@@ -232,13 +481,15 @@ export class JudicialBinaclePersonalScanService {
 
               const binnaclesFiles = await models.JUDICIAL_BIN_FILE.findAll({
                 where:{
-                  judicial_binnacle_id_judicial_binnacle: binnacleId
+                  judicial_binnacle_id_judicial_binnacle: binnacleId,
+                  deleted_at: null
                 }
               })
 
+
               // TODO: find binnacles files fron bd and bucket where binnacle index is a number and delete
               // 3. Delete on bucket and db files
-
+              console.log("Binnacles files", binnaclesFiles)
               await Promise.all(binnaclesFiles.map(async(binnacleFile:any)=>{
                 try{
                   await deleteFileBucket(
@@ -246,7 +497,7 @@ export class JudicialBinaclePersonalScanService {
                   )
                   await models.JUDICIAL_BIN_FILE.destroy({
                     where:{
-                      id_judicial_bin_file: binnacleFile.dataValues.id,
+                      judicial_binnacle_id_judicial_binnacle: binnacleId,
                       customer_has_bank_id_customer_has_bank: binnacleFile.dataValues.customerHasBankId,
                       name_origin_aws: binnacleFile.dataValues.name_origin_aws
                     }
@@ -496,7 +747,7 @@ export class JudicialBinaclePersonalScanService {
               // console.log("Creado notificacion: ",  judicialBinNotification);
             }))
 
-          }
+
         } catch (error) {
           throw boom.notFound("Error to proccess case file");
         }
