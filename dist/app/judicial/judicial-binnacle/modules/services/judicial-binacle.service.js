@@ -111,8 +111,10 @@ class JudicialBinacleService {
         let errorsCounter = 0;
         try {
             const downloadPath = path_1.default.join(__dirname, "../../../../../public/docs");
-            if (!fs_1.default.existsSync(downloadPath))
+            if (!fs_1.default.existsSync(downloadPath)) {
+                console.log("Create a folder to save files");
                 fs_1.default.mkdirSync(downloadPath);
+            }
             const caseFiles = await this.getAllCaseFilesDB();
             const { browser } = await (0, setupBrowser_1.setupBrowser)(downloadPath);
             if (errorsCounter > 4)

@@ -8,7 +8,7 @@ const router = express.Router();
 const { updateAllBinnacleInformationByScrapingSchema } = binnacleSchemas;
 
 router.post('/:caseFileId/:binnacleId',
-  JWTAuth,
+  // JWTAuth,
   validatorHandler(updateAllBinnacleInformationByScrapingSchema, "params"),
   updateAllBinnacleInformationByScrapingController
 );

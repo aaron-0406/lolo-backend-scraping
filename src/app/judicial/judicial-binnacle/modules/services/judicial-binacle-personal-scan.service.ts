@@ -117,10 +117,11 @@ export class JudicialBinaclePersonalScanService {
           let binnaclesFromDB: any[] = [];
           let prevBinnaclesIndexs: any[]= []
           let scrapingBinnaclesIndex: any[] = [];
-          let newBinnaclesFound: any[] = [];
 
+          console.log("Getting binnacle types");
           const binnacleTypes = await this.findAllBinnaclesTypes(caseFile.dataValues.customerHasBankId)
           if (!binnacleTypes) throw boom.notFound("Binnacles types not found");
+          console.log("Getting procedural stages");
           const proceduralStages = await this.findAllproceduralStages(caseFile.dataValues.customerHasBankId)
           if (!proceduralStages) throw boom.notFound("Procedural stages not found");
 

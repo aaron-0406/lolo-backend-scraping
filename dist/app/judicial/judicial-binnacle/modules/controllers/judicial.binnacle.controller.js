@@ -1,16 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reScanBinnacleController = void 0;
+exports.updateAllBinnacleInformationByScrapingController = void 0;
 const judicial_binacle_personal_scan_service_1 = require("../services/judicial-binacle-personal-scan.service");
-const service = new judicial_binacle_personal_scan_service_1.JudicialBinacleService();
-const reScanBinnacleController = async (req, res, next) => {
+const service = new judicial_binacle_personal_scan_service_1.JudicialBinaclePersonalScanService();
+const updateAllBinnacleInformationByScrapingController = async (req, res, next) => {
     try {
-        const { id } = req.params;
-        // const caseFiles = await service.findAll();
-        // res.json(caseFiles);
+        const { caseFileId, binnacleId } = req.params;
+        const caseFiles = await service.main(Number(caseFileId), Number(binnacleId));
+        res.json(caseFiles);
     }
     catch (error) {
         next(error);
     }
 };
-exports.reScanBinnacleController = reScanBinnacleController;
+exports.updateAllBinnacleInformationByScrapingController = updateAllBinnacleInformationByScrapingController;
