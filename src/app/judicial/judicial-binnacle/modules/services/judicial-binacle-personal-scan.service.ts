@@ -96,6 +96,34 @@ export class JudicialBinaclePersonalScanService {
     else return proceduralStages
   }
 
+  async findBinnacleByID(id: string) {
+    const judicialBinnacle = await models.JUDICIAL_BINNACLE.findOne({
+      include: [
+        {
+          model: models.JUDICIAL_BIN_TYPE_BINNACLE,
+          as: "binnacleType",
+        },
+        {
+          model: models.JUDICIAL_BIN_PROCEDURAL_STAGE,
+          as: "judicialBinProceduralStage",
+        },
+        {
+          model: models.JUDICIAL_BIN_FILE,
+          as: "judicialBinFiles",
+        },
+      ],
+      where: {
+        id,
+      },
+    });
+
+    if (!judicialBinnacle) {
+      throw boom.notFound("Bitacora Judicial no encontrada");
+    }
+
+    return judicialBinnacle;
+  }
+
 
   async main(caseFileId: number, binnacleId:number) {
     let errorsCounter:number = 0;
@@ -459,12 +487,12 @@ export class JudicialBinaclePersonalScanService {
 
             // TODO: Find binnacle and id and index
 
-            console.log("binnacles from db", binnaclesFromDB)
+            // console.log("binnacles from db", binnaclesFromDB)
             console.log("binnalce id", binnacleId)
 
             const binnacleToUpadteFromDB = binnaclesFromDB.find((binnacle: any) => binnacle.dataValues.id === binnacleId)
 
-            console.log("Binnacle form db", binnacleToUpadteFromDB)
+            // console.log("Binnacle form db", binnacleToUpadteFromDB)
 
             const binncleToUpdateFromScraping = caseFileBinacles.find((binnacle: any)=> binnacle.index === binnacleToUpadteFromDB.dataValues.index)
             if(!binncleToUpdateFromScraping) throw boom.notFound("Binnacle to update form scraping not found")
@@ -487,19 +515,18 @@ export class JudicialBinaclePersonalScanService {
               })
 
 
-              // TODO: find binnacles files fron bd and bucket where binnacle index is a number and delete
+              // TODO: find binnacles files from bd and bucket where binnacle index is a number and delete
               // 3. Delete on bucket and db files
-              console.log("Binnacles files", binnaclesFiles)
               await Promise.all(binnaclesFiles.map(async(binnacleFile:any)=>{
                 try{
                   await deleteFileBucket(
-                    `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${binnacleFile.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${binnacleFile.dataValues.name_origin_aws}`
+                    `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${binnacleFile.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${binnacleFile.dataValues.nameOriginAws}`
                   )
                   await models.JUDICIAL_BIN_FILE.destroy({
                     where:{
                       judicial_binnacle_id_judicial_binnacle: binnacleId,
                       customer_has_bank_id_customer_has_bank: binnacleFile.dataValues.customerHasBankId,
-                      name_origin_aws: binnacleFile.dataValues.name_origin_aws
+                      name_origin_aws: binnacleFile.dataValues.nameOriginAws
                     }
                   })
                 }catch(e){
@@ -747,23 +774,21 @@ export class JudicialBinaclePersonalScanService {
               // console.log("Creado notificacion: ",  judicialBinNotification);
             }))
 
+            const docsPath = path.join(__dirname, `../../../../../public/docs`);
+
+            await deleteFolderContents(docsPath);
 
         } catch (error) {
           throw boom.notFound("Error to proccess case file");
         }
-      await browser.close();
 
+      await browser.close();
+      const binnacle = await this.findBinnacleByID(String(binnacleId))
+      return binnacle;
+      
     } catch (error) {
       console.error(error);
     }
-    const notScanedCaseFiles = await models.JUDICIAL_CASE_FILE.findAll({
-      where: {
-        isScanValid: true,
-        wasScanned: false,
-      },
-    });
-
-    return { notScanedCaseFiles: notScanedCaseFiles.length, errorsCounter: errorsCounter };
   }
 }
 

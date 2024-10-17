@@ -10,8 +10,8 @@ export const updateAllBinnacleInformationByScrapingController = async (
 ) => {
   try {
     const { caseFileId, binnacleId } = req.params;
-    const caseFiles = await service.main( Number(caseFileId), Number(binnacleId));
-    res.json(caseFiles);
+    const binnacle = await service.main( Number(caseFileId), Number(binnacleId));
+    res.json(binnacle);
   } catch (error) {
     next(error);
   }
