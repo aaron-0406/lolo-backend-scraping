@@ -11,7 +11,7 @@ async function removeHCaptcha(page) {
                 await new Promise((resolve) => setTimeout(resolve, 5000));
                 await page.waitForSelector("body > div.container > div:nth-child(2) > div.captcha-mid > form > center > input.btn.btn-success.btn-sm");
                 await page.click("body > div.container > div:nth-child(2) > div.captcha-mid > form > center > input.btn.btn-success.btn-sm");
-                new Promise((resolve) => setTimeout(resolve, 5000));
+                new Promise((resolve) => setTimeout(resolve, 10000));
                 return true;
             }
             else {
