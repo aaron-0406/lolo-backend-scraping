@@ -136,6 +136,10 @@ export class JudicialBinacleService {
       if(errorsCounter > 4) return { notScanedCaseFiles: 0, errorsCounter: errorsCounter };
 
       for (const caseFile of caseFiles) {
+        if (!fs.existsSync(downloadPath)) {
+          console.log("Create a folder to save files")
+          fs.mkdirSync(downloadPath);
+        }
         if (
           !caseFile.dataValues.isScanValid ||
           caseFile.dataValues.wasScanned ||
