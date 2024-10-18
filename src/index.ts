@@ -99,7 +99,7 @@ app.get("/ping", (_req, res) => {
   res.send("Hello World! 2");
 });
 
-  // (async() => await service.main())();
+  (async() => await service.main())();
 
   // cron.schedule('0 12 * * *', async () => {
   //   await service.resetAllCaseFiles();

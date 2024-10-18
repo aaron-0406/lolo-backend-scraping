@@ -17,6 +17,7 @@ const validateAndNavigateCaseFile_1 = require("./judicial-binacle.service.libs/m
 const helpers_1 = require("../../../../../libs/helpers");
 const aws_bucket_1 = require("../../../../../libs/aws_bucket");
 const get_nine_types_1 = require("../libs/get-nine-types");
+const deleteFolderContents_1 = require("./judicial-binacle.service.libs/main/deleteFolderContents");
 const uuid_1 = require("uuid");
 const config_1 = __importDefault(require("../../../../../config/config"));
 const boom_1 = __importDefault(require("@hapi/boom"));
@@ -92,6 +93,31 @@ class JudicialBinaclePersonalScanService {
             throw boom_1.default.notFound("Procedural stages not found");
         else
             return proceduralStages;
+    }
+    async findBinnacleByID(id) {
+        const judicialBinnacle = await models.JUDICIAL_BINNACLE.findOne({
+            include: [
+                {
+                    model: models.JUDICIAL_BIN_TYPE_BINNACLE,
+                    as: "binnacleType",
+                },
+                {
+                    model: models.JUDICIAL_BIN_PROCEDURAL_STAGE,
+                    as: "judicialBinProceduralStage",
+                },
+                {
+                    model: models.JUDICIAL_BIN_FILE,
+                    as: "judicialBinFiles",
+                },
+            ],
+            where: {
+                id,
+            },
+        });
+        if (!judicialBinnacle) {
+            throw boom_1.default.notFound("Bitacora Judicial no encontrada");
+        }
+        return judicialBinnacle;
     }
     async main(caseFileId, binnacleId) {
         var _a;
@@ -340,10 +366,10 @@ class JudicialBinaclePersonalScanService {
                     }));
                 }
                 // TODO: Find binnacle and id and index
-                console.log("binnacles from db", binnaclesFromDB);
+                // console.log("binnacles from db", binnaclesFromDB)
                 console.log("binnalce id", binnacleId);
                 const binnacleToUpadteFromDB = binnaclesFromDB.find((binnacle) => binnacle.dataValues.id === binnacleId);
-                console.log("Binnacle form db", binnacleToUpadteFromDB);
+                // console.log("Binnacle form db", binnacleToUpadteFromDB)
                 const binncleToUpdateFromScraping = caseFileBinacles.find((binnacle) => binnacle.index === binnacleToUpadteFromDB.dataValues.index);
                 if (!binncleToUpdateFromScraping)
                     throw boom_1.default.notFound("Binnacle to update form scraping not found");
@@ -361,17 +387,16 @@ class JudicialBinaclePersonalScanService {
                         deleted_at: null
                     }
                 });
-                // TODO: find binnacles files fron bd and bucket where binnacle index is a number and delete
+                // TODO: find binnacles files from bd and bucket where binnacle index is a number and delete
                 // 3. Delete on bucket and db files
-                console.log("Binnacles files", binnaclesFiles);
                 await Promise.all(binnaclesFiles.map(async (binnacleFile) => {
                     try {
-                        await (0, aws_bucket_1.deleteFileBucket)(`${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${binnacleFile.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${binnacleFile.dataValues.name_origin_aws}`);
+                        await (0, aws_bucket_1.deleteFileBucket)(`${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${binnacleFile.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle/${binnacleFile.dataValues.nameOriginAws}`);
                         await models.JUDICIAL_BIN_FILE.destroy({
                             where: {
                                 judicial_binnacle_id_judicial_binnacle: binnacleId,
                                 customer_has_bank_id_customer_has_bank: binnacleFile.dataValues.customerHasBankId,
-                                name_origin_aws: binnacleFile.dataValues.name_origin_aws
+                                name_origin_aws: binnacleFile.dataValues.nameOriginAws
                             }
                         });
                     }
@@ -528,22 +553,19 @@ class JudicialBinaclePersonalScanService {
                     });
                     // console.log("Creado notificacion: ",  judicialBinNotification);
                 }));
+                const docsPath = path_1.default.join(__dirname, `../../../../../public/docs`);
+                await (0, deleteFolderContents_1.deleteFolderContents)(docsPath);
             }
             catch (error) {
                 throw boom_1.default.notFound("Error to proccess case file");
             }
             await browser.close();
+            const binnacle = await this.findBinnacleByID(String(binnacleId));
+            return binnacle;
         }
         catch (error) {
             console.error(error);
         }
-        const notScanedCaseFiles = await models.JUDICIAL_CASE_FILE.findAll({
-            where: {
-                isScanValid: true,
-                wasScanned: false,
-            },
-        });
-        return { notScanedCaseFiles: notScanedCaseFiles.length, errorsCounter: errorsCounter };
     }
 }
 exports.JudicialBinaclePersonalScanService = JudicialBinaclePersonalScanService;
