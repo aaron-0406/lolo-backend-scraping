@@ -132,7 +132,10 @@ class JudicialBinaclePersonalScanService {
                 throw boom_1.default.notFound("Case file not found");
             //? BLOCK 1
             try {
-                if (!caseFile.dataValues.isScanValid || caseFile.dataValues.wasScanned || !caseFile.dataValues.processStatus || caseFile.dataValues.processStatus === "Concluido")
+                if (!caseFile.dataValues.isScanValid ||
+                    caseFile.dataValues.wasScanned ||
+                    !caseFile.dataValues.processStatus ||
+                    caseFile.dataValues.processStatus === "Concluido")
                     return;
                 let isValidCaseFile;
                 let binnaclesFromDB = [];

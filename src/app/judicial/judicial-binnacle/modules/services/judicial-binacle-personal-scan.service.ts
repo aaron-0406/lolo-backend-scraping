@@ -139,7 +139,13 @@ export class JudicialBinaclePersonalScanService {
       //? BLOCK 1
 
         try {
-          if (!caseFile.dataValues.isScanValid || caseFile.dataValues.wasScanned || !caseFile.dataValues.processStatus || caseFile.dataValues.processStatus === "Concluido" ) return;
+          if (
+            !caseFile.dataValues.isScanValid ||
+            caseFile.dataValues.wasScanned ||
+            !caseFile.dataValues.processStatus ||
+            caseFile.dataValues.processStatus === "Concluido"
+          )
+            return;
 
           let isValidCaseFile:boolean;
           let binnaclesFromDB: any[] = [];
@@ -148,9 +154,12 @@ export class JudicialBinaclePersonalScanService {
           let newBinnaclesFound: any[] = [];
 
           console.log("Getting binnacle types");
+
           const binnacleTypes = await this.findAllBinnaclesTypes(caseFile.dataValues.customerHasBankId)
           if (!binnacleTypes) throw boom.notFound("Binnacles types not found");
+
           console.log("Getting procedural stages");
+
           const proceduralStages = await this.findAllproceduralStages(caseFile.dataValues.customerHasBankId)
           if (!proceduralStages) throw boom.notFound("Procedural stages not found");
 
@@ -785,7 +794,7 @@ export class JudicialBinaclePersonalScanService {
       await browser.close();
       const binnacle = await this.findBinnacleByID(String(binnacleId))
       return binnacle;
-      
+
     } catch (error) {
       console.error(error);
     }

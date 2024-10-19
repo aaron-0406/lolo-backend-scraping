@@ -34,7 +34,18 @@ export class JudicialBinacleService {
   // }
 
   async resetAllCaseFiles(): Promise<void> {
-    await models.JUDICIAL_CASE_FILE.update({ wasScanned: false }, { where: { isScanValid: true } });
+    await models.JUDICIAL_CASE_FILE.update(
+      { wasScanned: false },
+      {
+        where: {
+          [Op.and]: [
+            { is_scan_valid: true }, // caseFile.dataValues.isScanValid
+            { was_scanned: false }, // caseFile.dataValues.wasScanned
+            { process_status: "Activo" }, // caseFile.dataValues.processStatus
+          ],
+        },
+      }
+    );
   }
   //? Puppeteer
   async getAllCaseFilesDB() {
