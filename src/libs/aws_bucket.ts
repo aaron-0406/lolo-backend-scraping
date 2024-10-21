@@ -43,6 +43,27 @@ export const uploadFile = async (
   return await client.send(command);
 };
 
+export const personalScanUploadFile = async (
+  file: Express.Multer.File,
+  pathname: string
+) => {
+  // Reading File
+  const stream = fs.createReadStream(
+    path.join(__dirname, "../public/docs-personal-scan/", file.filename)
+  );
+
+  const uploadParam: PutObjectCommandInput = {
+    Bucket: AWS_BUCKET_NAME,
+    Key: `${pathname}/${file.filename}`,
+    Body: stream,
+  };
+
+  // UPLOAD TO AWS
+  const command = new PutObjectCommand(uploadParam);
+
+  return await client.send(command);
+};
+
 export const readFile = async (filename: string) => {
   const getParam: GetObjectCommandInput = {
     Bucket: AWS_BUCKET_NAME,

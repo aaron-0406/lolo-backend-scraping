@@ -10,16 +10,23 @@ async function fillCaseFileNumber(page, numberCaseFileDecoder) {
         const errElement = document.getElementById("mensajeNoExisteExpedientes");
         // if (!errElement?.style?.display) return true;
         // return false;
-        return errElement === null || errElement === void 0 ? void 0 : errElement.style["0"];
+        return errElement === null || errElement === void 0 ? void 0 : errElement.style;
     });
     const isCorrectCaptcha = await page.evaluate(() => {
         const errElement = document.getElementById("codCaptchaError");
         // if (!errElement?.style?.display) return true;
         // return false;
-        return errElement === null || errElement === void 0 ? void 0 : errElement.style["0"];
+        return errElement === null || errElement === void 0 ? void 0 : errElement.style;
+    });
+    const isBotDetected = await page.evaluate(() => {
+        const errElement = document.getElementById("custom_footer");
+        // if (!errElement?.style?.display) return true;
+        // return false;
+        return errElement === null || errElement === void 0 ? void 0 : errElement.style;
     });
     console.log("Case file previous", caseFileExist);
     console.log("Captcha previous", isCorrectCaptcha);
+    console.log("Bot detected", isBotDetected);
     // #####################################
     await page.waitForSelector("#myTab > li:nth-child(2) > a"),
         await page.click("#myTab > li:nth-child(2) > a"),

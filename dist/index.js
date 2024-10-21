@@ -13,7 +13,9 @@ const ip_handler_1 = __importDefault(require("./middlewares/ip.handler"));
 const error_handler_1 = __importDefault(require("./middlewares/error.handler"));
 const node_cron_1 = __importDefault(require("node-cron"));
 const routes_1 = __importDefault(require("./routes"));
+const judicial_case_files_service_1 = require("./app/judicial/judicial-case-file/modules/services/judicial-case-files.service");
 const service = new judicial_binacle_service_1.JudicialBinacleService();
+const caseFilesService = new judicial_case_files_service_1.judicialCaseFileService();
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = error_handler_1.default;
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -64,9 +66,10 @@ app.listen(process.env.PORT || 3000, () => {
         res.send("Hello World! 2");
     });
     // (async() => await service.main())();
+    // (async() => await caseFilesService.currencyExchange())();
     node_cron_1.default.schedule('0 6 * * *', async () => {
         await service.resetAllCaseFiles();
-        console.log('Cron job iniciado: 10 AM');
+        console.log('Cron job iniciado: 6 AM');
         await processCaseFiles();
         async function processCaseFiles() {
             const { notScanedCaseFiles, errorsCounter } = await service.main();

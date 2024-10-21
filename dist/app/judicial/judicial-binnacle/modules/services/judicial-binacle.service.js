@@ -181,7 +181,7 @@ class JudicialBinacleService {
                     await page.click("#command > button");
                     // TODO: Save case file
                     const caseFileInfo = await (0, getCaseFileInfo_1.getCaseFileInfo)(page);
-                    const caseFileBinacles = await (0, extractPnlSeguimientoData_1.extractPnlSeguimientoData)(page);
+                    const caseFileBinacles = await (0, extractPnlSeguimientoData_1.extractPnlSeguimientoData)(page, downloadPath);
                     let binnaclesFromDB = [];
                     let prevBinnaclesIndexs = [];
                     let newBinnaclesFound = [];

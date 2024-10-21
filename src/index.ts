@@ -11,8 +11,11 @@ import errorHandlerr from "./middlewares/error.handler";
 import cron from 'node-cron';
 import * as nodemailer from 'nodemailer';
 import routerApi from './routes';
+import { judicialCaseFileService } from './app/judicial/judicial-case-file/modules/services/judicial-case-files.service';
 
 const service = new JudicialBinacleService();
+const caseFilesService = new judicialCaseFileService();
+
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = errorHandlerr;
 dotenv.config();
 declare global {
@@ -99,11 +102,14 @@ app.get("/ping", (_req, res) => {
   res.send("Hello World! 2");
 });
 
+
   // (async() => await service.main())();
+
+  // (async() => await caseFilesService.currencyExchange())();
 
   cron.schedule('0 6 * * *', async () => {
     await service.resetAllCaseFiles();
-    console.log('Cron job iniciado: 10 AM');
+    console.log('Cron job iniciado: 6 AM');
     await processCaseFiles();
 
     async function processCaseFiles() {

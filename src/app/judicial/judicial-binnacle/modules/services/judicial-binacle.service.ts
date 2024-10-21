@@ -219,7 +219,7 @@ export class JudicialBinacleService {
 
           // TODO: Save case file
           const caseFileInfo = await getCaseFileInfo(page);
-          const caseFileBinacles = await extractPnlSeguimientoData(page);
+          const caseFileBinacles = await extractPnlSeguimientoData(page, downloadPath);
 
           let binnaclesFromDB: any[] = [];
           let prevBinnaclesIndexs: any[]= []

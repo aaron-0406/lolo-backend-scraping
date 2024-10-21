@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeNormalCaptchaV2SR = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const judicial_binacle_constants_1 = require("../../../constants/judicial-binacle.constants");
+const removeHCaptcha_1 = require("../removeHCaptcha/removeHCaptcha");
 async function removeNormalCaptchaV2SR({ page, solver }) {
     let isBotDetected = false;
     let isCasFileTrue = false;
@@ -32,6 +34,8 @@ async function removeNormalCaptchaV2SR({ page, solver }) {
             }).then(async () => {
                 await page.locator("#btnRepro").click();
                 await new Promise(resolve => setTimeout(resolve, 5000));
+                if (page.url() !== judicial_binacle_constants_1.JEC_URL)
+                    await (0, removeHCaptcha_1.removeHCaptcha)(page);
                 const valueCaptcha = await page.evaluate(() => {
                     const inputAudio = document.getElementById("1zirobotz0");
                     return inputAudio === null || inputAudio === void 0 ? void 0 : inputAudio.value;
@@ -73,8 +77,13 @@ async function removeNormalCaptchaV2SR({ page, solver }) {
                     return errElement === null || errElement === void 0 ? void 0 : errElement.style;
                 }
             });
+            const botDetected = await page.evaluate(() => {
+                const errElement = document.getElementById("custom_footer");
+                return errElement === null || errElement === void 0 ? void 0 : errElement.style;
+            });
             console.log("Case file last", caseFileExist);
             console.log("Captcha last", isCorrectCaptcha);
+            console.log("Bot detected", botDetected);
         });
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         await delay(2000);

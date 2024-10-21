@@ -18,24 +18,31 @@ export async function fillCaseFileNumber(
 
   await page.waitForSelector("#mensajeNoExisteExpedientes")
   await page.waitForSelector("#codCaptchaError")
-  
+
   const caseFileExist = await page.evaluate(() => {
     const errElement = document.getElementById("mensajeNoExisteExpedientes");
     // if (!errElement?.style?.display) return true;
     // return false;
-    return errElement?.style["0"];
+    return errElement?.style;
   });
 
   const isCorrectCaptcha = await page.evaluate(() => {
     const errElement = document.getElementById("codCaptchaError");
     // if (!errElement?.style?.display) return true;
     // return false;
-    return errElement?.style["0"];
+    return errElement?.style;
+  });
+
+  const isBotDetected = await page.evaluate(() => {
+    const errElement = document.getElementById("custom_footer");
+    // if (!errElement?.style?.display) return true;
+    // return false;
+    return errElement?.style;
   });
 
   console.log("Case file previous", caseFileExist);
   console.log("Captcha previous", isCorrectCaptcha);
-
+  console.log("Bot detected", isBotDetected);
   // #####################################
 
   await page.waitForSelector("#myTab > li:nth-child(2) > a"),

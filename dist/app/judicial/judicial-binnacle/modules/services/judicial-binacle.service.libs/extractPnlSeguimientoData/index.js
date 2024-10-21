@@ -8,7 +8,7 @@ const path_1 = __importDefault(require("path"));
 const waitForDownload_1 = require("./waitForDownload");
 const clickDynamicAnchor_1 = require("./clickDynamicAnchor");
 const renameDownloadedFile_1 = require("./renameDownloadedFile");
-async function extractPnlSeguimientoData(page) {
+async function extractPnlSeguimientoData(page, downloadPath) {
     const binnacles = await page.evaluate(async () => {
         var _a;
         const results = [];
@@ -122,7 +122,6 @@ async function extractPnlSeguimientoData(page) {
             if (data.urlDownload) {
                 console.log("Descargando archivo dinámico", data.urlDownload);
                 await (0, clickDynamicAnchor_1.clickDynamicAnchor)(page, data.urlDownload);
-                const downloadPath = path_1.default.join(__dirname, "../../../../../../../public/docs");
                 const downloadedFilePath = await (0, waitForDownload_1.waitForDownload)(downloadPath, startTime);
                 const fileExtension = path_1.default.extname(downloadedFilePath);
                 const newFileName = `binnacle-bot-document-${data.index}${fileExtension}`;

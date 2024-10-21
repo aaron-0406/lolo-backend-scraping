@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFileBucket = exports.createFolder = exports.readFile = exports.uploadFile = void 0;
+exports.deleteFileBucket = exports.createFolder = exports.readFile = exports.personalScanUploadFile = exports.uploadFile = void 0;
 const client_s3_1 = require("@aws-sdk/client-s3");
 const fs_1 = __importDefault(require("fs"));
 const config_1 = __importDefault(require("../config/config"));
@@ -26,6 +26,19 @@ const uploadFile = async (file, pathname) => {
     return await client.send(command);
 };
 exports.uploadFile = uploadFile;
+const personalScanUploadFile = async (file, pathname) => {
+    // Reading File
+    const stream = fs_1.default.createReadStream(path_1.default.join(__dirname, "../public/docs-personal-scan/", file.filename));
+    const uploadParam = {
+        Bucket: AWS_BUCKET_NAME,
+        Key: `${pathname}/${file.filename}`,
+        Body: stream,
+    };
+    // UPLOAD TO AWS
+    const command = new client_s3_1.PutObjectCommand(uploadParam);
+    return await client.send(command);
+};
+exports.personalScanUploadFile = personalScanUploadFile;
 const readFile = async (filename) => {
     const getParam = {
         Bucket: AWS_BUCKET_NAME,

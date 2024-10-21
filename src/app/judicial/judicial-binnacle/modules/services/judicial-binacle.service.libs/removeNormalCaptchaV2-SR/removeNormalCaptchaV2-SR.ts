@@ -1,6 +1,8 @@
 import { Page } from "puppeteer";
 import path from "path";
 import fs from "fs";
+import { JEC_URL } from "../../../constants/judicial-binacle.constants";
+import { removeHCaptcha } from "../removeHCaptcha/removeHCaptcha";
 
 export async function removeNormalCaptchaV2SR(
 { page, solver }: { page: Page, solver: any }
@@ -21,9 +23,7 @@ export async function removeNormalCaptchaV2SR(
   const captchaDir = path.resolve(__dirname, '../../../../../public/audio-captchas');
 
   // Verifica si la carpeta existe, si no, la crea
-  if (!fs.existsSync(captchaDir)) {
-    fs.mkdirSync(captchaDir, { recursive: true });
-  }
+  if (!fs.existsSync(captchaDir)) { fs.mkdirSync(captchaDir, { recursive: true } );}
 
   try {
     let  data = "";
@@ -33,7 +33,10 @@ export async function removeNormalCaptchaV2SR(
       }).then(async()=>{
         await page.locator("#btnRepro").click();
         await new Promise(resolve => setTimeout(resolve, 5000));
-        const valueCaptcha = await page.evaluate(() => {
+
+        if(page.url() !== JEC_URL) await removeHCaptcha(page)
+
+          const valueCaptcha = await page.evaluate(() => {
           const inputAudio = document.getElementById("1zirobotz0") as HTMLInputElement;
           return inputAudio?.value;
         })
@@ -77,8 +80,15 @@ export async function removeNormalCaptchaV2SR(
         }
       });
 
+      const botDetected = await page.evaluate(() => {
+        const errElement = document.getElementById("custom_footer");
+        return errElement?.style
+      });
+
+
         console.log("Case file last", caseFileExist);
         console.log("Captcha last", isCorrectCaptcha);
+        console.log("Bot detected", botDetected);
     });
 
     const delay = (ms:any) => new Promise(resolve => setTimeout(resolve, ms));

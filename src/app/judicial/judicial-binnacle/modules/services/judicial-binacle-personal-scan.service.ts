@@ -1,5 +1,4 @@
-import { Op, where } from "sequelize"
-import { Express } from "express";
+import { Op } from "sequelize"
 import path from "path";
 import fs from 'fs';
 import moment from "moment-timezone";
@@ -10,14 +9,12 @@ import { getCaseFileInfo } from "./judicial-binacle.service.libs/getCaseFileInfo
 import { setupBrowser } from "./judicial-binacle.service.libs/main/setupBrowser";
 import { validateAndNavigateCaseFile } from "./judicial-binacle.service.libs/main/validateAndNavigateCaseFile";
 import { deleteFile } from "../../../../../libs/helpers";
-import { deleteFileBucket, uploadFile } from "../../../../../libs/aws_bucket";
+import { deleteFileBucket, personalScanUploadFile } from "../../../../../libs/aws_bucket";
 import { getMimeType } from "../libs/get-nine-types";
 import { Notification } from "../types/external-types";
 import { deleteFolderContents } from "./judicial-binacle.service.libs/main/deleteFolderContents";
 import { v4 } from "uuid";
 import config from "../../../../../config/config";
-import * as nodemailer from 'nodemailer';
-import { generateHtmlStructureToNewBinnacle } from "../assets/html-templates/generateHtmlStructureToNewBinnacle";
 import boom from "@hapi/boom";
 
 const { models } = sequelize;
@@ -128,7 +125,7 @@ export class JudicialBinaclePersonalScanService {
   async main(caseFileId: number, binnacleId:number) {
     let errorsCounter:number = 0;
     try {
-      const downloadPath = path.join(__dirname, "../../../../../public/docs");
+      const downloadPath = path.join(__dirname, "../../../../../public/docs-personal-scan");
       if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
 
       const { browser } = await setupBrowser(downloadPath);
@@ -195,7 +192,7 @@ export class JudicialBinaclePersonalScanService {
 
 
           const caseFileInfo = await getCaseFileInfo(page); // scrapp
-          const caseFileBinacles = await extractPnlSeguimientoData(page);
+          const caseFileBinacles = await extractPnlSeguimientoData(page, downloadPath);
 
           prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
             .filter((binnacle: any) => binnacle.dataValues.index !== null)
@@ -327,7 +324,7 @@ export class JudicialBinaclePersonalScanService {
                     const extensions = [".pdf", ".docx"];
                     const originalFilePath = path.join(
                       __dirname,
-                      `../../../../../public/docs/binnacle-bot-document-${binnacle.index}`
+                      `../../../../../public/docs-personal-scan/binnacle-bot-document-${binnacle.index}`
                     );
 
                     const newBinnacleName = `[BBD]-${v4()}`;
@@ -343,7 +340,7 @@ export class JudicialBinaclePersonalScanService {
                         // **Renombrar el archivo localmente**
                         const newLocalFilePath = path.join(
                           __dirname,
-                          `../../../../../public/docs/${newBinnacleName}${fileExtension}`
+                          `../../../../../public/docs-personal-scan/${newBinnacleName}${fileExtension}`
                         );
                         fs.renameSync(fileWithExtension, newLocalFilePath);
 
@@ -368,12 +365,12 @@ export class JudicialBinaclePersonalScanService {
                           buffer: fileBuffer,
                           size: fileBuffer.length,
                           stream: fileStream,
-                          destination: path.join(__dirname, "../../../../../public/docs"),
+                          destination: path.join(__dirname, "../../../../../public/docs-personal-scan"),
                           filename: `${newBinnacleName}${fileExtension}`,
                           path: newLocalFilePath,
                         };
 
-                        await uploadFile(
+                        await personalScanUploadFile(
                           file,
                           `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
                         );
@@ -382,7 +379,7 @@ export class JudicialBinaclePersonalScanService {
                           nameOriginAws: `${newBinnacleName}${fileExtension}`,
                         });
 
-                        await deleteFile("../public/docs", path.basename(file.filename));
+                        await deleteFile("../public/docs-personal-scan", path.basename(file.filename));
 
                         console.log("Archivo renombrado, subido y eliminado localmente.");
                       } else {
@@ -617,7 +614,7 @@ export class JudicialBinaclePersonalScanService {
                 const extensions = [".pdf", ".docx"];
                 const originalFilePath = path.join(
                   __dirname,
-                  `../../../../../public/docs/binnacle-bot-document-${binncleToUpdateFromScraping.index}`
+                  `../../../../../public/docs-personal-scan/binnacle-bot-document-${binncleToUpdateFromScraping.index}`
                 );
 
                 const newBinnacleName = `[BBD]-${v4()}`;
@@ -633,7 +630,7 @@ export class JudicialBinaclePersonalScanService {
                     // **Renombrar el archivo localmente**
                     const newLocalFilePath = path.join(
                       __dirname,
-                      `../../../../../public/docs/${newBinnacleName}${fileExtension}`
+                      `../../../../../public/docs-personal-scan/${newBinnacleName}${fileExtension}`
                     );
                     fs.renameSync(fileWithExtension, newLocalFilePath);
 
@@ -658,12 +655,14 @@ export class JudicialBinaclePersonalScanService {
                       buffer: fileBuffer,
                       size: fileBuffer.length,
                       stream: fileStream,
-                      destination: path.join(__dirname, "../../../../../public/docs"),
+                      destination: path.join(__dirname, "../../../../../public/docs-personal-scan"),
                       filename: `${newBinnacleName}${fileExtension}`,
                       path: newLocalFilePath,
                     };
 
-                    await uploadFile(
+                    console.log(file)
+
+                    await personalScanUploadFile(
                       file,
                       `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${juducialBinnacleUpadated.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
                     );
@@ -672,7 +671,7 @@ export class JudicialBinaclePersonalScanService {
                       nameOriginAws: `${newBinnacleName}${fileExtension}`,
                     });
 
-                    await deleteFile("../public/docs", path.basename(file.filename));
+                    await deleteFile("../public/docs-personal-scan", path.basename(file.filename));
 
                     console.log("Archivo renombrado, subido y eliminado localmente.");
                   } else {
@@ -783,7 +782,7 @@ export class JudicialBinaclePersonalScanService {
               // console.log("Creado notificacion: ",  judicialBinNotification);
             }))
 
-            const docsPath = path.join(__dirname, `../../../../../public/docs`);
+            const docsPath = path.join(__dirname, `../../../../../public/docs-personal-scan`);
 
             await deleteFolderContents(docsPath);
 

@@ -5,7 +5,7 @@ import { clickDynamicAnchor } from "./clickDynamicAnchor";
 import { renameDownloadedFile } from "./renameDownloadedFile";
 import { Notification, PnlSeguimientoData } from "../../../types/external-types";
 
-export async function extractPnlSeguimientoData(page: Page): Promise<PnlSeguimientoData[]> {
+export async function extractPnlSeguimientoData(page: Page, downloadPath:string): Promise<PnlSeguimientoData[]> {
   const binnacles: PnlSeguimientoData[] = await page.evaluate(async () => {
       const results: PnlSeguimientoData[] = [];
       let index = 1;
@@ -138,8 +138,6 @@ export async function extractPnlSeguimientoData(page: Page): Promise<PnlSeguimie
         console.log("Descargando archivo dinámico", data.urlDownload);
 
         await clickDynamicAnchor(page, data.urlDownload);
-
-        const downloadPath = path.join(__dirname, "../../../../../../../public/docs");
 
         const downloadedFilePath = await waitForDownload(downloadPath, startTime);
 
