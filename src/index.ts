@@ -103,7 +103,7 @@ app.get("/ping", (_req, res) => {
 });
 
 
-  // (async() => await service.main())();
+  (async() => await service.main())();
 
   // (async() => await caseFilesService.currencyExchange())();
 

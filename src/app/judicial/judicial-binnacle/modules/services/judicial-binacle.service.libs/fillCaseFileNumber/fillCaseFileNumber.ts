@@ -40,9 +40,9 @@ export async function fillCaseFileNumber(
     return errElement?.style;
   });
 
-  console.log("Case file previous", caseFileExist);
-  console.log("Captcha previous", isCorrectCaptcha);
-  console.log("Bot detected", isBotDetected);
+  // console.log("Case file previous", caseFileExist);
+  // console.log("Captcha previous", isCorrectCaptcha);
+  // console.log("Bot detected", isBotDetected);
   // #####################################
 
   await page.waitForSelector("#myTab > li:nth-child(2) > a"),

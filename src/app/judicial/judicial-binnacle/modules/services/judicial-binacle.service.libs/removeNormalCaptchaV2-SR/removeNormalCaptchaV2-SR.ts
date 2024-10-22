@@ -3,149 +3,125 @@ import path from "path";
 import fs from "fs";
 import { JEC_URL } from "../../../constants/judicial-binacle.constants";
 import { removeHCaptcha } from "../removeHCaptcha/removeHCaptcha";
+import { fillCaseFileNumber } from "../fillCaseFileNumber/fillCaseFileNumber";
 
 export async function removeNormalCaptchaV2SR(
-{ page, solver }: { page: Page, solver: any }
+{ page, solver, numberCaseFile }: { page: Page, solver: any, numberCaseFile: any }
 ): Promise<{ isSolved: boolean; isCasFileTrue: boolean; isBotDetected: boolean }> {
-  let isBotDetected = false;
-  let isCasFileTrue = false;
-  let isSolved = false;
-
-  await page.waitForSelector("#captcha_image");
-  await page.waitForSelector("#mensajeNoExisteExpedientes");
-  await page.waitForSelector("#codCaptchaError");
-
-  const imageElement = await page.$("#captcha_image");
-  if (!imageElement) throw new Error("No captcha image found");
-  const boundingBox = await imageElement.boundingBox();
-  if (!boundingBox) throw new Error("No captcha bounding box found");
 
   const captchaDir = path.resolve(__dirname, '../../../../../public/audio-captchas');
 
   // Verifica si la carpeta existe, si no, la crea
   if (!fs.existsSync(captchaDir)) { fs.mkdirSync(captchaDir, { recursive: true } );}
+  let isBotDetected = false;
+  let isCasFileTrue = false;
+  let isSolved = false;
 
   try {
-    let  data = "";
+    let  data = "NOT FOUND";
+    let solvedHCaptcha = false;
     try {
-      const value = await page.locator("#btnRepro").scroll({
-        scrollTop: -30,
-      }).then(async()=>{
-        await page.locator("#btnRepro").click();
-        await new Promise(resolve => setTimeout(resolve, 5000));
+      while(!solvedHCaptcha){
+        console.log("solved captcha", solvedHCaptcha)
 
-        if(page.url() !== JEC_URL) await removeHCaptcha(page)
+        if(page.url() !== JEC_URL) {
+          console.log("Trying to remove hCaptcha")
+          await removeHCaptcha(page)
+        }
 
-          const valueCaptcha = await page.evaluate(() => {
-          const inputAudio = document.getElementById("1zirobotz0") as HTMLInputElement;
-          return inputAudio?.value;
-        })
-        return valueCaptcha;
-      });
+        await fillCaseFileNumber(page, numberCaseFile);
 
-      data = value !== "NULL" ? value : 'NOT FOUND';
+        const value = await page.locator("#btnRepro").scroll({
+          scrollTop: -30,
+        }).then(async()=>{
+          await page.locator("#btnRepro").click();
+          console.log("Button before submitted BTREPRO")
+          await new Promise(resolve => setTimeout(resolve, 5000));
 
-      console.log(`El valor del captcha es: ${value}`);
+
+            const valueCaptcha = await page.evaluate(() => {
+            const inputAudio = document.getElementById("1zirobotz0") as HTMLInputElement;
+            return inputAudio?.value;
+          })
+          return valueCaptcha;
+        });
+
+        await new Promise((resolve)=>setTimeout(resolve, 4000))
+
+        console.log("Case file number after submitted")
+
+        if(page.url() !== JEC_URL) {
+
+          console.log("Trying to remove hCaptcha before to fill and submit case file code")
+          await removeHCaptcha(page)
+         } else {
+          data = value !== "NULL" ? value : 'NOT FOUND';
+
+          console.log("Case file number before submitted")
+
+          await page.locator('input[id="codigoCaptcha"]').fill(data);
+          await page.click("#consultarExpedientes")
+
+          console.log(`El valor del captcha es: ${value}`);
+
+          console.log("Case file code filled and submitted successfully")
+          await page.waitForSelector("#captcha_image");
+          await page.waitForSelector("#mensajeNoExisteExpedientes");
+          await page.waitForSelector("#codCaptchaError");
+
+          const imageElement = await page.$("#captcha_image");
+          if (!imageElement) throw new Error("No captcha image found");
+          const boundingBox = await imageElement.boundingBox();
+          if (!boundingBox) throw new Error("No captcha bounding box found");
+
+          [isCasFileTrue, isSolved, isBotDetected] = await
+            page.evaluate(() => {
+              const errElement = document.getElementById("mensajeNoExisteExpedientes");
+              const errorCaptcha = document.getElementById("codCaptchaError");
+              if (
+                !(typeof errElement?.style === "object") &&
+                !(typeof errorCaptcha?.style === "object")
+              ) {
+                return [true, true, false];
+              };
+              if (
+                typeof errElement?.style === "object" &&
+                typeof errorCaptcha?.style === "object" &&
+                errElement?.style["0"] === "display" &&
+                errorCaptcha?.style["1"] === "color"
+              )
+                return [true, false, false];
+              if (
+                typeof errElement?.style === "object" &&
+                typeof errorCaptcha?.style === "object" &&
+                errElement?.style["0"] === "color" &&
+                errorCaptcha?.style["0"] === "display"
+              ) {
+                return [false, true, false];
+              }
+              else return [true, true, false];
+            }),
+            // page.evaluate(() => {
+            //   const botDetected = document.getElementById("captcha-bot-detected");
+            //   if(!botDetected) return true;
+            //   return false
+            // }),
+          console.log("isBotDetected:", isBotDetected, "isSolved:", isSolved, "isCasFileTrue:", isCasFileTrue);
+          solvedHCaptcha = true
+          break;
+        }
+      }
     } catch (error) {
       console.error('Error al esperar el selector del input:', error);
     }
-    await page.locator('input[id="codigoCaptcha"]').fill(data);
-    await page.click("#consultarExpedientes").then(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      // await page.waitForSelector("#mensajeNoExisteExpedientes");
-      // await page.waitForSelector("#codCaptchaError");
-
-      const isCorrectCaptcha = await page.evaluate(() =>{
-        const errElement = document.getElementById("codCaptchaError");
-        return errElement?.style
-        if (errElement?.style["0"] === "display" || !errElement?.style["0"] ) {
-          isSolved = true
-          return errElement?.style
-        }else{
-          isSolved = false;
-          return errElement?.style
-        }
-      })
-
-      const caseFileExist = await page.evaluate(() => {
-        const errElement = document.getElementById("mensajeNoExisteExpedientes");
-        return errElement?.style
-        if (errElement?.style["0"] === "display" || !errElement?.style["0"] ) {
-          isCasFileTrue = true
-          return errElement?.style
-        }else{
-          isCasFileTrue = false;
-          return errElement?.style
-        }
-      });
-
-      const botDetected = await page.evaluate(() => {
-        const errElement = document.getElementById("custom_footer");
-        return errElement?.style
-      });
-
-
-        console.log("Case file last", caseFileExist);
-        console.log("Captcha last", isCorrectCaptcha);
-        console.log("Bot detected", botDetected);
-    });
 
     const delay = (ms:any) => new Promise(resolve => setTimeout(resolve, ms));
     await delay(2000);
 
+    // ========================================================================== //
 
-    // [isCasFileTrue, isSolved] = await Promise.all([
-    //   page.evaluate(() => {
-    //     const errElement = document.getElementById("mensajeNoExisteExpedientes");
-    //     if (errElement?.style["0"] === "display" || !errElement?.style["0"] ) return true;
-    //     return false;
-    //   }),
-    //   page.evaluate(() => {
-    //     const errorCaptcha = document.getElementById("codCaptchaError");
-    //     if (errorCaptcha?.style["0"] === "display" || !errorCaptcha?.style["0"] ) return true;
-    //     return false;
-    //   }),
-    //   // page.evaluate(() => {
-    //   //   const botDetected = document.getElementById("captcha-bot-detected");
-    //   //   if(!botDetected) return true;
-    //   //   return false
-    //   // }),
-    // ]);
 
-    [isCasFileTrue, isSolved, isBotDetected] = await
-      page.evaluate(() => {
-        const errElement = document.getElementById("mensajeNoExisteExpedientes");
-        const errorCaptcha = document.getElementById("codCaptchaError");
-        if (
-          !(typeof errElement?.style === "object") &&
-          !(typeof errorCaptcha?.style === "object")
-        ) {
-          return [true, true, false];
-        };
-        if (
-          typeof errElement?.style === "object" &&
-          typeof errorCaptcha?.style === "object" &&
-          errElement?.style["0"] === "display" &&
-          errElement?.style["1"] === "color"
-        )
-          return [true, false, false];
-        if (
-          typeof errElement?.style === "object" &&
-          typeof errorCaptcha?.style === "object" &&
-          errElement?.style["0"] === "color" &&
-          errorCaptcha?.style["0"] === "display"
-        ) {
-          return [false, true, false];
-        }
-        else return [true, true, false];
-      }),
-      // page.evaluate(() => {
-      //   const botDetected = document.getElementById("captcha-bot-detected");
-      //   if(!botDetected) return true;
-      //   return false
-      // }),
-    console.log("isBotDetected:", isBotDetected, "isSolved:", isSolved, "isCasFileTrue:", isCasFileTrue);
+
     return { isSolved, isCasFileTrue, isBotDetected };
 
   } catch (error: any) {

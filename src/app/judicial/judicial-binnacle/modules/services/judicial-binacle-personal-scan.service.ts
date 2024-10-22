@@ -26,7 +26,7 @@ export class JudicialBinaclePersonalScanService {
   async findCaseFileByNumber (caseFileId: number) {
     const caseFile = models.JUDICIAL_CASE_FILE.findOne({
       where:{
-        id_judicial_case_file: caseFileId,
+        id_judicial_case_file: String(caseFileId),
         [Op.and]: [
           { is_scan_valid: true }, // caseFile.dataValues.isScanValid
           { was_scanned: false }, // caseFile.dataValues.wasScanned
@@ -130,7 +130,12 @@ export class JudicialBinaclePersonalScanService {
 
       const { browser } = await setupBrowser(downloadPath);
 
+      console.log("Case file id", caseFileId)
+
       const caseFile = await this.findCaseFileByNumber(caseFileId)
+
+      console.log(caseFile)
+
       if (!caseFile) throw boom.notFound("Case file not found");
 
       //? BLOCK 1
