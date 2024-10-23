@@ -64,11 +64,12 @@ app.listen(process.env.PORT || 3000, () => {
     app.get("/ping", (_req, res) => {
         res.send("Hello World! 2");
     });
-    (async () => {
-        console.log("Using manual boot scan 🚀");
-        await service.resetAllCaseFiles();
-        await service.main();
-    })();
+    // (async () => {
+    //   console.log("Using manual boot scan 🚀")
+    //   await service.resetAllCaseFiles()
+    //   await service.main()
+    // }
+    // )();
     // (async() => await caseFilesService.currencyExchange())();
     // cron.schedule('0 6 * * *', async () => {
     //   await service.resetAllCaseFiles();

@@ -98,6 +98,9 @@ async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
         }
         catch (error) {
             console.error('Error al esperar el selector del input:', error);
+            isSolved = false;
+            isCasFileTrue = true;
+            isBotDetected = false;
         }
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         await delay(2000);
