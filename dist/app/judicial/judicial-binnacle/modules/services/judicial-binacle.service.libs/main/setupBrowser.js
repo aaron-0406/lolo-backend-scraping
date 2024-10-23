@@ -4,7 +4,7 @@ exports.setupBrowser = void 0;
 const puppeteer_extra_1 = require("../../../utils/puppeteer-extra");
 async function setupBrowser(downloadPath) {
     const browser = await puppeteer_extra_1.puppeteerExtra.launch({
-        headless: false,
+        headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
         slowMo: 5,
     });
