@@ -40,7 +40,7 @@ export class JudicialBinacleService {
         where: {
           [Op.and]: [
             { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-            { was_scanned: false }, // caseFile.dataValues.wasScanned
+            { was_scanned: true }, // caseFile.dataValues.wasScanned
             { process_status: "Activo" }, // caseFile.dataValues.processStatus
           ],
         },

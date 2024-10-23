@@ -35,7 +35,7 @@ class JudicialBinacleService {
             where: {
                 [sequelize_1.Op.and]: [
                     { is_scan_valid: true },
-                    { was_scanned: false },
+                    { was_scanned: true },
                     { process_status: "Activo" }, // caseFile.dataValues.processStatus
                 ],
             },
