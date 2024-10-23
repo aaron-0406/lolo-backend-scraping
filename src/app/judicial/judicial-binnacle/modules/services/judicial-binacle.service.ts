@@ -135,11 +135,6 @@ export class JudicialBinacleService {
     try {
       const downloadPath = path.join(__dirname, "../../../../../public/docs");
 
-      if (!fs.existsSync(downloadPath)) {
-        console.log("Create a folder to save files")
-        fs.mkdirSync(downloadPath);
-      }
-
       const caseFiles = await this.getAllCaseFilesDB();
 
       const { browser } = await setupBrowser(downloadPath);
@@ -151,6 +146,11 @@ export class JudicialBinacleService {
           console.log("Create a folder to save files")
           fs.mkdirSync(downloadPath);
         }
+        else{
+          await deleteFolderContents(downloadPath)
+          fs.mkdirSync(downloadPath);
+        }
+
         if (
           !caseFile.dataValues.isScanValid ||
           caseFile.dataValues.wasScanned ||
@@ -402,10 +402,10 @@ export class JudicialBinacleService {
                         path: newLocalFilePath,
                       };
 
-                      await uploadFile(
-                        file,
-                        `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                      );
+                      // await uploadFile(
+                      //   file,
+                      //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                      // );
 
                       await newBinFile.update({
                         nameOriginAws: `${newBinnacleName}${fileExtension}`,

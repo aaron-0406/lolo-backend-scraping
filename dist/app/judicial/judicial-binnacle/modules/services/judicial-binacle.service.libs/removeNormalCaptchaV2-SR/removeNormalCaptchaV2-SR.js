@@ -27,7 +27,13 @@ async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
                 if (page.url() !== judicial_binacle_constants_1.JEC_URL) {
                     console.log("Trying to remove hCaptcha");
                     await (0, removeHCaptcha_1.removeHCaptcha)(page);
+                    console.log("Bot url: ", page.url());
+                    if (page.url() === " https://cej.pj.gob.pe/cej/forms/busquedaform.html#tabs-2")
+                        await page.goto(judicial_binacle_constants_1.JEC_URL);
                 }
+                await page.waitForSelector("#captcha_image");
+                await page.waitForSelector("#mensajeNoExisteExpedientes");
+                await page.waitForSelector("#codCaptchaError");
                 await (0, fillCaseFileNumber_1.fillCaseFileNumber)(page, numberCaseFile);
                 const value = await page.locator("#btnRepro").scroll({
                     scrollTop: -30,
@@ -56,15 +62,10 @@ async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
                     console.log("Case file code filled and submitted successfully");
                     console.log("Current page url is:" + page.url());
                     await new Promise((resolve) => setTimeout(resolve, 4000));
-                    await page.waitForSelector("#captcha_image");
-                    await page.waitForSelector("#mensajeNoExisteExpedientes");
-                    await page.waitForSelector("#codCaptchaError");
-                    const imageElement = await page.$("#captcha_image");
-                    if (!imageElement)
-                        throw new Error("No captcha image found");
-                    const boundingBox = await imageElement.boundingBox();
-                    if (!boundingBox)
-                        throw new Error("No captcha bounding box found");
+                    // const imageElement = await page.$("#captcha_image");
+                    // if (!imageElement) throw new Error("No captcha image found");
+                    // const boundingBox = await imageElement.boundingBox();
+                    // if (!boundingBox) throw new Error("No captcha bounding box found");
                     [isCasFileTrue, isSolved, isBotDetected] = await page.evaluate(() => {
                         const errElement = document.getElementById("mensajeNoExisteExpedientes");
                         const errorCaptcha = document.getElementById("codCaptchaError");
@@ -76,7 +77,7 @@ async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
                         if (typeof (errElement === null || errElement === void 0 ? void 0 : errElement.style) === "object" &&
                             typeof (errorCaptcha === null || errorCaptcha === void 0 ? void 0 : errorCaptcha.style) === "object" &&
                             (errElement === null || errElement === void 0 ? void 0 : errElement.style["0"]) === "display" &&
-                            (errorCaptcha === null || errorCaptcha === void 0 ? void 0 : errorCaptcha.style["1"]) === "color")
+                            (errElement === null || errElement === void 0 ? void 0 : errElement.style["1"]) === "color")
                             return [true, false, false];
                         if (typeof (errElement === null || errElement === void 0 ? void 0 : errElement.style) === "object" &&
                             typeof (errorCaptcha === null || errorCaptcha === void 0 ? void 0 : errorCaptcha.style) === "object" &&

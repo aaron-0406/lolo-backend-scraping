@@ -27,7 +27,13 @@ export async function removeNormalCaptchaV2SR(
         if(page.url() !== JEC_URL) {
           console.log("Trying to remove hCaptcha")
           await removeHCaptcha(page)
+          console.log("Bot url: ", page.url())
+          if(page.url() === " https://cej.pj.gob.pe/cej/forms/busquedaform.html#tabs-2" ) await page.goto(JEC_URL)
         }
+
+        await page.waitForSelector("#captcha_image");
+        await page.waitForSelector("#mensajeNoExisteExpedientes");
+        await page.waitForSelector("#codCaptchaError");
 
         await fillCaseFileNumber(page, numberCaseFile);
 
@@ -36,8 +42,8 @@ export async function removeNormalCaptchaV2SR(
         }).then(async()=>{
           await page.locator("#btnRepro").click();
           console.log("Button before submitted BTREPRO")
-          await new Promise(resolve => setTimeout(resolve, 5000));
 
+          await new Promise(resolve => setTimeout(resolve, 5000));
 
             const valueCaptcha = await page.evaluate(() => {
             const inputAudio = document.getElementById("1zirobotz0") as HTMLInputElement;
@@ -55,6 +61,7 @@ export async function removeNormalCaptchaV2SR(
           console.log("Trying to remove hCaptcha before to fill and submit case file code")
           await removeHCaptcha(page)
          } else {
+
           data = value !== "NULL" ? value : 'NOT FOUND';
 
           console.log("Case file number before submitted")
@@ -65,18 +72,15 @@ export async function removeNormalCaptchaV2SR(
           console.log(`El valor del captcha es: ${value}`);
 
           console.log("Case file code filled and submitted successfully")
+
           console.log("Current page url is:" + page.url())
 
           await new Promise((resolve) => setTimeout(resolve, 4000));
-          
-          await page.waitForSelector("#captcha_image");
-          await page.waitForSelector("#mensajeNoExisteExpedientes");
-          await page.waitForSelector("#codCaptchaError");
 
-          const imageElement = await page.$("#captcha_image");
-          if (!imageElement) throw new Error("No captcha image found");
-          const boundingBox = await imageElement.boundingBox();
-          if (!boundingBox) throw new Error("No captcha bounding box found");
+          // const imageElement = await page.$("#captcha_image");
+          // if (!imageElement) throw new Error("No captcha image found");
+          // const boundingBox = await imageElement.boundingBox();
+          // if (!boundingBox) throw new Error("No captcha bounding box found");
 
           [isCasFileTrue, isSolved, isBotDetected] = await
             page.evaluate(() => {
@@ -92,7 +96,7 @@ export async function removeNormalCaptchaV2SR(
                 typeof errElement?.style === "object" &&
                 typeof errorCaptcha?.style === "object" &&
                 errElement?.style["0"] === "display" &&
-                errorCaptcha?.style["1"] === "color"
+                errElement?.style["1"] === "color"
               )
                 return [true, false, false];
               if (

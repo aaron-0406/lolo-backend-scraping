@@ -15,11 +15,9 @@ const getCaseFileInfo_1 = require("./judicial-binacle.service.libs/getCaseFileIn
 const setupBrowser_1 = require("./judicial-binacle.service.libs/main/setupBrowser");
 const validateAndNavigateCaseFile_1 = require("./judicial-binacle.service.libs/main/validateAndNavigateCaseFile");
 const helpers_1 = require("../../../../../libs/helpers");
-const aws_bucket_1 = require("../../../../../libs/aws_bucket");
 const get_nine_types_1 = require("../libs/get-nine-types");
 const deleteFolderContents_1 = require("./judicial-binacle.service.libs/main/deleteFolderContents");
 const uuid_1 = require("uuid");
-const config_1 = __importDefault(require("../../../../../config/config"));
 const { models } = sequelize_2.default;
 // ! THINGS TO FIX
 // 1. detect if normar captcha is solved
@@ -119,10 +117,6 @@ class JudicialBinacleService {
         let errorsCounter = 0;
         try {
             const downloadPath = path_1.default.join(__dirname, "../../../../../public/docs");
-            if (!fs_1.default.existsSync(downloadPath)) {
-                console.log("Create a folder to save files");
-                fs_1.default.mkdirSync(downloadPath);
-            }
             const caseFiles = await this.getAllCaseFilesDB();
             const { browser } = await (0, setupBrowser_1.setupBrowser)(downloadPath);
             if (errorsCounter > 4)
@@ -130,6 +124,10 @@ class JudicialBinacleService {
             for (const caseFile of caseFiles) {
                 if (!fs_1.default.existsSync(downloadPath)) {
                     console.log("Create a folder to save files");
+                    fs_1.default.mkdirSync(downloadPath);
+                }
+                else {
+                    await (0, deleteFolderContents_1.deleteFolderContents)(downloadPath);
                     fs_1.default.mkdirSync(downloadPath);
                 }
                 if (!caseFile.dataValues.isScanValid ||
@@ -309,7 +307,10 @@ class JudicialBinacleService {
                                                 filename: `${newBinnacleName}${fileExtension}`,
                                                 path: newLocalFilePath,
                                             };
-                                            await (0, aws_bucket_1.uploadFile)(file, `${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`);
+                                            // await uploadFile(
+                                            //   file,
+                                            //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                                            // );
                                             await newBinFile.update({
                                                 nameOriginAws: `${newBinnacleName}${fileExtension}`,
                                             });
