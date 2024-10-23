@@ -29,7 +29,7 @@ export class JudicialBinaclePersonalScanService {
         id_judicial_case_file: String(caseFileId),
         [Op.and]: [
           { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-          { was_scanned: false }, // caseFile.dataValues.wasScanned
+          { was_scanned: false }, // caseFile.dataV alues.wasScanned
           { process_status:"Activo" }, // caseFile.dataValues.processStatus
         ]
       },

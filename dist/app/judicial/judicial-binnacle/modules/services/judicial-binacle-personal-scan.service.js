@@ -27,7 +27,7 @@ class JudicialBinaclePersonalScanService {
     async findCaseFileByNumber(caseFileId) {
         const caseFile = models.JUDICIAL_CASE_FILE.findOne({
             where: {
-                id_judicial_case_file: caseFileId,
+                id_judicial_case_file: String(caseFileId),
                 [sequelize_1.Op.and]: [
                     { is_scan_valid: true },
                     { was_scanned: false },
@@ -127,7 +127,9 @@ class JudicialBinaclePersonalScanService {
             if (!fs_1.default.existsSync(downloadPath))
                 fs_1.default.mkdirSync(downloadPath);
             const { browser } = await (0, setupBrowser_1.setupBrowser)(downloadPath);
+            console.log("Case file id", caseFileId);
             const caseFile = await this.findCaseFileByNumber(caseFileId);
+            console.log(caseFile);
             if (!caseFile)
                 throw boom_1.default.notFound("Case file not found");
             //? BLOCK 1

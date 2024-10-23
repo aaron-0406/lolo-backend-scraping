@@ -24,9 +24,9 @@ async function fillCaseFileNumber(page, numberCaseFileDecoder) {
         // return false;
         return errElement === null || errElement === void 0 ? void 0 : errElement.style;
     });
-    console.log("Case file previous", caseFileExist);
-    console.log("Captcha previous", isCorrectCaptcha);
-    console.log("Bot detected", isBotDetected);
+    // console.log("Case file previous", caseFileExist);
+    // console.log("Captcha previous", isCorrectCaptcha);
+    // console.log("Bot detected", isBotDetected);
     // #####################################
     await page.waitForSelector("#myTab > li:nth-child(2) > a"),
         await page.click("#myTab > li:nth-child(2) > a"),
