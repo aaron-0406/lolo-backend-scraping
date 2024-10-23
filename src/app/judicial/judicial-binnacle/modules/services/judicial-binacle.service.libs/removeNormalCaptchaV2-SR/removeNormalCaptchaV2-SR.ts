@@ -65,6 +65,10 @@ export async function removeNormalCaptchaV2SR(
           console.log(`El valor del captcha es: ${value}`);
 
           console.log("Case file code filled and submitted successfully")
+          console.log("Current page url is:" + page.url())
+
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+          
           await page.waitForSelector("#captcha_image");
           await page.waitForSelector("#mensajeNoExisteExpedientes");
           await page.waitForSelector("#codCaptchaError");
