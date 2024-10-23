@@ -65,6 +65,7 @@ app.listen(process.env.PORT || 3000, () => {
         res.send("Hello World! 2");
     });
     (async () => {
+        console.log("Using manual boot scan 🚀");
         await service.resetAllCaseFiles();
         await service.main();
     })();
