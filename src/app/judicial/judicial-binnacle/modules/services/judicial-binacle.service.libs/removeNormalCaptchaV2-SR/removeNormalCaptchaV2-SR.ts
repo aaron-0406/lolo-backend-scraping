@@ -113,9 +113,7 @@ export async function removeNormalCaptchaV2SR(
       }
     } catch (error) {
       console.error('Error al esperar el selector del input:', error);
-      isSolved = false
-      isCasFileTrue = true
-      isBotDetected = false
+      return { isSolved: false, isCasFileTrue: true, isBotDetected: false };
     }
 
     const delay = (ms:any) => new Promise(resolve => setTimeout(resolve, ms));
