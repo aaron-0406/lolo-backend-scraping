@@ -28,7 +28,7 @@ async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
                     console.log("Trying to remove hCaptcha");
                     await (0, removeHCaptcha_1.removeHCaptcha)(page);
                     console.log("Bot url: ", page.url());
-                    if (page.url() === " https://cej.pj.gob.pe/cej/forms/busquedaform.html#tabs-2")
+                    if (page.url() === "https://cej.pj.gob.pe/cej/forms/busquedaform.html#tabs-2")
                         await page.goto(judicial_binacle_constants_1.JEC_URL);
                 }
                 await page.waitForSelector("#captcha_image");

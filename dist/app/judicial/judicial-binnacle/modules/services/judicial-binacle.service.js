@@ -64,7 +64,7 @@ class JudicialBinacleService {
                         { is_scan_valid: true },
                         { was_scanned: false },
                         { process_status: "Activo" }, // caseFile.dataValues.processStatus
-                    ]
+                    ],
                     // number_case_file:"01331-2024-0-1601-JP-CI-05"
                 },
                 include: [
@@ -183,6 +183,7 @@ class JudicialBinacleService {
                     let binnaclesFromDB = [];
                     let prevBinnaclesIndexs = [];
                     let newBinnaclesFound = [];
+                    console.log("Case file code: ", caseFile.dataValues.numberCaseFile);
                     prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
                         .filter((binnacle) => binnacle.dataValues.index !== null)
                         .map((binnacle) => binnacle.dataValues.index);
@@ -192,7 +193,7 @@ class JudicialBinacleService {
                     const newBinnaclesIndex = caseFileBinacles.map((binnacle) => binnacle.index);
                     if (newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
                         const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
-                        // Actualizar los índices de las bitácoras previas
+                        // Get all binnacles
                         const prevBinnacles = caseFile.dataValues.judicialBinnacle
                             .filter((binnacle) => binnacle.dataValues.index !== null)
                             .map((binnacle) => binnacle);
@@ -201,12 +202,15 @@ class JudicialBinacleService {
                                 index: prevBinnacle.dataValues.index + contNewBinnacles
                             });
                         }));
-                        // Actualizar los índices previos en memoria
+                        // Update the previous indices in memory
                         prevBinnaclesIndexs = prevBinnaclesIndexs.map((index) => index + contNewBinnacles);
-                        // Obtener las bitácoras nuevas desde la base de datos filtrando por índice
+                        // Get the new binnacles from the database filtering by index
                         binnaclesFromDB = await models.JUDICIAL_BINNACLE.findAll({
                             where: {
                                 judicial_file_case_id_judicial_file_case: caseFile.dataValues.id,
+                                index: {
+                                    [sequelize_1.Op.not]: null
+                                }
                             },
                             include: [
                                 {
@@ -224,7 +228,9 @@ class JudicialBinacleService {
                         // Find the eliminated binnacle by index
                     }
                     newBinnaclesFound = caseFileBinacles.filter((binnacle) => !prevBinnaclesIndexs.includes(binnacle.index));
-                    console.log(" New binnacles found ", newBinnaclesFound);
+                    console.log("Previous binnacles indexs:", binnaclesFromDB.map(binnacle => binnacle.dataValues)); // []
+                    console.log("New binnacles found ", newBinnaclesFound); // [8]
+                    console.log("New binnacles found length ", newBinnaclesFound.length); // [8]
                     // ! Read only new binnacles to create
                     if (newBinnaclesFound.length) {
                         await Promise.all(newBinnaclesFound.map(async (binnacle) => {
@@ -447,12 +453,18 @@ class JudicialBinacleService {
                                 console.log("Verify if there are new notifications... 🔔");
                                 const matchedBinnacle = caseFileBinacles.find((data) => data.index === binnacle.index);
                                 notificationsFound = (_a = matchedBinnacle === null || matchedBinnacle === void 0 ? void 0 : matchedBinnacle.notifications) !== null && _a !== void 0 ? _a : [];
+                                const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
+                                const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
+                                console.log("Prev notification codes 01: ", notificationsCodesPrevious);
+                                console.log("Notifications Found", notificationsFound);
+                                console.log("New notifications 🔔 01", newNotifications);
                                 if (previousNotifications.length === notificationsFound.length)
                                     return;
                                 else {
                                     const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
                                     const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
-                                    console.log("New notifications found 🔔", newNotifications);
+                                    console.log("Prev notification codes: ", notificationsCodesPrevious);
+                                    console.log("New notifications 🔔", newNotifications);
                                     if (!newNotifications.length || !matchedBinnacle)
                                         return;
                                     await Promise.all(newNotifications.map(async (notification) => {

@@ -28,7 +28,7 @@ export async function removeNormalCaptchaV2SR(
           console.log("Trying to remove hCaptcha")
           await removeHCaptcha(page)
           console.log("Bot url: ", page.url())
-          if(page.url() === " https://cej.pj.gob.pe/cej/forms/busquedaform.html#tabs-2" ) await page.goto(JEC_URL)
+          if(page.url() === "https://cej.pj.gob.pe/cej/forms/busquedaform.html#tabs-2" ) await page.goto(JEC_URL)
         }
 
         await page.waitForSelector("#captcha_image");

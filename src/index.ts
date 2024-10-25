@@ -106,7 +106,7 @@ app.get("/ping", (_req, res) => {
   (async () => {
     console.log("Using manual boot scan 🚀")
     // await service.resetAllCaseFiles()
-    await service.main()
+    // await service.main()
   }
   )();
 
