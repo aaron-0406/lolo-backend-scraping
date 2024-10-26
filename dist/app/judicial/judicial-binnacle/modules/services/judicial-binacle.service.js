@@ -231,7 +231,11 @@ class JudicialBinacleService {
                     console.log("Previous binnacles indexs:", binnaclesFromDB.map(binnacle => binnacle.dataValues)); // []
                     console.log("New binnacles found ", newBinnaclesFound); // [8]
                     console.log("New binnacles found length ", newBinnaclesFound.length); // [8]
-                    // ! Read only new binnacles to create
+                    // ! Read only new binnacles to create [4] => DB
+                    // ! Read only new binnacles to create [5] => CEJ
+                    // ! 1 - Read only new binnacles to create
+                    // ! 5-4 -> 1
+                    // ! + 1
                     if (newBinnaclesFound.length) {
                         await Promise.all(newBinnaclesFound.map(async (binnacle) => {
                             var _a;

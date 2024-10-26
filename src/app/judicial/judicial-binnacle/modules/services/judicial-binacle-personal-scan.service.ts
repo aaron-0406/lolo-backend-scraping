@@ -26,10 +26,9 @@ export class JudicialBinaclePersonalScanService {
   async findCaseFileByNumber (caseFileId: number) {
     const caseFile = models.JUDICIAL_CASE_FILE.findOne({
       where:{
-        id_judicial_case_file: String(caseFileId),
+        id_judicial_case_file: caseFileId,
         [Op.and]: [
           { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-          { was_scanned: false }, // caseFile.dataV alues.wasScanned
           { process_status:"Activo" }, // caseFile.dataValues.processStatus
         ]
       },
@@ -126,7 +125,7 @@ export class JudicialBinaclePersonalScanService {
     let errorsCounter:number = 0;
     try {
       const downloadPath = path.join(__dirname, "../../../../../public/docs-personal-scan");
-      if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
+      // if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
 
       const { browser } = await setupBrowser(downloadPath);
 
@@ -134,20 +133,27 @@ export class JudicialBinaclePersonalScanService {
 
       const caseFile = await this.findCaseFileByNumber(caseFileId)
 
-      console.log(caseFile)
-
       if (!caseFile) throw boom.notFound("Case file not found");
 
       //? BLOCK 1
 
         try {
-          if (
-            !caseFile.dataValues.isScanValid ||
-            caseFile.dataValues.wasScanned ||
-            !caseFile.dataValues.processStatus ||
-            caseFile.dataValues.processStatus === "Concluido"
-          )
-            return;
+
+          if (!fs.existsSync(downloadPath)) {
+            console.log("Create a folder to save files")
+            fs.mkdirSync(downloadPath);
+          }
+          else{
+            await deleteFolderContents(downloadPath)
+            fs.mkdirSync(downloadPath);
+          }
+          // if (
+          //   !caseFile.dataValues.isScanValid ||
+          //   caseFile.dataValues.wasScanned ||
+          //   !caseFile.dataValues.processStatus ||
+          //   caseFile.dataValues.processStatus === "Concluido"
+          // )
+          //   return;
 
           let isValidCaseFile:boolean;
           let binnaclesFromDB: any[] = [];
@@ -375,10 +381,10 @@ export class JudicialBinaclePersonalScanService {
                           path: newLocalFilePath,
                         };
 
-                        await personalScanUploadFile(
-                          file,
-                          `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                        );
+                        // await personalScanUploadFile(
+                        //   file,
+                        //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                        // );
 
                         await newBinFile.update({
                           nameOriginAws: `${newBinnacleName}${fileExtension}`,
@@ -510,6 +516,9 @@ export class JudicialBinaclePersonalScanService {
 
               // TODO: delete all notifications
               // 1. Delete binnacle notifications
+
+              console.log("Deleting binnacle notifications for ", binnacleId)
+
               const notificationsToDestroy = await models.JUDICIAL_BIN_NOTIFICATION.destroy({
                 where:{
                   judicial_binacle_id_judicial_binacle : binnacleId
@@ -517,6 +526,8 @@ export class JudicialBinaclePersonalScanService {
               })
 
               // 2. find binnacle files fron bd
+
+              console.log("Finding binnacle files for ", binnacleId)
 
               const binnaclesFiles = await models.JUDICIAL_BIN_FILE.findAll({
                 where:{
@@ -528,6 +539,9 @@ export class JudicialBinaclePersonalScanService {
 
               // TODO: find binnacles files from bd and bucket where binnacle index is a number and delete
               // 3. Delete on bucket and db files
+
+              console.log("Deleting binnacle files for ", binnacleId)
+
               await Promise.all(binnaclesFiles.map(async(binnacleFile:any)=>{
                 try{
                   await deleteFileBucket(
@@ -665,8 +679,6 @@ export class JudicialBinaclePersonalScanService {
                       path: newLocalFilePath,
                     };
 
-                    console.log(file)
-
                     await personalScanUploadFile(
                       file,
                       `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${juducialBinnacleUpadated.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
@@ -675,8 +687,6 @@ export class JudicialBinaclePersonalScanService {
                     await newBinFile.update({
                       nameOriginAws: `${newBinnacleName}${fileExtension}`,
                     });
-
-                    await deleteFile("../public/docs-personal-scan", path.basename(file.filename));
 
                     console.log("Archivo renombrado, subido y eliminado localmente.");
                   } else {
@@ -689,114 +699,119 @@ export class JudicialBinaclePersonalScanService {
             }
             // TODO: add new notifications by scraping
 
-            if(!binncleToUpdateFromScraping.notifications.length) return
+            console.log("Adding new notifications by scraping")
 
-            await Promise.all(binncleToUpdateFromScraping.notifications.map(async (notification:Notification) => {
-              const shipDate =
-                notification.shipDate &&
-                moment(notification.shipDate, "DD/MM/YYYY HH:mm").isValid()
-                  ? moment.tz(notification.shipDate, "DD/MM/YYYY HH:mm", "America/Lima").format(
-                      "YYYY-MM-DD HH:mm:ss"
-                    )
-                  : null;
-              const resolutionDate =
-                notification.resolutionDate &&
-                moment(notification.resolutionDate, "DD/MM/YYYY HH:mm").isValid()
-                  ? moment.tz(
-                      notification.resolutionDate,
-                      "DD/MM/YYYY HH:mm",
-                      "America/Lima"
-                    ).format("YYYY-MM-DD HH:mm:ss")
-                  : null;
-              const notificationPrint =
-                notification.notificationPrint &&
-                moment(
-                  notification.notificationPrint,
-                  "DD/MM/YYYY HH:mm"
-                ).isValid()
-                  ? moment.tz(
-                      notification.notificationPrint,
-                      "DD/MM/YYYY HH:mm",
-                      "America/Lima"
-                    ).format("YYYY-MM-DD HH:mm:ss")
-                  : null;
-              const sentCentral =
-                notification.sentCentral &&
-                moment(notification.sentCentral, "DD/MM/YYYY HH:mm").isValid()
-                  ? moment
-                      .tz(
-                        notification.sentCentral,
-                        "DD/MM/YYYY HH:mm",
-                        "America/Lima"
+            if(binncleToUpdateFromScraping.notifications.length) {
+              await Promise.all(binncleToUpdateFromScraping.notifications.map(async (notification:Notification) => {
+                const shipDate =
+                  notification.shipDate &&
+                  moment(notification.shipDate, "DD/MM/YYYY HH:mm").isValid()
+                    ? moment.tz(notification.shipDate, "DD/MM/YYYY HH:mm", "America/Lima").format(
+                        "YYYY-MM-DD HH:mm:ss"
                       )
-                      .format("YYYY-MM-DD HH:mm:ss")
-                  : null;
-                const centralReceipt =
-                  notification.centralReceipt &&
-                  moment(
-                    notification.centralReceipt,
-                    "DD/MM/YYYY HH:mm"
-                  ).isValid()
+                    : null;
+                const resolutionDate =
+                  notification.resolutionDate &&
+                  moment(notification.resolutionDate, "DD/MM/YYYY HH:mm").isValid()
                     ? moment.tz(
-                        notification.centralReceipt,
+                        notification.resolutionDate,
                         "DD/MM/YYYY HH:mm",
                         "America/Lima"
                       ).format("YYYY-MM-DD HH:mm:ss")
                     : null;
-                const notificationToRecipientOn =
-                  notification.notificationToRecipientOn &&
+                const notificationPrint =
+                  notification.notificationPrint &&
                   moment(
-                    notification.notificationToRecipientOn,
+                    notification.notificationPrint,
                     "DD/MM/YYYY HH:mm"
                   ).isValid()
                     ? moment.tz(
-                        notification.notificationToRecipientOn,
+                        notification.notificationPrint,
                         "DD/MM/YYYY HH:mm",
                         "America/Lima"
                       ).format("YYYY-MM-DD HH:mm:ss")
                     : null;
-                const chargeReturnedToCourtOn =
-                  notification.chargeReturnedToCourtOn &&
-                  moment(
-                    notification.chargeReturnedToCourtOn,
-                    "DD/MM/YYYY HH:mm"
-                  ).isValid()
+                const sentCentral =
+                  notification.sentCentral &&
+                  moment(notification.sentCentral, "DD/MM/YYYY HH:mm").isValid()
                     ? moment
                         .tz(
-                          notification.chargeReturnedToCourtOn,
+                          notification.sentCentral,
                           "DD/MM/YYYY HH:mm",
                           "America/Lima"
                         )
                         .format("YYYY-MM-DD HH:mm:ss")
                     : null;
+                  const centralReceipt =
+                    notification.centralReceipt &&
+                    moment(
+                      notification.centralReceipt,
+                      "DD/MM/YYYY HH:mm"
+                    ).isValid()
+                      ? moment.tz(
+                          notification.centralReceipt,
+                          "DD/MM/YYYY HH:mm",
+                          "America/Lima"
+                        ).format("YYYY-MM-DD HH:mm:ss")
+                      : null;
+                  const notificationToRecipientOn =
+                    notification.notificationToRecipientOn &&
+                    moment(
+                      notification.notificationToRecipientOn,
+                      "DD/MM/YYYY HH:mm"
+                    ).isValid()
+                      ? moment.tz(
+                          notification.notificationToRecipientOn,
+                          "DD/MM/YYYY HH:mm",
+                          "America/Lima"
+                        ).format("YYYY-MM-DD HH:mm:ss")
+                      : null;
+                  const chargeReturnedToCourtOn =
+                    notification.chargeReturnedToCourtOn &&
+                    moment(
+                      notification.chargeReturnedToCourtOn,
+                      "DD/MM/YYYY HH:mm"
+                    ).isValid()
+                      ? moment
+                          .tz(
+                            notification.chargeReturnedToCourtOn,
+                            "DD/MM/YYYY HH:mm",
+                            "America/Lima"
+                          )
+                          .format("YYYY-MM-DD HH:mm:ss")
+                      : null;
 
-                await models.JUDICIAL_BIN_NOTIFICATION.create({
-                  notificationCode: notification.notificationCode,
-                  addressee: notification.addressee,
-                  shipDate: shipDate,
-                  attachments: notification.attachments,
-                  deliveryMethod: notification.deliveryMethod,
-                  resolutionDate: resolutionDate,
-                  notificationPrint: notificationPrint,
-                  sentCentral: sentCentral,
-                  centralReceipt: centralReceipt,
-                  notificationToRecipientOn: notificationToRecipientOn,
-                  chargeReturnedToCourtOn: chargeReturnedToCourtOn,
-                  idJudicialBinacle: binnacleId,
-                });
-              // console.log("Creado notificacion: ",  judicialBinNotification);
-            }))
+                  await models.JUDICIAL_BIN_NOTIFICATION.create({
+                    notificationCode: notification.notificationCode,
+                    addressee: notification.addressee,
+                    shipDate: shipDate,
+                    attachments: notification.attachments,
+                    deliveryMethod: notification.deliveryMethod,
+                    resolutionDate: resolutionDate,
+                    notificationPrint: notificationPrint,
+                    sentCentral: sentCentral,
+                    centralReceipt: centralReceipt,
+                    notificationToRecipientOn: notificationToRecipientOn,
+                    chargeReturnedToCourtOn: chargeReturnedToCourtOn,
+                    idJudicialBinacle: binnacleId,
+                  });
+                // console.log("Creado notificacion: ",  judicialBinNotification);
+              }))
+            }
 
-            const docsPath = path.join(__dirname, `../../../../../public/docs-personal-scan`);
-
-            await deleteFolderContents(docsPath);
 
         } catch (error) {
           throw boom.notFound("Error to proccess case file");
         }
 
       await browser.close();
+
+      const docsPath = path.join(__dirname, `../../../../../public/docs-personal-scan`);
+
+      await deleteFolderContents(docsPath);
+
       const binnacle = await this.findBinnacleByID(String(binnacleId))
+
       return binnacle;
 
     } catch (error) {

@@ -6,6 +6,7 @@ const service = new judicial_binacle_personal_scan_service_1.JudicialBinaclePers
 const updateAllBinnacleInformationByScrapingController = async (req, res, next) => {
     try {
         const { caseFileId, binnacleId } = req.params;
+        console.log(caseFileId, binnacleId);
         const binnacle = await service.main(Number(caseFileId), Number(binnacleId));
         res.json(binnacle);
     }

@@ -7,7 +7,6 @@ export async function removeHCaptcha(page: Page) {
     try {
       console.log("🤖 Anti-bot detected");
       const data = await page.solveRecaptchas();
-      console.log("data", data)
       if (data.solved.length && data.solved[0] && data.solved[0].isSolved) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
         await page.waitForSelector(
