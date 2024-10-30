@@ -6,13 +6,19 @@ import { renameDownloadedFile } from "./renameDownloadedFile";
 import { Notification, PnlSeguimientoData } from "../../../types/external-types";
 
 export async function extractPnlSeguimientoData(page: Page, downloadPath:string): Promise<PnlSeguimientoData[]> {
+  await new Promise(resolve => setTimeout(resolve, 5000));
   const binnacles: PnlSeguimientoData[] = await page.evaluate(async () => {
       const results: PnlSeguimientoData[] = [];
       let index = 1;
 
       while (true) {
-          const pnlSeguimiento = document.querySelector(`#pnlSeguimiento${index}`);
-          if (!pnlSeguimiento) break;
+
+        const pnlSeguimiento = document.querySelector(`#pnlSeguimiento${index}`);
+
+        if (!pnlSeguimiento) {
+          console.log("Indice no encontrado", pnlSeguimiento)
+          break
+        };
 
           const data: PnlSeguimientoData = {
               index,

@@ -9,14 +9,18 @@ const waitForDownload_1 = require("./waitForDownload");
 const clickDynamicAnchor_1 = require("./clickDynamicAnchor");
 const renameDownloadedFile_1 = require("./renameDownloadedFile");
 async function extractPnlSeguimientoData(page, downloadPath) {
+    await new Promise(resolve => setTimeout(resolve, 5000));
     const binnacles = await page.evaluate(async () => {
         var _a;
         const results = [];
         let index = 1;
         while (true) {
             const pnlSeguimiento = document.querySelector(`#pnlSeguimiento${index}`);
-            if (!pnlSeguimiento)
+            if (!pnlSeguimiento) {
+                console.log("Indice no encontrado", pnlSeguimiento);
                 break;
+            }
+            ;
             const data = {
                 index,
                 resolutionDate: extractTextContent(pnlSeguimiento, "Fecha de Resolución:"),

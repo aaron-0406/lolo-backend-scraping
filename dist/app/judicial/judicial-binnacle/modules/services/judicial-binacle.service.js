@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -15,14 +38,18 @@ const getCaseFileInfo_1 = require("./judicial-binacle.service.libs/getCaseFileIn
 const setupBrowser_1 = require("./judicial-binacle.service.libs/main/setupBrowser");
 const validateAndNavigateCaseFile_1 = require("./judicial-binacle.service.libs/main/validateAndNavigateCaseFile");
 const helpers_1 = require("../../../../../libs/helpers");
+const aws_bucket_1 = require("../../../../../libs/aws_bucket");
 const get_nine_types_1 = require("../libs/get-nine-types");
 const deleteFolderContents_1 = require("./judicial-binacle.service.libs/main/deleteFolderContents");
 const uuid_1 = require("uuid");
+const config_1 = __importDefault(require("../../../../../config/config"));
+const nodemailer = __importStar(require("nodemailer"));
+const generateHtmlStructureToNewBinnacle_1 = require("../assets/html-templates/generateHtmlStructureToNewBinnacle");
 const { models } = sequelize_2.default;
 // ! THINGS TO FIX
-// 1. detect if normar captcha is solved
-// 2. detect if bot is detected where it shouldn't be
-// 3. detect if case file is valid
+//// 1. detect if normar captcha is solved
+//// 2. detect if bot is detected where it shouldn't be
+//// 3. detect if case file is valid
 class JudicialBinacleService {
     constructor() { }
     // async getAllCaseFiles(): Promise<CaseFiles> {
@@ -65,7 +92,7 @@ class JudicialBinacleService {
                         { was_scanned: false },
                         { process_status: "Activo" }, // caseFile.dataValues.processStatus
                     ],
-                    // number_case_file:"01331-2024-0-1601-JP-CI-05"
+                    // number_case_file:"04660-2015-0-1601-JR-CI-06"
                 },
                 include: [
                     {
@@ -180,10 +207,11 @@ class JudicialBinacleService {
                     // TODO: Save case file
                     const caseFileInfo = await (0, getCaseFileInfo_1.getCaseFileInfo)(page);
                     const caseFileBinacles = await (0, extractPnlSeguimientoData_1.extractPnlSeguimientoData)(page, downloadPath);
+                    // console.log(caseFileBinacles)
                     let binnaclesFromDB = [];
                     let prevBinnaclesIndexs = [];
                     let newBinnaclesFound = [];
-                    console.log("Case file code: ", caseFile.dataValues.numberCaseFile);
+                    // console.log("Case file code: ", caseFile.dataValues.numberCaseFile)
                     prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
                         .filter((binnacle) => binnacle.dataValues.index !== null)
                         .map((binnacle) => binnacle.dataValues.index);
@@ -202,8 +230,6 @@ class JudicialBinacleService {
                                 index: prevBinnacle.dataValues.index + contNewBinnacles
                             });
                         }));
-                        // Update the previous indices in memory
-                        prevBinnaclesIndexs = prevBinnaclesIndexs.map((index) => index + contNewBinnacles);
                         // Get the new binnacles from the database filtering by index
                         binnaclesFromDB = await models.JUDICIAL_BINNACLE.findAll({
                             where: {
@@ -222,15 +248,18 @@ class JudicialBinacleService {
                                 }
                             ]
                         });
+                        // Update the previous indices in memory
+                        // prevBinnaclesIndexs = prevBinnaclesIndexs.map((index: number) => index + contNewBinnacles);
+                        prevBinnaclesIndexs = binnaclesFromDB.filter((binnacle) => binnacle.dataValues.index !== null).map((binnacle) => binnacle.dataValues.index);
                     }
                     if (newBinnaclesIndex.length < prevBinnaclesIndexs.length) {
                         const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
                         // Find the eliminated binnacle by index
                     }
                     newBinnaclesFound = caseFileBinacles.filter((binnacle) => !prevBinnaclesIndexs.includes(binnacle.index));
-                    console.log("Previous binnacles indexs:", binnaclesFromDB.map(binnacle => binnacle.dataValues)); // []
-                    console.log("New binnacles found ", newBinnaclesFound); // [8]
-                    console.log("New binnacles found length ", newBinnaclesFound.length); // [8]
+                    // console.log("Previous binnacles indexs updated:", binnaclesFromDB.filter(binnacle => binnacle.dataValues.index !== null)) // []
+                    console.log("New binnacles found", newBinnaclesFound); // [8]
+                    // console.log("New binnacles found length ", newBinnaclesFound.length) // [8]
                     // ! Read only new binnacles to create [4] => DB
                     // ! Read only new binnacles to create [5] => CEJ
                     // ! 1 - Read only new binnacles to create
@@ -317,10 +346,7 @@ class JudicialBinacleService {
                                                 filename: `${newBinnacleName}${fileExtension}`,
                                                 path: newLocalFilePath,
                                             };
-                                            // await uploadFile(
-                                            //   file,
-                                            //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                                            // );
+                                            await (0, aws_bucket_1.uploadFile)(file, `${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`);
                                             await newBinFile.update({
                                                 nameOriginAws: `${newBinnacleName}${fileExtension}`,
                                             });
@@ -421,30 +447,29 @@ class JudicialBinacleService {
                         //   console.log("Preview URL to new binnacle:", previewUrl);
                         // }))
                         { /** ! PROD SEND EMAILS */ }
-                        // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
-                        //   const transporter = nodemailer.createTransport({
-                        //     host: config.AWS_EMAIL_HOST,
-                        //     port: 587,
-                        //     secure: false,
-                        //     auth: {
-                        //       user: config.AWS_EMAIL_USER,
-                        //       pass: config.AWS_EMAIL_PASSWORD,
-                        //     },
-                        //   })
-                        //   const message = {
-                        //     from: config.AWS_EMAIL,
-                        //     // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
-                        //     to: `luisarmandoballadares@gmail.com`,
-                        //     subject: "Notificación de PNL",
-                        //     text: "Nueva bitácora registrada",
-                        //     html: generateHtmlStructureToNewBinnacle({
-                        //       data: binnacle,
-                        //       titleDescription:"Nueva bitácora registrada",
-                        //       numberCaseFile:caseFile.dataValues.numberCaseFile
-                        //     })
-                        //   }
-                        //   await transporter.sendMail(message)
-                        // }))
+                        await Promise.all(newBinnaclesFound.map(async (binnacle) => {
+                            const transporter = nodemailer.createTransport({
+                                host: config_1.default.AWS_EMAIL_HOST,
+                                port: 587,
+                                secure: false,
+                                auth: {
+                                    user: config_1.default.AWS_EMAIL_USER,
+                                    pass: config_1.default.AWS_EMAIL_PASSWORD,
+                                },
+                            });
+                            const message = {
+                                from: config_1.default.AWS_EMAIL,
+                                to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com, intjavaaron@gmail.com, mhidalgoo@hvabogados.com.pe`,
+                                subject: "Notificación de PNL",
+                                text: "Nueva bitácora registrada",
+                                html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)({
+                                    data: binnacle,
+                                    titleDescription: "Nueva bitácora registrada",
+                                    numberCaseFile: caseFile.dataValues.numberCaseFile
+                                })
+                            };
+                            await transporter.sendMail(message);
+                        }));
                     }
                     // ! Read binnacles from DB to create new notifications
                     if (binnaclesFromDB.length) {
@@ -459,16 +484,16 @@ class JudicialBinacleService {
                                 notificationsFound = (_a = matchedBinnacle === null || matchedBinnacle === void 0 ? void 0 : matchedBinnacle.notifications) !== null && _a !== void 0 ? _a : [];
                                 const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
                                 const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
-                                console.log("Prev notification codes 01: ", notificationsCodesPrevious);
-                                console.log("Notifications Found", notificationsFound);
-                                console.log("New notifications 🔔 01", newNotifications);
+                                // console.log("Prev notification codes 01: ", notificationsCodesPrevious)
+                                // console.log("Notifications Found", notificationsFound)
+                                // console.log("New notifications 🔔 01", newNotifications)
                                 if (previousNotifications.length === notificationsFound.length)
                                     return;
                                 else {
                                     const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
                                     const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
-                                    console.log("Prev notification codes: ", notificationsCodesPrevious);
-                                    console.log("New notifications 🔔", newNotifications);
+                                    // console.log("Prev notification codes: ", notificationsCodesPrevious)
+                                    // console.log("New notifications 🔔", newNotifications)
                                     if (!newNotifications.length || !matchedBinnacle)
                                         return;
                                     await Promise.all(newNotifications.map(async (notification) => {
@@ -521,28 +546,27 @@ class JudicialBinacleService {
                                     // const previewUrl = nodemailer.getTestMessageUrl(info);
                                     // console.log("Preview URL to new notifications:", previewUrl);
                                     { /** ! PROD SEND EMAILS WITH NEW NOTIFICATIONS */ }
-                                    // const transporter = nodemailer.createTransport({
-                                    //   host: config.AWS_EMAIL_HOST,
-                                    //   port: 587,
-                                    //   secure: false,
-                                    //   auth: {
-                                    //     user: config.AWS_EMAIL_USER,
-                                    //     pass: config.AWS_EMAIL_PASSWORD,
-                                    //   },
-                                    // })
-                                    // const message = {
-                                    //   from: config.AWS_EMAIL,
-                                    //   // to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com`,
-                                    //   to: `luisarmandoballadares@gmail.com`,
-                                    //   subject: "Notificación de PNL",
-                                    //   text: "Nueva notificación registrada",
-                                    //   html: generateHtmlStructureToNewBinnacle({
-                                    //     data: {...matchedBinnacle, notifications: newNotifications},
-                                    //     titleDescription:"Nuevas notificaciones registradas",
-                                    //     numberCaseFile: caseFile.dataValues.numberCaseFile
-                                    //   })
-                                    // }
-                                    // await transporter.sendMail(message)
+                                    const transporter = nodemailer.createTransport({
+                                        host: config_1.default.AWS_EMAIL_HOST,
+                                        port: 587,
+                                        secure: false,
+                                        auth: {
+                                            user: config_1.default.AWS_EMAIL_USER,
+                                            pass: config_1.default.AWS_EMAIL_PASSWORD,
+                                        },
+                                    });
+                                    const message = {
+                                        from: config_1.default.AWS_EMAIL,
+                                        to: `${caseFile.dataValues.customerUser.dataValues.email}, luisarmandoballadares@gmail.com, intjavaaron@gmail.com, mhidalgoo@hvabogados.com.pe`,
+                                        subject: "Notificación de PNL",
+                                        text: "Nueva notificación registrada",
+                                        html: (0, generateHtmlStructureToNewBinnacle_1.generateHtmlStructureToNewBinnacle)({
+                                            data: Object.assign(Object.assign({}, matchedBinnacle), { notifications: newNotifications }),
+                                            titleDescription: "Nuevas notificaciones registradas",
+                                            numberCaseFile: caseFile.dataValues.numberCaseFile,
+                                        }),
+                                    };
+                                    await transporter.sendMail(message);
                                 }
                             }
                             catch (error) {
