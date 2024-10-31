@@ -66,7 +66,7 @@ app.listen(process.env.PORT || 3000, () => {
     });
     (async () => {
         console.log("Using manual boot scan 🚀");
-        // await service.resetAllCaseFiles()
+        await service.resetAllCaseFiles();
         await service.main();
     })();
     // (async() => await caseFilesService.currencyExchange())();
