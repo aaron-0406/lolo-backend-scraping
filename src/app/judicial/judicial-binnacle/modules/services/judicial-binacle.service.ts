@@ -36,14 +36,12 @@ export class JudicialBinacleService {
   //! Temp tu reload count of valid case fieles
   async resetAllCaseFiles(): Promise<void> {
     await models.JUDICIAL_CASE_FILE.update(
-      { wasScanned: false,
-        isScanValid: true,
-       },
+      { wasScanned: false },
       {
         where: {
           [Op.and]: [
-            // { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-            // { was_scanned: true }, // caseFile.dataValues.wasScanned
+            { is_scan_valid: true }, // caseFile.dataValues.isScanValid
+            { was_scanned: true }, // caseFile.dataValues.wasScanned
             { process_status: "Activo" }, // caseFile.dataValues.processStatus
           ],
         },

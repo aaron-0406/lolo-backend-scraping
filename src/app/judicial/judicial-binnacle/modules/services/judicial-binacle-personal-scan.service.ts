@@ -381,10 +381,10 @@ export class JudicialBinaclePersonalScanService {
                           path: newLocalFilePath,
                         };
 
-                        // await personalScanUploadFile(
-                        //   file,
-                        //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                        // );
+                        await personalScanUploadFile(
+                          file,
+                          `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                        );
 
                         await newBinFile.update({
                           nameOriginAws: `${newBinnacleName}${fileExtension}`,

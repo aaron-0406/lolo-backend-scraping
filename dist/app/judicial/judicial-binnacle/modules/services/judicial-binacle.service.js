@@ -57,13 +57,11 @@ class JudicialBinacleService {
     // }
     //! Temp tu reload count of valid case fieles
     async resetAllCaseFiles() {
-        await models.JUDICIAL_CASE_FILE.update({ wasScanned: false,
-            isScanValid: true,
-        }, {
+        await models.JUDICIAL_CASE_FILE.update({ wasScanned: false }, {
             where: {
                 [sequelize_1.Op.and]: [
-                    // { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-                    // { was_scanned: true }, // caseFile.dataValues.wasScanned
+                    { is_scan_valid: true },
+                    { was_scanned: true },
                     { process_status: "Activo" }, // caseFile.dataValues.processStatus
                 ],
             },

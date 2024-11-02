@@ -307,10 +307,7 @@ class JudicialBinaclePersonalScanService {
                                             filename: `${newBinnacleName}${fileExtension}`,
                                             path: newLocalFilePath,
                                         };
-                                        // await personalScanUploadFile(
-                                        //   file,
-                                        //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                                        // );
+                                        await (0, aws_bucket_1.personalScanUploadFile)(file, `${config_1.default.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`);
                                         await newBinFile.update({
                                             nameOriginAws: `${newBinnacleName}${fileExtension}`,
                                         });

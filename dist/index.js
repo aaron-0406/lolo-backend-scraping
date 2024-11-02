@@ -78,7 +78,7 @@ app.listen(process.env.PORT || 3000, () => {
         await processCaseFiles();
         async function processCaseFiles() {
             const { notScanedCaseFiles, errorsCounter } = await service.main();
-            if (notScanedCaseFiles || errorsCounter > 4) {
+            if (notScanedCaseFiles > 0 && errorsCounter > 4) {
                 console.log("Case files with no scan, retrying in 30 minutes.");
                 setTimeout(async () => {
                     await processCaseFiles();

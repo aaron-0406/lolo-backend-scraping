@@ -120,7 +120,7 @@ app.get("/ping", (_req, res) => {
     async function processCaseFiles() {
       const { notScanedCaseFiles, errorsCounter } = await service.main();
 
-      if (notScanedCaseFiles  || errorsCounter > 4) {
+      if (notScanedCaseFiles > 0  && errorsCounter > 4) {
         console.log("Case files with no scan, retrying in 30 minutes.");
 
         setTimeout(async () => {
