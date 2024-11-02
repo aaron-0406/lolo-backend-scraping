@@ -55,12 +55,15 @@ class JudicialBinacleService {
     // async getAllCaseFiles(): Promise<CaseFiles> {
     //   return caseFilesData as CaseFiles;
     // }
+    //! Temp tu reload count of valid case fieles
     async resetAllCaseFiles() {
-        await models.JUDICIAL_CASE_FILE.update({ wasScanned: false }, {
+        await models.JUDICIAL_CASE_FILE.update({ wasScanned: false,
+            isScanValid: true,
+        }, {
             where: {
                 [sequelize_1.Op.and]: [
-                    { is_scan_valid: true },
-                    { was_scanned: true },
+                    // { is_scan_valid: true }, // caseFile.dataValues.isScanValid
+                    // { was_scanned: true }, // caseFile.dataValues.wasScanned
                     { process_status: "Activo" }, // caseFile.dataValues.processStatus
                 ],
             },
