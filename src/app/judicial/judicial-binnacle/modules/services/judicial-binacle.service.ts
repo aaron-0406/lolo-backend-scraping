@@ -18,6 +18,15 @@ import { v4 } from "uuid";
 import config from "../../../../../config/config";
 import * as nodemailer from 'nodemailer';
 import { generateHtmlStructureToNewBinnacle } from "../assets/html-templates/generateHtmlStructureToNewBinnacle";
+import { MessageType } from "../../../../settings/types/message.type";
+import { generateJsonStructureToNewBinnacle } from "../assets/json-templates/generateJsonStructureToNewBinnacle";
+import CustomerUserService from "../../../../dash/services/customer-user.service";
+import MessageService from "../../../../settings/services/message.service";
+import { MessagesUserService } from "../../../../settings/services/messages-user.service";
+
+const customerUserService = new CustomerUserService()
+const messageService = new MessageService()
+const messagesUsersService = new MessagesUserService()
 
 const { models } = sequelize;
 
@@ -227,6 +236,7 @@ export class JudicialBinacleService {
           let binnaclesFromDB: any[] = [];
           let prevBinnaclesIndexs: any[]= []
           let newBinnaclesFound: any[] = [];
+          let insertedBinnacles: any[] = [];
 
           // console.log("Case file code: ", caseFile.dataValues.numberCaseFile)
 
@@ -300,7 +310,7 @@ export class JudicialBinacleService {
           // ! + 1
 
           if(newBinnaclesFound.length){
-            await Promise.all(newBinnaclesFound.map(async (binnacle:any) => {
+            insertedBinnacles = await Promise.all(newBinnaclesFound.map(async (binnacle:any) => {
 
               console.log("Adding binnacles to database... 📁");
 
@@ -365,7 +375,7 @@ export class JudicialBinacleService {
 
                 totalTariff: 0,
                 tariffHistory: "[]",
-              });
+              },{ returning: true });
 
 
               if (judicialBinnacleData) {
@@ -419,10 +429,10 @@ export class JudicialBinacleService {
                         path: newLocalFilePath,
                       };
 
-                      await uploadFile(
-                        file,
-                        `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                      );
+                      // await uploadFile(
+                      //   file,
+                      //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                      // );
 
                       await newBinFile.update({
                         nameOriginAws: `${newBinnacleName}${fileExtension}`,
@@ -440,7 +450,9 @@ export class JudicialBinacleService {
                 }
               }
 
-              if(!binnacle.notifications.length) return
+              if(!binnacle.notifications.length) {
+                return judicialBinnacleData.dataValues
+              }
 
               await Promise.all(binnacle.notifications.map(async (notification:Notification) => {binnacle
                 const shipDate =
@@ -537,7 +549,10 @@ export class JudicialBinacleService {
                   });
                 // console.log("Creado notificacion: ",  judicialBinNotification);
               }))
+              return judicialBinnacleData.dataValues
             }))
+
+            // console.log("Inserted binnacles: ", insertedBinnacles)
             // Test account created: {
             //   user: 'jblyf2ftfkgyv32f@ethereal.email',
             //   pass: '5StqmXTdVgdcHc7afv',
@@ -547,6 +562,7 @@ export class JudicialBinacleService {
             //   web: 'https://ethereal.email',
             //   mxEnabled: false
             // }
+
             {/** ! TEST SEND EMAILS */}
             // await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
 
@@ -600,6 +616,57 @@ export class JudicialBinacleService {
 
             //   await transporter.sendMail(message)
             // }))
+
+            // TODO - Send new binnacle to APP
+            const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId)
+            console.log("User bot: ", userBot)
+            if (!userBot) continue;
+            await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
+              const insertedBinnacle = insertedBinnacles.find(
+                (binnacleInserted: any) =>
+                  binnacleInserted.index === binnacle.index
+              );
+              try {
+              // 1. Generate new Message
+                  const message: Omit<
+                  MessageType,
+                  "id" | "createdAt" | "updatedAt" | "deletedAt"
+                > = {
+                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+                  customerUserId: userBot.dataValues.id,
+                  subject: "Nueva bitácora registrada",
+                  body: JSON.stringify(
+                    generateJsonStructureToNewBinnacle({
+                      data: binnacle,
+                      titleDescription: "Nueva bitácora registrada",
+                      numberCaseFile: caseFile.dataValues.numberCaseFile,
+                      urls: JSON.stringify([`/judicial/${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.urlIdentifier}/expediente/${caseFile.dataValues.numberCaseFile}/bitacora/${insertedBinnacle.id}`]),
+                    })
+                  ),
+                  whasRead: false,
+                };
+
+                const newMessage = await messageService.create(message)
+
+                if (!newMessage) return
+
+                const newMessagesUsers = await messagesUsersService.create({
+                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+                  messageId: newMessage.dataValues.id,
+                  customerUserId: userBot.dataValues.id,
+                })
+
+                const newMessagesUserOwner = await messagesUsersService.create({
+                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+                  messageId: newMessage.dataValues.id,
+                  customerUserId: 7,
+                })
+
+                console.log("New message created: [BINNACLE]", newMessage);
+              } catch (error) {
+                console.log("Error al crear notificación con código ", error)
+              }
+            }))
           }
           // ! Read binnacles from DB to create new notifications
           if (binnaclesFromDB.length) {
@@ -712,6 +779,53 @@ export class JudicialBinacleService {
                   // };
 
                   // await transporter.sendMail(message)
+                  try {
+                      // TODO: Send new message to APP [NOTIFICATION]
+                      const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId)
+                      console.log("User bot: ", userBot)
+                      if (!userBot) return;
+                      const message: Omit<
+                        MessageType,
+                        "id" | "createdAt" | "updatedAt" | "deletedAt"
+                      > = {
+                        customerHasBankId:
+                          caseFile.dataValues.customerHasBankId,
+                        customerUserId: userBot.dataValues.id,
+                        subject: "Nuevas notificaciones registradas",
+                        body: JSON.stringify(
+                          generateJsonStructureToNewBinnacle({
+                            data: {
+                              ...matchedBinnacle,
+                              notifications: newNotifications,
+                            },
+                            titleDescription:
+                              "Nuevas notificaciones registradas",
+                            numberCaseFile: caseFile.dataValues.numberCaseFile,
+                            urls: JSON.stringify([
+                              `/judicial/${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.urlIdentifier}/expediente/${caseFile.dataValues.numberCaseFile}/bitacora/${binnacle.id}`,
+                            ]),
+                          })
+                        ),
+                        whasRead: false,
+                      };
+
+                      const newMessage = await messageService.create(message)
+
+                      if (!newMessage) return
+
+                      const newMessagesUsers = await messagesUsersService.create({
+                        customerHasBankId: caseFile.dataValues.customerHasBankId,
+                        messageId: newMessage.dataValues.id,
+                        customerUserId: userBot.dataValues.id,
+                      })
+
+                      console.log(
+                        "New message created [Notification]: ",
+                        newMessage
+                      );
+                  } catch (error) {
+                    console.error("Error during creation of judicial notifications:", error);
+                  }
                 }
               } catch (error) {
                 console.error("Error during creation of judicial notifications:", error);

@@ -124,6 +124,14 @@ class CustomerUser extends Model {
       as: "responsibleUser",
       foreignKey: "responsibleUserId",
     })
+    this.hasMany(models.MESSAGES_USERS, {
+      as: "messagesUsers",
+      foreignKey: "customerUserId",
+    });
+    this.hasMany(models.MESSAGE, {
+      as: "messages",
+      foreignKey: "customerUserId",
+    });
   }
 
   static config(sequelize: Sequelize) {

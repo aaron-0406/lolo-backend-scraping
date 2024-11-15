@@ -2,6 +2,7 @@ import sequelize from "../../../libs/sequelize";
 import boom from "@hapi/boom";
 import { CustomerUserType } from "../types/customer-user.type";
 import { encryptPassword } from "../../../libs/bcrypt";
+import { Op } from "sequelize";
 
 const { models } = sequelize;
 
@@ -11,6 +12,24 @@ class CustomerUserService {
   async findAll() {
     const rta = await models.CUSTOMER_USER.findAll();
     return rta;
+  }
+
+  async findUserBot(customerId: number) {
+    try {
+      const rta = await models.CUSTOMER_USER.findOne({
+        where:{
+          name:{
+            [Op.like]: '%bot%'
+          },
+          customerId
+        }
+      })
+
+      if (!rta) return null;
+      return rta;
+    }catch(e){
+      console.log(e)
+    }
   }
 
   async findAllByCustomerID(customerId: string) {

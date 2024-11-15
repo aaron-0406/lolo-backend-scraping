@@ -12,10 +12,9 @@ import cron from 'node-cron';
 import * as nodemailer from 'nodemailer';
 import routerApi from './routes';
 import { judicialCaseFileService } from './app/judicial/judicial-case-file/modules/services/judicial-case-files.service';
-
+import customeUserService  from './app/dash/services/customer-user.service';
 const service = new JudicialBinacleService();
-const caseFilesService = new judicialCaseFileService();
-
+const serviceCustomer = new customeUserService()
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = errorHandlerr;
 dotenv.config();
 declare global {
@@ -103,12 +102,14 @@ app.get("/ping", (_req, res) => {
 });
 
 
-  // (async () => {
-  //   console.log("Using manual boot scan 🚀")
-  //   await service.resetAllCaseFiles()
-  //   await service.main()
-  // }
-  // )();
+
+  (async () => {
+    console.log("Using manual boot scan 🚀")
+    // await service.resetAllCaseFiles()
+    await service.main()
+
+  }
+  )();
 
   // (async() => await caseFilesService.currencyExchange())();
 
