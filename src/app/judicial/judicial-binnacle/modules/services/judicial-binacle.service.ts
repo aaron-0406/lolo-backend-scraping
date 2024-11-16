@@ -635,6 +635,7 @@ export class JudicialBinacleService {
                   customerHasBankId: caseFile.dataValues.customerHasBankId,
                   customerUserId: userBot.dataValues.id,
                   subject: "Nueva bitácora registrada",
+                  keyMessage: "new-binnacle-registered-by-bot",
                   body: JSON.stringify(
                     generateJsonStructureToNewBinnacle({
                       data: binnacle,
@@ -792,6 +793,7 @@ export class JudicialBinacleService {
                           caseFile.dataValues.customerHasBankId,
                         customerUserId: userBot.dataValues.id,
                         subject: "Nuevas notificaciones registradas",
+                        keyMessage: "new-notifications-registered-by-bot",
                         body: JSON.stringify(
                           generateJsonStructureToNewBinnacle({
                             data: {

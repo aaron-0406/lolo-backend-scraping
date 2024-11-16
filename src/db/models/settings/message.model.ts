@@ -58,6 +58,11 @@ const MessageSchema: ModelAttributes<Message, MessageType> = {
     onUpdate: "CASCADE",
     onDelete: "NO ACTION",
   },
+  keyMessage: {
+    allowNull: true,
+    field: "key_message",
+    type: DataTypes.STRING(150),
+  },
   createdAt: {
     allowNull: false,
     field: "created_at",

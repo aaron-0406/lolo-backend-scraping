@@ -5,6 +5,7 @@ export type MessageType = {
   body: string;
   whasRead: boolean;
   customerHasBankId: number;
+  keyMessage: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date;
