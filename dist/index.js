@@ -13,9 +13,9 @@ const ip_handler_1 = __importDefault(require("./middlewares/ip.handler"));
 const error_handler_1 = __importDefault(require("./middlewares/error.handler"));
 const node_cron_1 = __importDefault(require("node-cron"));
 const routes_1 = __importDefault(require("./routes"));
-const judicial_case_files_service_1 = require("./app/judicial/judicial-case-file/modules/services/judicial-case-files.service");
+const customer_user_service_1 = __importDefault(require("./app/dash/services/customer-user.service"));
 const service = new judicial_binacle_service_1.JudicialBinacleService();
-const caseFilesService = new judicial_case_files_service_1.judicialCaseFileService();
+const serviceCustomer = new customer_user_service_1.default();
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = error_handler_1.default;
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -67,7 +67,7 @@ app.listen(process.env.PORT || 3000, () => {
     });
     // (async () => {
     //   console.log("Using manual boot scan 🚀")
-    //   await service.resetAllCaseFiles()
+    //   // await service.resetAllCaseFiles()
     //   await service.main()
     // }
     // )();

@@ -429,10 +429,10 @@ export class JudicialBinacleService {
                         path: newLocalFilePath,
                       };
 
-                      // await uploadFile(
-                      //   file,
-                      //   `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
-                      // );
+                      await uploadFile(
+                        file,
+                        `${config.AWS_CHB_PATH}${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.id}/${judicialBinnacleData.dataValues.customerHasBankId}/${caseFile.dataValues.client.dataValues.code}/case-file/${caseFile.dataValues.id}/binnacle`
+                      );
 
                       await newBinFile.update({
                         nameOriginAws: `${newBinnacleName}${fileExtension}`,
@@ -819,6 +819,12 @@ export class JudicialBinacleService {
                         customerHasBankId: caseFile.dataValues.customerHasBankId,
                         messageId: newMessage.dataValues.id,
                         customerUserId: userBot.dataValues.id,
+                      })
+
+                      const newMessagesUserOwner = await messagesUsersService.create({
+                        customerHasBankId: caseFile.dataValues.customerHasBankId,
+                        messageId: newMessage.dataValues.id,
+                        customerUserId: 7,
                       })
 
                       console.log(

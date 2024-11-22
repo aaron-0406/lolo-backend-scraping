@@ -13,6 +13,22 @@ class CustomerUserService {
         const rta = await models.CUSTOMER_USER.findAll();
         return rta;
     }
+    async findUserBot(customerId) {
+        try {
+            const rta = await models.CUSTOMER_USER.findOne({
+                where: {
+                    dni: "00000001",
+                    customerId
+                }
+            });
+            if (!rta)
+                return null;
+            return rta;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
     async findAllByCustomerID(customerId) {
         const rta = await models.CUSTOMER_USER.findAll({
             include: ["role"],

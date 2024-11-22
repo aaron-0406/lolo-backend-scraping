@@ -70,6 +70,8 @@ const judicial_bin_notification_model_1 = __importDefault(require("./judicial-bi
 const tariff_model_1 = __importDefault(require("./tariff.model"));
 const tariff_interval_model_1 = __importDefault(require("./tariff-interval.model"));
 const tariff_interval_match_model_1 = __importDefault(require("./tariff-interval-match.model"));
+const message_model_1 = __importDefault(require("./settings/message.model"));
+const messages_users_model_1 = __importDefault(require("./settings/messages-users.model"));
 const { Customer, CustomerSchema } = customer_model_1.default;
 const { Funcionario, FuncionarioSchema } = funcionario_model_1.default;
 const { Bank, BankSchema } = bank_model_1.default;
@@ -136,6 +138,8 @@ const { Tariff, TariffSchema } = tariff_model_1.default;
 const { TariffInterval, TariffIntervalSchema } = tariff_interval_model_1.default;
 const { TariffIntervalMatch, TariffIntervalMatchSchema } = tariff_interval_match_model_1.default;
 const { JudicialBinNotification, JudicialBinNotificationSchema } = judicial_bin_notification_model_1.default;
+const { Message, MessageSchema } = message_model_1.default;
+const { MessagesUsers, MessagesUserSchema } = messages_users_model_1.default;
 const setupModels = (sequelize) => {
     Customer.init(CustomerSchema, Customer.config(sequelize));
     Bank.init(BankSchema, Bank.config(sequelize));
@@ -203,6 +207,8 @@ const setupModels = (sequelize) => {
     Tariff.init(TariffSchema, Tariff.config(sequelize));
     TariffInterval.init(TariffIntervalSchema, TariffInterval.config(sequelize));
     TariffIntervalMatch.init(TariffIntervalMatchSchema, TariffIntervalMatch.config(sequelize));
+    Message.init(MessageSchema, Message.config(sequelize));
+    MessagesUsers.init(MessagesUserSchema, MessagesUsers.config(sequelize));
     Customer.associate(sequelize.models);
     CustomerUser.associate(sequelize.models);
     Bank.associate(sequelize.models);
@@ -267,5 +273,7 @@ const setupModels = (sequelize) => {
     Tariff.associate(sequelize.models);
     TariffInterval.associate(sequelize.models);
     TariffIntervalMatch.associate(sequelize.models);
+    Message.associate(sequelize.models);
+    MessagesUsers.associate(sequelize.models);
 };
 exports.setupModels = setupModels;

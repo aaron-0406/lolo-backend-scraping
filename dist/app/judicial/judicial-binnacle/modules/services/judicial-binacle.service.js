@@ -20,6 +20,13 @@ const get_nine_types_1 = require("../libs/get-nine-types");
 const deleteFolderContents_1 = require("./judicial-binacle.service.libs/main/deleteFolderContents");
 const uuid_1 = require("uuid");
 const config_1 = __importDefault(require("../../../../../config/config"));
+const generateJsonStructureToNewBinnacle_1 = require("../assets/json-templates/generateJsonStructureToNewBinnacle");
+const customer_user_service_1 = __importDefault(require("../../../../dash/services/customer-user.service"));
+const message_service_1 = __importDefault(require("../../../../settings/services/message.service"));
+const messages_user_service_1 = require("../../../../settings/services/messages-user.service");
+const customerUserService = new customer_user_service_1.default();
+const messageService = new message_service_1.default();
+const messagesUsersService = new messages_user_service_1.MessagesUserService();
 const { models } = sequelize_2.default;
 // ! THINGS TO FIX
 //// 1. detect if normar captcha is solved
@@ -187,6 +194,7 @@ class JudicialBinacleService {
                     let binnaclesFromDB = [];
                     let prevBinnaclesIndexs = [];
                     let newBinnaclesFound = [];
+                    let insertedBinnacles = [];
                     // console.log("Case file code: ", caseFile.dataValues.numberCaseFile)
                     prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
                         .filter((binnacle) => binnacle.dataValues.index !== null)
@@ -242,7 +250,7 @@ class JudicialBinacleService {
                     // ! 5-4 -> 1
                     // ! + 1
                     if (newBinnaclesFound.length) {
-                        await Promise.all(newBinnaclesFound.map(async (binnacle) => {
+                        insertedBinnacles = await Promise.all(newBinnaclesFound.map(async (binnacle) => {
                             var _a;
                             console.log("Adding binnacles to database... 📁");
                             const resolutionDate = (0, moment_timezone_1.default)(binnacle.resolutionDate, "DD/MM/YYYY HH:mm").isValid()
@@ -285,7 +293,7 @@ class JudicialBinacleService {
                                 createdBy: "BOT",
                                 totalTariff: 0,
                                 tariffHistory: "[]",
-                            });
+                            }, { returning: true });
                             if (judicialBinnacleData) {
                                 try {
                                     const extensions = [".pdf", ".docx"];
@@ -338,8 +346,9 @@ class JudicialBinacleService {
                                     console.log("Error al subir el archivo:", error);
                                 }
                             }
-                            if (!binnacle.notifications.length)
-                                return;
+                            if (!binnacle.notifications.length) {
+                                return judicialBinnacleData.dataValues;
+                            }
                             await Promise.all(binnacle.notifications.map(async (notification) => {
                                 binnacle;
                                 const shipDate = notification.shipDate &&
@@ -390,7 +399,9 @@ class JudicialBinacleService {
                                 });
                                 // console.log("Creado notificacion: ",  judicialBinNotification);
                             }));
+                            return judicialBinnacleData.dataValues;
                         }));
+                        // console.log("Inserted binnacles: ", insertedBinnacles)
                         // Test account created: {
                         //   user: 'jblyf2ftfkgyv32f@ethereal.email',
                         //   pass: '5StqmXTdVgdcHc7afv',
@@ -446,6 +457,47 @@ class JudicialBinacleService {
                         //   }
                         //   await transporter.sendMail(message)
                         // }))
+                        // TODO - Send new binnacle to APP
+                        const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId);
+                        console.log("User bot: ", userBot);
+                        if (!userBot)
+                            continue;
+                        await Promise.all(newBinnaclesFound.map(async (binnacle) => {
+                            const insertedBinnacle = insertedBinnacles.find((binnacleInserted) => binnacleInserted.index === binnacle.index);
+                            try {
+                                // 1. Generate new Message
+                                const message = {
+                                    customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                    customerUserId: userBot.dataValues.id,
+                                    subject: "Nueva bitácora registrada",
+                                    keyMessage: "new-binnacle-registered-by-bot",
+                                    body: JSON.stringify((0, generateJsonStructureToNewBinnacle_1.generateJsonStructureToNewBinnacle)({
+                                        data: binnacle,
+                                        titleDescription: "Nueva bitácora registrada",
+                                        numberCaseFile: caseFile.dataValues.numberCaseFile,
+                                        urls: JSON.stringify([`/judicial/${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.urlIdentifier}/expediente/${caseFile.dataValues.numberCaseFile}/bitacora/${insertedBinnacle.id}`]),
+                                    })),
+                                    wasRead: false,
+                                };
+                                const newMessage = await messageService.create(message);
+                                if (!newMessage)
+                                    return;
+                                const newMessagesUsers = await messagesUsersService.create({
+                                    customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                    messageId: newMessage.dataValues.id,
+                                    customerUserId: userBot.dataValues.id,
+                                });
+                                const newMessagesUserOwner = await messagesUsersService.create({
+                                    customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                    messageId: newMessage.dataValues.id,
+                                    customerUserId: 7,
+                                });
+                                console.log("New message created: [BINNACLE]", newMessage);
+                            }
+                            catch (error) {
+                                console.log("Error al crear notificación con código ", error);
+                            }
+                        }));
                     }
                     // ! Read binnacles from DB to create new notifications
                     if (binnaclesFromDB.length) {
@@ -546,6 +598,45 @@ class JudicialBinacleService {
                                     //   }),
                                     // };
                                     // await transporter.sendMail(message)
+                                    try {
+                                        // TODO: Send new message to APP [NOTIFICATION]
+                                        const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId);
+                                        console.log("User bot: ", userBot);
+                                        if (!userBot)
+                                            return;
+                                        const message = {
+                                            customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                            customerUserId: userBot.dataValues.id,
+                                            subject: "Nuevas notificaciones registradas",
+                                            keyMessage: "new-notifications-registered-by-bot",
+                                            body: JSON.stringify((0, generateJsonStructureToNewBinnacle_1.generateJsonStructureToNewBinnacle)({
+                                                data: Object.assign(Object.assign({}, matchedBinnacle), { notifications: newNotifications }),
+                                                titleDescription: "Nuevas notificaciones registradas",
+                                                numberCaseFile: caseFile.dataValues.numberCaseFile,
+                                                urls: JSON.stringify([
+                                                    `/judicial/${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.urlIdentifier}/expediente/${caseFile.dataValues.numberCaseFile}/bitacora/${binnacle.id}`,
+                                                ]),
+                                            })),
+                                            wasRead: false,
+                                        };
+                                        const newMessage = await messageService.create(message);
+                                        if (!newMessage)
+                                            return;
+                                        const newMessagesUsers = await messagesUsersService.create({
+                                            customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                            messageId: newMessage.dataValues.id,
+                                            customerUserId: userBot.dataValues.id,
+                                        });
+                                        const newMessagesUserOwner = await messagesUsersService.create({
+                                            customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                            messageId: newMessage.dataValues.id,
+                                            customerUserId: 7,
+                                        });
+                                        console.log("New message created [Notification]: ", newMessage);
+                                    }
+                                    catch (error) {
+                                        console.error("Error during creation of judicial notifications:", error);
+                                    }
                                 }
                             }
                             catch (error) {
