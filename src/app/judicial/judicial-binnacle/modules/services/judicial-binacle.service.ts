@@ -644,7 +644,7 @@ export class JudicialBinacleService {
                       urls: JSON.stringify([`/judicial/${caseFile.dataValues.customerHasBank.dataValues.customer.dataValues.urlIdentifier}/expediente/${caseFile.dataValues.numberCaseFile}/bitacora/${insertedBinnacle.id}`]),
                     })
                   ),
-                  whasRead: false,
+                  wasRead: false,
                 };
 
                 const newMessage = await messageService.create(message)
@@ -808,7 +808,7 @@ export class JudicialBinacleService {
                             ]),
                           })
                         ),
-                        whasRead: false,
+                        wasRead: false,
                       };
 
                       const newMessage = await messageService.create(message)

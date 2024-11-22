@@ -42,9 +42,9 @@ const MessageSchema: ModelAttributes<Message, MessageType> = {
     field: "body",
     type: DataTypes.TEXT("long"),
   },
-  whasRead: {
+  wasRead: {
     allowNull: false,
-    field: "whas_read",
+    field: "was_read",
     type: DataTypes.BOOLEAN,
   },
   customerHasBankId: {

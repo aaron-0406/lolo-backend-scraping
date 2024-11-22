@@ -3,7 +3,7 @@ export type MessageType = {
   customerUserId: number;
   subject: string;
   body: string;
-  whasRead: boolean;
+  wasRead: boolean;
   customerHasBankId: number;
   keyMessage: string;
   createdAt: Date;

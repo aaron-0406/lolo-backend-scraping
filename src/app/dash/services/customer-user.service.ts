@@ -18,9 +18,7 @@ class CustomerUserService {
     try {
       const rta = await models.CUSTOMER_USER.findOne({
         where:{
-          name:{
-            [Op.like]: '%bot%'
-          },
+          dni:"00000001",
           customerId
         }
       })
