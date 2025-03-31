@@ -618,7 +618,7 @@ export class JudicialBinacleService {
             // }))
 
             // TODO - Send new binnacle to APP
-            const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId)
+            const userBot = await customerUserService.findUserBot(caseFile?.dataValues?.chbTransferred ?? caseFile.dataValues.customerHasBankId)
             console.log("User bot: ", userBot)
             if (!userBot) continue;
             await Promise.all(newBinnaclesFound.map(async(binnacle:any) => {
@@ -632,7 +632,7 @@ export class JudicialBinacleService {
                   MessageType,
                   "id" | "createdAt" | "updatedAt" | "deletedAt"
                 > = {
-                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+                  customerHasBankId: caseFile?.dataValues?.chbTransferred ?? caseFile.dataValues.customerHasBankId,
                   customerUserId: userBot.dataValues.id,
                   subject: "Nueva bitácora registrada",
                   keyMessage: "new-binnacle-registered-by-bot",
@@ -652,16 +652,17 @@ export class JudicialBinacleService {
                 if (!newMessage) return
 
                 const newMessagesUsers = await messagesUsersService.create({
-                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+                  customerHasBankId: caseFile?.dataValues?.chbTransferred ?? caseFile.dataValues.customerHasBankId,
                   messageId: newMessage.dataValues.id,
                   customerUserId: userBot.dataValues.id,
                 })
 
-                const newMessagesUserOwner = await messagesUsersService.create({
+                // TODO: Remove
+                /* const newMessagesUserOwner = await messagesUsersService.create({
                   customerHasBankId: caseFile.dataValues.customerHasBankId,
                   messageId: newMessage.dataValues.id,
                   customerUserId: 7,
-                })
+                }) */
 
                 console.log("New message created: [BINNACLE]", newMessage);
               } catch (error) {
@@ -782,15 +783,14 @@ export class JudicialBinacleService {
                   // await transporter.sendMail(message)
                   try {
                       // TODO: Send new message to APP [NOTIFICATION]
-                      const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId)
+                      const userBot = await customerUserService.findUserBot(caseFile?.dataValues?.chbTransferred ?? caseFile.dataValues.customerHasBankId)
                       console.log("User bot: ", userBot)
                       if (!userBot) return;
                       const message: Omit<
                         MessageType,
                         "id" | "createdAt" | "updatedAt" | "deletedAt"
                       > = {
-                        customerHasBankId:
-                          caseFile.dataValues.customerHasBankId,
+                        customerHasBankId: caseFile?.dataValues?.chbTransferred ?? caseFile.dataValues.customerHasBankId,
                         customerUserId: userBot.dataValues.id,
                         subject: "Nuevas notificaciones registradas",
                         keyMessage: "new-notifications-registered-by-bot",
@@ -816,16 +816,17 @@ export class JudicialBinacleService {
                       if (!newMessage) return
 
                       const newMessagesUsers = await messagesUsersService.create({
-                        customerHasBankId: caseFile.dataValues.customerHasBankId,
+                        customerHasBankId: caseFile?.dataValues?.chbTransferred ?? caseFile.dataValues.customerHasBankId,
                         messageId: newMessage.dataValues.id,
                         customerUserId: userBot.dataValues.id,
                       })
 
-                      const newMessagesUserOwner = await messagesUsersService.create({
+                      // TODO: Remove
+                      /* const newMessagesUserOwner = await messagesUsersService.create({
                         customerHasBankId: caseFile.dataValues.customerHasBankId,
                         messageId: newMessage.dataValues.id,
                         customerUserId: 7,
-                      })
+                      }) */
 
                       console.log(
                         "New message created [Notification]: ",

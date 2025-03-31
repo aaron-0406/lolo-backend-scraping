@@ -124,6 +124,7 @@ class JudicialBinacleService {
         }
     }
     async main() {
+        var _a, _b;
         let errorsCounter = 0;
         try {
             const downloadPath = path_1.default.join(__dirname, "../../../../../public/docs");
@@ -458,16 +459,17 @@ class JudicialBinacleService {
                         //   await transporter.sendMail(message)
                         // }))
                         // TODO - Send new binnacle to APP
-                        const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId);
+                        const userBot = await customerUserService.findUserBot((_b = (_a = caseFile === null || caseFile === void 0 ? void 0 : caseFile.dataValues) === null || _a === void 0 ? void 0 : _a.chbTransferred) !== null && _b !== void 0 ? _b : caseFile.dataValues.customerHasBankId);
                         console.log("User bot: ", userBot);
                         if (!userBot)
                             continue;
                         await Promise.all(newBinnaclesFound.map(async (binnacle) => {
+                            var _a, _b, _c, _d;
                             const insertedBinnacle = insertedBinnacles.find((binnacleInserted) => binnacleInserted.index === binnacle.index);
                             try {
                                 // 1. Generate new Message
                                 const message = {
-                                    customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                    customerHasBankId: (_b = (_a = caseFile === null || caseFile === void 0 ? void 0 : caseFile.dataValues) === null || _a === void 0 ? void 0 : _a.chbTransferred) !== null && _b !== void 0 ? _b : caseFile.dataValues.customerHasBankId,
                                     customerUserId: userBot.dataValues.id,
                                     subject: "Nueva bitácora registrada",
                                     keyMessage: "new-binnacle-registered-by-bot",
@@ -483,15 +485,16 @@ class JudicialBinacleService {
                                 if (!newMessage)
                                     return;
                                 const newMessagesUsers = await messagesUsersService.create({
-                                    customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                    customerHasBankId: (_d = (_c = caseFile === null || caseFile === void 0 ? void 0 : caseFile.dataValues) === null || _c === void 0 ? void 0 : _c.chbTransferred) !== null && _d !== void 0 ? _d : caseFile.dataValues.customerHasBankId,
                                     messageId: newMessage.dataValues.id,
                                     customerUserId: userBot.dataValues.id,
                                 });
-                                const newMessagesUserOwner = await messagesUsersService.create({
-                                    customerHasBankId: caseFile.dataValues.customerHasBankId,
-                                    messageId: newMessage.dataValues.id,
-                                    customerUserId: 7,
-                                });
+                                // TODO: Remove
+                                /* const newMessagesUserOwner = await messagesUsersService.create({
+                                  customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                  messageId: newMessage.dataValues.id,
+                                  customerUserId: 7,
+                                }) */
                                 console.log("New message created: [BINNACLE]", newMessage);
                             }
                             catch (error) {
@@ -502,7 +505,7 @@ class JudicialBinacleService {
                     // ! Read binnacles from DB to create new notifications
                     if (binnaclesFromDB.length) {
                         await Promise.all(binnaclesFromDB.map(async (binnacle) => {
-                            var _a;
+                            var _a, _b, _c, _d, _e, _f, _g;
                             try {
                                 binnacle = binnacle.dataValues;
                                 let previousNotifications = binnacle.judicialBinNotifications.map((Notification) => Notification.dataValues);
@@ -600,12 +603,12 @@ class JudicialBinacleService {
                                     // await transporter.sendMail(message)
                                     try {
                                         // TODO: Send new message to APP [NOTIFICATION]
-                                        const userBot = await customerUserService.findUserBot(caseFile.dataValues.customerHasBankId);
+                                        const userBot = await customerUserService.findUserBot((_c = (_b = caseFile === null || caseFile === void 0 ? void 0 : caseFile.dataValues) === null || _b === void 0 ? void 0 : _b.chbTransferred) !== null && _c !== void 0 ? _c : caseFile.dataValues.customerHasBankId);
                                         console.log("User bot: ", userBot);
                                         if (!userBot)
                                             return;
                                         const message = {
-                                            customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                            customerHasBankId: (_e = (_d = caseFile === null || caseFile === void 0 ? void 0 : caseFile.dataValues) === null || _d === void 0 ? void 0 : _d.chbTransferred) !== null && _e !== void 0 ? _e : caseFile.dataValues.customerHasBankId,
                                             customerUserId: userBot.dataValues.id,
                                             subject: "Nuevas notificaciones registradas",
                                             keyMessage: "new-notifications-registered-by-bot",
@@ -623,15 +626,16 @@ class JudicialBinacleService {
                                         if (!newMessage)
                                             return;
                                         const newMessagesUsers = await messagesUsersService.create({
-                                            customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                            customerHasBankId: (_g = (_f = caseFile === null || caseFile === void 0 ? void 0 : caseFile.dataValues) === null || _f === void 0 ? void 0 : _f.chbTransferred) !== null && _g !== void 0 ? _g : caseFile.dataValues.customerHasBankId,
                                             messageId: newMessage.dataValues.id,
                                             customerUserId: userBot.dataValues.id,
                                         });
-                                        const newMessagesUserOwner = await messagesUsersService.create({
-                                            customerHasBankId: caseFile.dataValues.customerHasBankId,
-                                            messageId: newMessage.dataValues.id,
-                                            customerUserId: 7,
-                                        });
+                                        // TODO: Remove
+                                        /* const newMessagesUserOwner = await messagesUsersService.create({
+                                          customerHasBankId: caseFile.dataValues.customerHasBankId,
+                                          messageId: newMessage.dataValues.id,
+                                          customerUserId: 7,
+                                        }) */
                                         console.log("New message created [Notification]: ", newMessage);
                                     }
                                     catch (error) {

@@ -13,13 +13,26 @@ class CustomerUserService {
         const rta = await models.CUSTOMER_USER.findAll();
         return rta;
     }
-    async findUserBot(customerId) {
+    async findUserBot(chb) {
+        var _a, _b;
+        // TODO: Change this logic
+        const customer = await models.CUSTOMER_HAS_BANK.findByPk(chb);
+        let dni = "";
+        let customerId = 0;
+        if (((_a = customer === null || customer === void 0 ? void 0 : customer.dataValues) === null || _a === void 0 ? void 0 : _a.idCustomer) == 1) {
+            customerId = 1;
+            dni = "00000001";
+        }
+        else if (((_b = customer === null || customer === void 0 ? void 0 : customer.dataValues) === null || _b === void 0 ? void 0 : _b.idCustomer) == 22) {
+            customerId = 22;
+            dni = "00000002";
+        }
         try {
             const rta = await models.CUSTOMER_USER.findOne({
                 where: {
-                    dni: "00000001",
-                    customerId
-                }
+                    dni,
+                    customerId,
+                },
             });
             if (!rta)
                 return null;
