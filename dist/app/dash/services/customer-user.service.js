@@ -36,6 +36,7 @@ class CustomerUserService {
             });
             if (!rta)
                 return null;
+            console.log("🚀 ~ CustomerUserService ~ findUserBot ~ rta:", JSON.stringify(rta));
             return rta;
         }
         catch (e) {
