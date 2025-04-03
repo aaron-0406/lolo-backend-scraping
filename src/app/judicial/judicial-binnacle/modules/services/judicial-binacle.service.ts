@@ -81,7 +81,9 @@ export class JudicialBinacleService {
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
           customer_has_bank_id: {
-            [Op.in]: [28, 30],
+            [Op.in]: customerHasBanksIds.map(
+              (customer) => customer.dataValues.id
+            ),
           },
           [Op.and]: [
             { is_scan_valid: true }, // caseFile.dataValues.isScanValid
@@ -123,6 +125,8 @@ export class JudicialBinacleService {
             as: "customerUser",
           },
         ],
+        limit: 5000,
+        offset: 0,
       });
       // console.log(
       //   caseFiles.map(
