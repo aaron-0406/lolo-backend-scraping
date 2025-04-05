@@ -71,9 +71,7 @@ export class JudicialBinacleService {
       const customerHasBanksIds = await models.CUSTOMER_HAS_BANK.findAll({
         where: {
           customer_id_customer: {
-            [Op.in]: activeCustomersIds.map(
-              (customer) => customer.dataValues.id_customer
-            ),
+            [Op.in]: [28, 30],
           },
         },
       });
