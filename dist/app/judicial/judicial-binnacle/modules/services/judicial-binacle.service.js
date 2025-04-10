@@ -61,7 +61,7 @@ class JudicialBinacleService {
             const customerHasBanksIds = await models.CUSTOMER_HAS_BANK.findAll({
                 where: {
                     customer_id_customer: {
-                        [sequelize_1.Op.in]: activeCustomersIds.map((customer) => customer.dataValues.id_customer),
+                        [sequelize_1.Op.in]: [31],
                     },
                 },
             });
