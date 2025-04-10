@@ -25,6 +25,9 @@ class CustomerUserService {
     } else if (customer?.dataValues?.idCustomer == 22) {
       customerId = 22;
       dni = "00000002";
+    } else if (customer?.dataValues?.idCustomer == 23) {
+      customerId = 23;
+      dni = "00000003";
     }
 
     try {

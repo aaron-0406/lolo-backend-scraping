@@ -78,61 +78,68 @@ export class JudicialBinacleService {
         },
       });
 
-      const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
-        where: {
-          customer_has_bank_id: {
-            [Op.in]: [31],
+      let offset = 0;
+      const limit = 1000;
+      let allCaseFiles: any[] = [];
+      while (true) {
+        const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
+          where: {
+            customer_has_bank_id: {
+              [Op.in]: customerHasBanksIds.map(
+                (customer) => customer.dataValues.id
+              ),
+            },
+            [Op.and]: [
+              { is_scan_valid: true }, // caseFile.dataValues.isScanValid
+              { was_scanned: false }, // caseFile.dataValues.wasScanned
+              { process_status:"Activo" }, // caseFile.dataValues.processStatus
+            ],
+            // number_case_file:"04660-2015-0-1601-JR-CI-06"
           },
-          [Op.and]: [
-            { is_scan_valid: true }, // caseFile.dataValues.isScanValid
-            { was_scanned: false }, // caseFile.dataValues.wasScanned
-            { process_status:"Activo" }, // caseFile.dataValues.processStatus
-          ],
-          // number_case_file:"04660-2015-0-1601-JR-CI-06"
-        },
-        include: [
-          {
-            model: models.JUDICIAL_BINNACLE,
-            as: "judicialBinnacle",
-            include: [
-              {
-                model: models.JUDICIAL_BIN_NOTIFICATION,
-                as: "judicialBinNotifications",
-                attributes: {
-                  exclude: ["judicialBinnacleId"],
+          include: [
+            {
+              model: models.JUDICIAL_BINNACLE,
+              as: "judicialBinnacle",
+              include: [
+                {
+                  model: models.JUDICIAL_BIN_NOTIFICATION,
+                  as: "judicialBinNotifications",
+                  attributes: {
+                    exclude: ["judicialBinnacleId"],
+                  },
                 },
-              },
-            ],
-          },
-          {
-            model: models.CUSTOMER_HAS_BANK,
-            as: "customerHasBank",
-            include: [
-              {
-                model: models.CUSTOMER,
-                as: "customer",
-              },
-            ],
-          },
-          {
-            model: models.CLIENT,
-            as: "client",
-          },
-          {
-            model: models.CUSTOMER_USER,
-            as: "customerUser",
-          },
-        ],
-        limit: 5000,
-        offset: 0,
-      });
-      // console.log(
-      //   caseFiles.map(
-      //     (caseFileData: any) => caseFileData.dataValues.customerUser.dataValues.email
-      //   )
-      // );
+              ],
+            },
+            {
+              model: models.CUSTOMER_HAS_BANK,
+              as: "customerHasBank",
+              include: [
+                {
+                  model: models.CUSTOMER,
+                  as: "customer",
+                },
+              ],
+            },
+            {
+              model: models.CLIENT,
+              as: "client",
+            },
+            {
+              model: models.CUSTOMER_USER,
+              as: "customerUser",
+            },
+          ],
+          limit,
+          offset,
+        });
+        
+        if (caseFiles.length === 0) break;
 
-      return caseFiles
+        allCaseFiles = allCaseFiles.concat(caseFiles);
+        offset += limit;
+      }
+
+      return allCaseFiles
     } catch (error) {
       console.error("Error during connection to database", error);
       return [];
