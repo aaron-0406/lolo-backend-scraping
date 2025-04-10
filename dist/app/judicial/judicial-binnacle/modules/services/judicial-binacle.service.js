@@ -61,7 +61,7 @@ class JudicialBinacleService {
             const customerHasBanksIds = await models.CUSTOMER_HAS_BANK.findAll({
                 where: {
                     customer_id_customer: {
-                        [sequelize_1.Op.in]: [31],
+                        [sequelize_1.Op.in]: activeCustomersIds.map((customer) => customer.dataValues.id_customer),
                     },
                 },
             });
@@ -72,7 +72,7 @@ class JudicialBinacleService {
                 const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
                     where: {
                         customer_has_bank_id: {
-                            [sequelize_1.Op.in]: customerHasBanksIds.map((customer) => customer.dataValues.id),
+                            [sequelize_1.Op.in]: [28, 30, 31],
                         },
                         [sequelize_1.Op.and]: [
                             { is_scan_valid: true },
