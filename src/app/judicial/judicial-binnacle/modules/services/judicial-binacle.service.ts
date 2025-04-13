@@ -12,7 +12,7 @@ import { validateAndNavigateCaseFile } from "./judicial-binacle.service.libs/mai
 import { deleteFile } from "../../../../../libs/helpers";
 import { uploadFile } from "../../../../../libs/aws_bucket";
 import { getMimeType } from "../libs/get-nine-types";
-import { Notification } from "../types/external-types";
+import { Notification, CaseFile } from '../types/external-types';
 import { deleteFolderContents } from "./judicial-binacle.service.libs/main/deleteFolderContents";
 import { v4 } from "uuid";
 import config from "../../../../../config/config";
@@ -41,6 +41,20 @@ export class JudicialBinacleService {
   // async getAllCaseFiles(): Promise<CaseFiles> {
   //   return caseFilesData as CaseFiles;
   // }
+ 
+  
+  async resetCaseFilesByCustomerHasBankId(): Promise<void> {
+    await models.JUDICIAL_CASE_FILE.update(
+      { wasScanned: false, isScanValid: true },
+      {
+        where: {
+          customer_has_bank_id: {
+            [Op.in]: [28, 30, 31],
+          },
+        },
+      }
+    );
+  }
 
   //! Temp tu reload count of valid case fieles
   async resetAllCaseFiles(): Promise<void> {
@@ -80,9 +94,9 @@ export class JudicialBinacleService {
 
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
-          // customer_has_bank_id: {
-          //   [Op.in]: [28, 30, 31],
-          // },
+          customer_has_bank_id: {
+            [Op.in]: [28, 30, 31],
+          },
           [Op.and]: [
             { is_scan_valid: true }, // caseFile.dataValues.isScanValid
             { was_scanned: false }, // caseFile.dataValues.wasScanned
@@ -93,7 +107,10 @@ export class JudicialBinacleService {
         include: [
           {
             model: models.JUDICIAL_BINNACLE,
-            as: "judicialBinnacle",
+            as: "judicialFileCaseBinnacles",
+            attributes: {
+              exclude: ["judicialFileCaseBinnaclesId"]
+            },
             include: [
               {
                 model: models.JUDICIAL_BIN_NOTIFICATION,
@@ -119,12 +136,12 @@ export class JudicialBinacleService {
             as: "client",
           },
           {
-            model: models.CUSTOMER_USER,
+            model: models.CUSTOMER_USER, 
             as: "customerUser",
           },
         ],
-        limit: 5000,
-        offset: 0,
+        // limit: 5000,
+        // offset: 0,
       });
       // console.log(
       //   caseFiles.map(

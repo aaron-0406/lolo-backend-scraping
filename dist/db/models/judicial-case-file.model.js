@@ -48,6 +48,26 @@ const JudicialCaseFileSchema = {
         field: "amount_demanded_dollars",
         type: sequelize_1.DataTypes.DECIMAL(10, 2),
     },
+    comercialValueSoles: {
+        allowNull: true,
+        field: "comercial_value_soles",
+        type: sequelize_1.DataTypes.DECIMAL(10, 2),
+    },
+    comercialValueDollars: {
+        allowNull: true,
+        field: "comercial_value_dollars",
+        type: sequelize_1.DataTypes.DECIMAL(10, 2),
+    },
+    amountAffectionSoles: {
+        allowNull: true,
+        field: "amount_affection_soles",
+        type: sequelize_1.DataTypes.DECIMAL(10, 2),
+    },
+    amountAffectionDollars: {
+        allowNull: true,
+        field: "amount_affection_dollars",
+        type: sequelize_1.DataTypes.DECIMAL(10, 2),
+    },
     cautionaryCode: {
         allowNull: true,
         field: "cautionary_code",
@@ -232,10 +252,27 @@ const JudicialCaseFileSchema = {
         field: "qr_code",
         type: sequelize_1.DataTypes.TEXT("long"),
     },
+    isArchived: {
+        allowNull: false,
+        field: "is_archived",
+        type: sequelize_1.DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
     chbTransferred: {
         allowNull: true,
         field: "chb_transferred",
         type: sequelize_1.DataTypes.INTEGER,
+    },
+    updatedAt: {
+        allowNull: true,
+        field: "updated_at",
+        defaultValue: sequelize_1.DataTypes.NOW,
+        type: sequelize_1.DataTypes.DATE,
+    },
+    deletedAt: {
+        allowNull: true,
+        field: "deleted_at",
+        type: sequelize_1.DataTypes.DATE,
     },
 };
 class JudicialCaseFile extends sequelize_1.Model {
@@ -262,20 +299,26 @@ class JudicialCaseFile extends sequelize_1.Model {
             foreignKey: "idJudicialCaseFileRelated",
         });
         this.hasMany(models.JUDICIAL_BINNACLE, {
-            as: "judicialBinnacle",
+            as: "judicialFileCaseBinnacles",
             foreignKey: "judicialFileCaseId",
         });
         this.hasMany(models.JUDICIAL_CASE_FILE_HAS_COLLATERAL, {
             as: "judicialCaseFileHasCollateral",
             foreignKey: "judicialCaseFileId",
         });
+        // this.hasMany(models.JUDICIAL_RESOURCES, {
+        //   as: "judicialResources",
+        //   foreignKey: "judicialCaseFileId",
+        // })
     }
     static config(sequelize) {
         return {
             sequelize,
             tableName: JUDICIAL_CASE_FILE_TABLE,
             modelName: JUDICIAL_CASE_FILE_TABLE,
-            timestamps: false,
+            timestamps: true,
+            paranoid: true,
+            deleteAt: "deleted_at",
         };
     }
 }

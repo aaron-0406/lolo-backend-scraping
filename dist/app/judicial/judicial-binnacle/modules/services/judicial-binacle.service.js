@@ -37,6 +37,15 @@ class JudicialBinacleService {
     // async getAllCaseFiles(): Promise<CaseFiles> {
     //   return caseFilesData as CaseFiles;
     // }
+    async resetCaseFilesByCustomerHasBankId() {
+        await models.JUDICIAL_CASE_FILE.update({ wasScanned: false, isScanValid: true }, {
+            where: {
+                customer_has_bank_id: {
+                    [sequelize_1.Op.in]: [28, 30, 31],
+                },
+            },
+        });
+    }
     //! Temp tu reload count of valid case fieles
     async resetAllCaseFiles() {
         await models.JUDICIAL_CASE_FILE.update({ wasScanned: false }, {
@@ -80,7 +89,10 @@ class JudicialBinacleService {
                 include: [
                     {
                         model: models.JUDICIAL_BINNACLE,
-                        as: "judicialBinnacle",
+                        as: "judicialFileCaseBinnacles",
+                        attributes: {
+                            exclude: ["judicialFileCaseBinnaclesId"]
+                        },
                         include: [
                             {
                                 model: models.JUDICIAL_BIN_NOTIFICATION,
@@ -110,8 +122,8 @@ class JudicialBinacleService {
                         as: "customerUser",
                     },
                 ],
-                limit: 5000,
-                offset: 0,
+                // limit: 5000,
+                // offset: 0,
             });
             // console.log(
             //   caseFiles.map(

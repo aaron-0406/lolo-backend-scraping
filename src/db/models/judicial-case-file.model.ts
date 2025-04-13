@@ -56,6 +56,26 @@ const JudicialCaseFileSchema: ModelAttributes<
     field: "amount_demanded_dollars",
     type: DataTypes.DECIMAL(10, 2),
   },
+  comercialValueSoles: {
+    allowNull: true,
+    field: "comercial_value_soles",
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  comercialValueDollars: {
+    allowNull: true,
+    field: "comercial_value_dollars",
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  amountAffectionSoles: {
+    allowNull: true,
+    field: "amount_affection_soles",
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  amountAffectionDollars: {
+    allowNull: true,
+    field: "amount_affection_dollars",
+    type: DataTypes.DECIMAL(10, 2),
+  },
   cautionaryCode: {
     allowNull: true,
     field: "cautionary_code",
@@ -242,10 +262,27 @@ const JudicialCaseFileSchema: ModelAttributes<
     field: "qr_code",
     type: DataTypes.TEXT("long"),
   },
+  isArchived: {
+    allowNull: false,
+    field: "is_archived",
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
   chbTransferred: {
     allowNull: true,
     field: "chb_transferred",
     type: DataTypes.INTEGER,
+  },
+  updatedAt: {
+    allowNull: true,
+    field: "updated_at",
+    defaultValue: DataTypes.NOW,
+    type: DataTypes.DATE,
+  },
+  deletedAt: {
+    allowNull: true,
+    field: "deleted_at",
+    type: DataTypes.DATE,
   },
 };
 
@@ -276,13 +313,17 @@ class JudicialCaseFile extends Model {
     });
 
     this.hasMany(models.JUDICIAL_BINNACLE, {
-      as: "judicialBinnacle",
+      as: "judicialFileCaseBinnacles",
       foreignKey: "judicialFileCaseId",
     });
     this.hasMany(models.JUDICIAL_CASE_FILE_HAS_COLLATERAL, {
       as: "judicialCaseFileHasCollateral",
       foreignKey: "judicialCaseFileId",
     });
+    // this.hasMany(models.JUDICIAL_RESOURCES, {
+    //   as: "judicialResources",
+    //   foreignKey: "judicialCaseFileId",
+    // })
   }
 
   static config(sequelize: Sequelize) {
@@ -290,7 +331,9 @@ class JudicialCaseFile extends Model {
       sequelize,
       tableName: JUDICIAL_CASE_FILE_TABLE,
       modelName: JUDICIAL_CASE_FILE_TABLE,
-      timestamps: false,
+      timestamps: true,
+      paranoid: true,
+      deleteAt: "deleted_at",
     };
   }
 }

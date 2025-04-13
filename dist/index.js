@@ -12,10 +12,13 @@ const morgan_1 = __importDefault(require("morgan"));
 const ip_handler_1 = __importDefault(require("./middlewares/ip.handler"));
 const error_handler_1 = __importDefault(require("./middlewares/error.handler"));
 const routes_1 = __importDefault(require("./routes"));
+const customer_user_service_1 = __importDefault(require("./app/dash/services/customer-user.service"));
 const service = new judicial_binacle_service_1.JudicialBinacleService();
+const serviceCustomer = new customer_user_service_1.default();
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = error_handler_1.default;
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+const port = process.env.PORT || 5000;
 app.use(express_1.default.json());
 app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.urlencoded({ extended: false }));
@@ -44,10 +47,6 @@ app.use(logErrors);
 app.use(boomErrorHandler);
 app.use(ormErrorHandler);
 app.use(errorHandler);
-const manualBootScan = async () => {
-    const data = await service.getAllCaseFilesDB();
-    console.log(data.length);
-};
 app.listen(process.env.PORT || 3000, () => {
     console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
     const options = {
@@ -65,15 +64,12 @@ app.listen(process.env.PORT || 3000, () => {
     app.get("/ping", (_req, res) => {
         res.send("Hello World! 2");
     });
-    try {
-        (async () => {
-            console.log("Using automatic boot scan 🚀");
-            await manualBootScan();
-        })();
-    }
-    catch (error) {
-        console.error("Error in automatic boot scan", error);
-    }
+    (async () => {
+        console.log("Using manual boot scan 🚀");
+        await service.resetAllCaseFiles();
+        await service.main();
+        // await service.resetCaseFilesByCustomerHasBankId();
+    })();
     // (async() => await caseFilesService.currencyExchange())();
     // cron.schedule('35 9 * * *', async () => {
     //   await service.resetAllCaseFiles();

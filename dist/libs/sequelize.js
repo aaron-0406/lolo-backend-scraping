@@ -11,7 +11,7 @@ const PASSWORD = encodeURIComponent(config_1.default.dbPassword);
 const URI = `mysql://${USER}:${PASSWORD}@${config_1.default.dbHost}:${config_1.default.dbPort}/${config_1.default.dbName}`;
 const sequelize = new sequelize_1.Sequelize(URI, {
     dialect: "mysql",
-    logging: true,
+    logging: (msg) => console.log(msg)
 });
 (0, models_1.setupModels)(sequelize);
 exports.default = sequelize;
