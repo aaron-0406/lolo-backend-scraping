@@ -6,7 +6,7 @@ import { removeHCaptcha } from "../removeHCaptcha/removeHCaptcha";
 import { fillCaseFileNumber } from "../fillCaseFileNumber/fillCaseFileNumber";
 
 export async function removeNormalCaptchaV2SR(
-{ page, solver, numberCaseFile }: { page: Page, solver: any, numberCaseFile: any }
+{ page, solver, numberCaseFile, caseFile }: { page: Page, solver: any, numberCaseFile: any, caseFile: any }
 ): Promise<{ isSolved: boolean; isCasFileTrue: boolean; isBotDetected: boolean }> {
 
   const captchaDir = path.resolve(__dirname, '../../../../../public/audio-captchas');
@@ -35,7 +35,7 @@ export async function removeNormalCaptchaV2SR(
         await page.waitForSelector("#mensajeNoExisteExpedientes");
         await page.waitForSelector("#codCaptchaError");
 
-        await fillCaseFileNumber(page, numberCaseFile);
+        await fillCaseFileNumber(page, numberCaseFile, caseFile);
 
         const value = await page.locator("#btnRepro").scroll({
           scrollTop: -30,

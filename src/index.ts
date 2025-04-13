@@ -103,37 +103,36 @@ app.get("/ping", (_req, res) => {
 
 
 
-  // (async () => {
-  //   console.log("Using manual boot scan 🚀")
-  //   // await service.resetAllCaseFiles()
-  //   await service.main()
-
-  // }
-  // )();
+  (async () => {
+    console.log("Using manual boot scan 🚀")
+    await service.resetAllCaseFiles()
+    await service.main()
+  }
+  )();
 
   // (async() => await caseFilesService.currencyExchange())();
 
-  cron.schedule('35 9 * * *', async () => {
-    await service.resetAllCaseFiles();
-    console.log('Cron job iniciado: 6 AM');
-    await processCaseFiles();
+  // cron.schedule('35 9 * * *', async () => {
+  //   await service.resetAllCaseFiles();
+  //   console.log('Cron job iniciado: 6 AM');
+  //   await processCaseFiles();
 
-    async function processCaseFiles() {
-      const { notScanedCaseFiles, errorsCounter } = await service.main();
+  //   async function processCaseFiles() {
+  //     const { notScanedCaseFiles, errorsCounter } = await service.main();
 
-      if (notScanedCaseFiles > 0  && errorsCounter > 4) {
-        console.log("Case files with no scan, retrying in 30 minutes.");
+  //     if (notScanedCaseFiles > 0  && errorsCounter > 4) {
+  //       console.log("Case files with no scan, retrying in 30 minutes.");
 
-        setTimeout(async () => {
-          await processCaseFiles();
-        }, 30 * 60 * 1000);
-      } else {
-        console.log("All case files scanned.");
-      }
-    }
-  },{
-    timezone: 'America/Lima'
-  });
+  //       setTimeout(async () => {
+  //         await processCaseFiles();
+  //       }, 30 * 60 * 1000);
+  //     } else {
+  //       console.log("All case files scanned.");
+  //     }
+  //   }
+  // },{
+  //   timezone: 'America/Lima'
+  // });
 
   console.log("server is running on port", process.env.PORT || 3000);
 });

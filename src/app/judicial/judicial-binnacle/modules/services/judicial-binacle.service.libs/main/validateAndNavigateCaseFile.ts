@@ -22,7 +22,7 @@ export async function validateAndNavigateCaseFile(page: Page, caseFile: any): Pr
       caseFile.dataValues.numberCaseFile
     );
 
-    const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV2SR({ page, solver, numberCaseFile });
+    const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV2SR({ page, solver, numberCaseFile, caseFile });
     // const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV1({ page, solver });
 
     if (isSolved && isCasFileTrue && !isBotDetected) {

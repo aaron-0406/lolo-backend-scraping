@@ -2,7 +2,8 @@ import { Page } from "puppeteer";
 import { CaseFileNumber } from "../../../types/external-types";
 export async function fillCaseFileNumber(
   page: Page,
-  numberCaseFileDecoder: CaseFileNumber
+  numberCaseFileDecoder: CaseFileNumber,
+  caseFile: any
 ): Promise<void> {
   const {
     codeExp,
@@ -54,4 +55,5 @@ export async function fillCaseFileNumber(
     await page.locator('input[id="cod_organo"]').fill(codeOrgano),
     await page.locator('input[id="cod_especialidad"]').fill(codEspecialidad),
     await page.locator('input[id="cod_instancia"]').fill(codInstancia);
-}
+    await page.locator('input[id="parte"]').fill(caseFile.client.name);
+  }
