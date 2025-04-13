@@ -6,8 +6,15 @@ import cors, { CorsOptions } from "cors";
 import morgan from "morgan";
 import ipHandler from "./middlewares/ip.handler";
 import errorHandlerr from "./middlewares/error.handler";
+
+
+import cron from 'node-cron';
+import * as nodemailer from 'nodemailer';
 import routerApi from './routes';
+import { judicialCaseFileService } from './app/judicial/judicial-case-file/modules/services/judicial-case-files.service';
+import customeUserService  from './app/dash/services/customer-user.service';
 const service = new JudicialBinacleService();
+const serviceCustomer = new customeUserService()
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = errorHandlerr;
 dotenv.config();
 declare global {
@@ -36,6 +43,7 @@ declare global {
 }
 
 const app = express();
+const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(morgan("dev"));
@@ -71,11 +79,6 @@ app.use(boomErrorHandler);
 app.use(ormErrorHandler);
 app.use(errorHandler);
 
-const manualBootScan = async () => {
-  console.log(" All case files to scan ")
-  const data = await service.getAllCaseFilesDB()
-  console.log(" All case files to scan ", data.length)
-}
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
@@ -98,41 +101,39 @@ app.get("/ping", (_req, res) => {
   res.send("Hello World! 2");
 });
 
-  try {
-     
-    (async () => {
-      console.log("Using automatic boot scan 🚀")
-      await manualBootScan()
-    }
-    )();
-  } catch (error) {
-    console.error("Error in automatic boot scan", error);
-  }
 
+
+  // (async () => {
+  //   console.log("Using manual boot scan 🚀")
+  //   // await service.resetAllCaseFiles()
+  //   await service.main()
+
+  // }
+  // )();
 
   // (async() => await caseFilesService.currencyExchange())();
 
-  // cron.schedule('35 9 * * *', async () => {
-  //   await service.resetAllCaseFiles();
-  //   console.log('Cron job iniciado: 6 AM');
-  //   await processCaseFiles();
+  cron.schedule('35 9 * * *', async () => {
+    await service.resetAllCaseFiles();
+    console.log('Cron job iniciado: 6 AM');
+    await processCaseFiles();
 
-  //   async function processCaseFiles() {
-  //     const { notScanedCaseFiles, errorsCounter } = await service.main();
+    async function processCaseFiles() {
+      const { notScanedCaseFiles, errorsCounter } = await service.main();
 
-  //     if (notScanedCaseFiles > 0  && errorsCounter > 4) {
-  //       console.log("Case files with no scan, retrying in 30 minutes.");
+      if (notScanedCaseFiles > 0  && errorsCounter > 4) {
+        console.log("Case files with no scan, retrying in 30 minutes.");
 
-  //       setTimeout(async () => {
-  //         await processCaseFiles();
-  //       }, 30 * 60 * 1000);
-  //     } else {
-  //       console.log("All case files scanned.");
-  //     }
-  //   }
-  // },{
-  //   timezone: 'America/Lima'
-  // });
+        setTimeout(async () => {
+          await processCaseFiles();
+        }, 30 * 60 * 1000);
+      } else {
+        console.log("All case files scanned.");
+      }
+    }
+  },{
+    timezone: 'America/Lima'
+  });
 
   console.log("server is running on port", process.env.PORT || 3000);
 });
