@@ -95,12 +95,12 @@ app.get("/ping", (_req, res) => {
 
 
 
-  (async () => {
-    console.log("Using manual boot scan 🚀")
-    await service.resetAllCaseFiles()
-    await service.main()
-  }
-  )();
+  // (async () => {
+  //   console.log("Using manual boot scan 🚀")
+  //   await service.resetAllCaseFiles()
+  //   await service.main()
+  // }
+  // )();
 
   // (async() => await caseFilesService.currencyExchange())();
 
