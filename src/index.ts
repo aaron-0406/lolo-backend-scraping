@@ -72,8 +72,8 @@ app.use(ormErrorHandler);
 app.use(errorHandler);
 
 const manualBootScan = async () => {
-  console.log("Using manual boot scan 🚀")
-  await service.resetAllCaseFiles()
+  // console.log("Using manual boot scan 🚀")
+  // await service.resetAllCaseFiles()
   await service.main()
 }
 
@@ -102,7 +102,7 @@ app.get("/ping", (_req, res) => {
 
   (async () => {
     console.log("Using automatic boot scan 🚀")
-    // await manualBootScan()
+    await manualBootScan()
   }
   )();
 

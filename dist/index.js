@@ -45,8 +45,8 @@ app.use(boomErrorHandler);
 app.use(ormErrorHandler);
 app.use(errorHandler);
 const manualBootScan = async () => {
-    console.log("Using manual boot scan 🚀");
-    await service.resetAllCaseFiles();
+    // console.log("Using manual boot scan 🚀")
+    // await service.resetAllCaseFiles()
     await service.main();
 };
 app.listen(process.env.PORT || 3000, () => {
@@ -68,7 +68,7 @@ app.listen(process.env.PORT || 3000, () => {
     });
     (async () => {
         console.log("Using automatic boot scan 🚀");
-        // await manualBootScan()
+        await manualBootScan();
     })();
     // (async() => await caseFilesService.currencyExchange())();
     // cron.schedule('35 9 * * *', async () => {
