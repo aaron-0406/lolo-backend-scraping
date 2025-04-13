@@ -100,10 +100,11 @@ app.get("/ping", (_req, res) => {
 
 
 
-  // (async () => {
-  //   await manualBootScan()
-  // }
-  // )();
+  (async () => {
+    console.log("Using automatic boot scan 🚀")
+    // await manualBootScan()
+  }
+  )();
 
   // (async() => await caseFilesService.currencyExchange())();
 
