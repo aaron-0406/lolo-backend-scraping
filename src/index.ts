@@ -98,13 +98,17 @@ app.get("/ping", (_req, res) => {
   res.send("Hello World! 2");
 });
 
-
-
-  (async () => {
-    console.log("Using automatic boot scan 🚀")
-    await manualBootScan()
+  try {
+     
+    (async () => {
+      console.log("Using automatic boot scan 🚀")
+      await manualBootScan()
+    }
+    )();
+  } catch (error) {
+    console.error("Error in automatic boot scan", error);
   }
-  )();
+
 
   // (async() => await caseFilesService.currencyExchange())();
 
