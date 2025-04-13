@@ -100,10 +100,10 @@ app.get("/ping", (_req, res) => {
 
 
 
-  (async () => {
-    await manualBootScan()
-  }
-  )();
+  // (async () => {
+  //   await manualBootScan()
+  // }
+  // )();
 
   // (async() => await caseFilesService.currencyExchange())();
 

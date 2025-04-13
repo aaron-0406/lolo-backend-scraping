@@ -66,9 +66,10 @@ app.listen(process.env.PORT || 3000, () => {
     app.get("/ping", (_req, res) => {
         res.send("Hello World! 2");
     });
-    (async () => {
-        await manualBootScan();
-    })();
+    // (async () => {
+    //   await manualBootScan()
+    // }
+    // )();
     // (async() => await caseFilesService.currencyExchange())();
     // cron.schedule('35 9 * * *', async () => {
     //   await service.resetAllCaseFiles();
