@@ -72,6 +72,7 @@ app.use(ormErrorHandler);
 app.use(errorHandler);
 
 const manualBootScan = async () => {
+  console.log(" All case files to scan ")
   const data = await service.getAllCaseFilesDB()
   console.log(" All case files to scan ", data.length)
 }
