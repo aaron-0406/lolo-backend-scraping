@@ -71,6 +71,11 @@ app.use(boomErrorHandler);
 app.use(ormErrorHandler);
 app.use(errorHandler);
 
+const manualBootScan = async () => {
+  console.log("Using manual boot scan 🚀")
+  await service.resetAllCaseFiles()
+  await service.main()
+}
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT || 3000}`);
@@ -95,12 +100,10 @@ app.get("/ping", (_req, res) => {
 
 
 
-  // (async () => {
-  //   console.log("Using manual boot scan 🚀")
-  //   await service.resetAllCaseFiles()
-  //   await service.main()
-  // }
-  // )();
+  (async () => {
+    await manualBootScan()
+  }
+  )();
 
   // (async() => await caseFilesService.currencyExchange())();
 
