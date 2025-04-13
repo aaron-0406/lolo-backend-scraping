@@ -72,9 +72,8 @@ app.use(ormErrorHandler);
 app.use(errorHandler);
 
 const manualBootScan = async () => {
-  // console.log("Using manual boot scan 🚀")
-  // await service.resetAllCaseFiles()
-  await service.main()
+  const data = await service.getAllCaseFilesDB()
+  console.log(data.length)
 }
 
 app.listen(process.env.PORT || 3000, () => {
