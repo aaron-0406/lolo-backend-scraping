@@ -6,15 +6,8 @@ import cors, { CorsOptions } from "cors";
 import morgan from "morgan";
 import ipHandler from "./middlewares/ip.handler";
 import errorHandlerr from "./middlewares/error.handler";
-
-
-import cron from 'node-cron';
-import * as nodemailer from 'nodemailer';
 import routerApi from './routes';
-import { judicialCaseFileService } from './app/judicial/judicial-case-file/modules/services/judicial-case-files.service';
-import customeUserService  from './app/dash/services/customer-user.service';
 const service = new JudicialBinacleService();
-const serviceCustomer = new customeUserService()
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = errorHandlerr;
 dotenv.config();
 declare global {
@@ -43,7 +36,6 @@ declare global {
 }
 
 const app = express();
-const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(morgan("dev"));
