@@ -211,19 +211,46 @@ class JudicialBinacleService {
                     let newBinnaclesFound = [];
                     let insertedBinnacles = [];
                     // console.log("Case file code: ", caseFile.dataValues.numberCaseFile)
-                    prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
-                        .filter((binnacle) => binnacle.dataValues.index !== null)
-                        .map((binnacle) => binnacle.dataValues.index);
-                    binnaclesFromDB = caseFile.dataValues.judicialBinnacle
-                        .filter((binnacle) => binnacle.dataValues.index !== null)
-                        .map((binnacle) => binnacle);
+                    try {
+                        prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
+                            .filter((binnacle) => binnacle.dataValues.index !== null)
+                            .map((binnacle) => binnacle.dataValues.index);
+                    }
+                    catch (error) {
+                        console.log("[ERROR CONTROLAOD]  Error al obtener prevBinnaclesIndexs con indice: ", error);
+                        // const currentbinnacles = caseFile.dataValues.judicialBinnacle
+                        //   .filter((binnacle: any) => binnacle.dataValues.index === null)
+                        //   .map((binnacle: any) => binnacle.dataValues.id_judicial_binnacle);
+                        //   console.log("currentbinnacles: ", currentbinnacles)
+                    }
+                    try {
+                        binnaclesFromDB = caseFile.dataValues.judicialBinnacle
+                            .filter((binnacle) => binnacle.dataValues.index !== null)
+                            .map((binnacle) => binnacle);
+                    }
+                    catch (error) {
+                        console.log("[ERROR CONTROLAOD]  Error al obtener binnaclesFromDB con indice: ", error);
+                        // const currentbinnacles = caseFile.dataValues.judicialBinnacle
+                        //   .filter((binnacle: any) => binnacle.dataValues.index === null)
+                        //   .map((binnacle: any) => binnacle.dataValues.id_judicial_binnacle);
+                        //   console.log("currentbinnacles: ", currentbinnacles)
+                    }
                     const newBinnaclesIndex = caseFileBinacles.map((binnacle) => binnacle.index);
                     if (newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
                         const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
-                        // Get all binnacles
-                        const prevBinnacles = caseFile.dataValues.judicialBinnacle
-                            .filter((binnacle) => binnacle.dataValues.index !== null)
-                            .map((binnacle) => binnacle);
+                        let prevBinnacles = [];
+                        try {
+                            prevBinnacles = caseFile.dataValues.judicialBinnacle
+                                .filter((binnacle) => binnacle.dataValues.index !== null)
+                                .map((binnacle) => binnacle);
+                        }
+                        catch (error) {
+                            console.log("[ERROR CONTROLAOD]  Error al obtener prevBinnacles con indice: ", error);
+                            // const currentbinnacles = caseFile.dataValues.judicialBinnacle
+                            //   .filter((binnacle: any) => binnacle.dataValues.index === null)
+                            //   .map((binnacle: any) => binnacle.dataValues.id_judicial_binnacle);
+                            //   console.log("currentbinnacles: ", currentbinnacles)
+                        }
                         await Promise.all(prevBinnacles.map(async (prevBinnacle) => {
                             await prevBinnacle.update({
                                 index: prevBinnacle.dataValues.index + contNewBinnacles
@@ -249,13 +276,23 @@ class JudicialBinacleService {
                         });
                         // Update the previous indices in memory
                         // prevBinnaclesIndexs = prevBinnaclesIndexs.map((index: number) => index + contNewBinnacles);
-                        prevBinnaclesIndexs = binnaclesFromDB.filter((binnacle) => binnacle.dataValues.index !== null).map((binnacle) => binnacle.dataValues.index);
+                        try {
+                            prevBinnaclesIndexs = binnaclesFromDB.filter((binnacle) => binnacle.dataValues.index !== null).map((binnacle) => binnacle.dataValues.index);
+                        }
+                        catch (error) {
+                            console.log("Error al obtener prevBinnaclesIndexs: ", error);
+                        }
                     }
                     if (newBinnaclesIndex.length < prevBinnaclesIndexs.length) {
                         const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
                         // Find the eliminated binnacle by index
                     }
-                    newBinnaclesFound = caseFileBinacles.filter((binnacle) => !prevBinnaclesIndexs.includes(binnacle.index));
+                    try {
+                        newBinnaclesFound = caseFileBinacles.filter((binnacle) => !prevBinnaclesIndexs.includes(binnacle.index));
+                    }
+                    catch (error) {
+                        console.log("Error al obtener newBinnaclesFound: ", error);
+                    }
                     // console.log("Previous binnacles indexs updated:", binnaclesFromDB.filter(binnacle => binnacle.dataValues.index !== null)) // []
                     console.log("New binnacles found", newBinnaclesFound); // [8]
                     // console.log("New binnacles found length ", newBinnaclesFound.length) // [8]
@@ -527,8 +564,8 @@ class JudicialBinacleService {
                                 console.log("Verify if there are new notifications... 🔔");
                                 const matchedBinnacle = caseFileBinacles.find((data) => data.index === binnacle.index);
                                 notificationsFound = (_a = matchedBinnacle === null || matchedBinnacle === void 0 ? void 0 : matchedBinnacle.notifications) !== null && _a !== void 0 ? _a : [];
-                                const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
-                                const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
+                                // const notificationsCodesPrevious = previousNotifications.map((notification:any) => notification.notificationCode)
+                                // const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
                                 // console.log("Prev notification codes 01: ", notificationsCodesPrevious)
                                 // console.log("Notifications Found", notificationsFound)
                                 // console.log("New notifications 🔔 01", newNotifications)
@@ -536,6 +573,12 @@ class JudicialBinacleService {
                                     return;
                                 else {
                                     const notificationsCodesPrevious = previousNotifications.map((notification) => notification.notificationCode);
+                                    try {
+                                        const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
+                                    }
+                                    catch (error) {
+                                        console.log("Error al obtener newNotifications: ", error);
+                                    }
                                     const newNotifications = notificationsFound.filter((notification) => !notificationsCodesPrevious.includes(notification.notificationCode));
                                     // console.log("Prev notification codes: ", notificationsCodesPrevious)
                                     // console.log("New notifications 🔔", newNotifications)

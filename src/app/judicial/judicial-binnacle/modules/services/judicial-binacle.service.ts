@@ -257,24 +257,52 @@ export class JudicialBinacleService {
 
           // console.log("Case file code: ", caseFile.dataValues.numberCaseFile)
 
-          prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
-            .filter((binnacle: any) => binnacle.dataValues.index !== null)
-            .map((binnacle: any) => binnacle.dataValues.index);
-          binnaclesFromDB = caseFile.dataValues.judicialBinnacle
-            .filter((binnacle: any) => binnacle.dataValues.index !== null)
-            .map((binnacle: any) => binnacle);
 
+          try {
+            prevBinnaclesIndexs = caseFile.dataValues.judicialBinnacle
+              .filter((binnacle: any) => binnacle.dataValues.index !== null)
+              .map((binnacle: any) => binnacle.dataValues.index);
+          } catch (error) {
+            console.log("[ERROR CONTROLAOD]  Error al obtener prevBinnaclesIndexs con indice: ", error);
+            // const currentbinnacles = caseFile.dataValues.judicialBinnacle
+            //   .filter((binnacle: any) => binnacle.dataValues.index === null)
+            //   .map((binnacle: any) => binnacle.dataValues.id_judicial_binnacle);
 
+            //   console.log("currentbinnacles: ", currentbinnacles)
+          }
+
+          try {
+            binnaclesFromDB = caseFile.dataValues.judicialBinnacle
+              .filter((binnacle: any) => binnacle.dataValues.index !== null)
+              .map((binnacle: any) => binnacle);
+          } catch (error) {
+            console.log("[ERROR CONTROLAOD]  Error al obtener binnaclesFromDB con indice: ", error);
+            // const currentbinnacles = caseFile.dataValues.judicialBinnacle
+            //   .filter((binnacle: any) => binnacle.dataValues.index === null)
+            //   .map((binnacle: any) => binnacle.dataValues.id_judicial_binnacle);
+
+            //   console.log("currentbinnacles: ", currentbinnacles)
+          }
 
           const newBinnaclesIndex = caseFileBinacles.map((binnacle:any) => binnacle.index);
 
           if (newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
             const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
+            
+            let prevBinnacles: any[] = [];
+            try {
+              prevBinnacles = caseFile.dataValues.judicialBinnacle
+                .filter((binnacle: any) => binnacle.dataValues.index !== null)
+                .map((binnacle: any) => binnacle);
+            } catch (error) {
+              console.log("[ERROR CONTROLAOD]  Error al obtener prevBinnacles con indice: ", error);
+              // const currentbinnacles = caseFile.dataValues.judicialBinnacle
+              //   .filter((binnacle: any) => binnacle.dataValues.index === null)
+              //   .map((binnacle: any) => binnacle.dataValues.id_judicial_binnacle);
 
-            // Get all binnacles
-            const prevBinnacles = caseFile.dataValues.judicialBinnacle
-              .filter((binnacle: any) => binnacle.dataValues.index !== null)
-              .map((binnacle: any) => binnacle);
+              //   console.log("currentbinnacles: ", currentbinnacles)
+              }
+
 
             await Promise.all(prevBinnacles.map(async (prevBinnacle: any) => {
               await prevBinnacle.update({
@@ -304,7 +332,11 @@ export class JudicialBinacleService {
 
             // Update the previous indices in memory
             // prevBinnaclesIndexs = prevBinnaclesIndexs.map((index: number) => index + contNewBinnacles);
-            prevBinnaclesIndexs = binnaclesFromDB.filter((binnacle: any) =>  binnacle.dataValues.index !== null).map((binnacle: any) => binnacle.dataValues.index);
+            try{
+              prevBinnaclesIndexs = binnaclesFromDB.filter((binnacle: any) =>  binnacle.dataValues.index !== null).map((binnacle: any) => binnacle.dataValues.index);
+            } catch (error) {
+              console.log("Error al obtener prevBinnaclesIndexs: ", error);
+            }
           }
 
           if(newBinnaclesIndex.length < prevBinnaclesIndexs.length){
@@ -313,9 +345,14 @@ export class JudicialBinacleService {
 
           }
 
-          newBinnaclesFound = caseFileBinacles.filter(
-            (binnacle: any) => !prevBinnaclesIndexs.includes(binnacle.index)
-          )
+          try {
+            newBinnaclesFound = caseFileBinacles.filter(
+              (binnacle: any) => !prevBinnaclesIndexs.includes(binnacle.index)
+            )
+          } catch (error) {
+            console.log("Error al obtener newBinnaclesFound: ", error);
+          }
+          
           // console.log("Previous binnacles indexs updated:", binnaclesFromDB.filter(binnacle => binnacle.dataValues.index !== null)) // []
           console.log("New binnacles found", newBinnaclesFound) // [8]
           // console.log("New binnacles found length ", newBinnaclesFound.length) // [8]
@@ -702,8 +739,8 @@ export class JudicialBinacleService {
                   );
 
                 notificationsFound = matchedBinnacle?.notifications ?? []
-                const notificationsCodesPrevious = previousNotifications.map((notification:any) => notification.notificationCode)
-                const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
+                // const notificationsCodesPrevious = previousNotifications.map((notification:any) => notification.notificationCode)
+                // const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
                 // console.log("Prev notification codes 01: ", notificationsCodesPrevious)
                 // console.log("Notifications Found", notificationsFound)
                 // console.log("New notifications 🔔 01", newNotifications)
@@ -711,6 +748,11 @@ export class JudicialBinacleService {
                 if(previousNotifications.length === notificationsFound.length) return
                 else{
                   const notificationsCodesPrevious = previousNotifications.map((notification:any) => notification.notificationCode)
+                  try {
+                    const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
+                  } catch (error) {
+                    console.log("Error al obtener newNotifications: ", error);
+                  }
                   const newNotifications = notificationsFound.filter((notification:any) => !notificationsCodesPrevious.includes(notification.notificationCode))
                   // console.log("Prev notification codes: ", notificationsCodesPrevious)
                   // console.log("New notifications 🔔", newNotifications)
