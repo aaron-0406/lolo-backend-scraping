@@ -73,7 +73,7 @@ app.use(errorHandler);
 
 const manualBootScan = async () => {
   const data = await service.getAllCaseFilesDB()
-  console.log(data.length)
+  console.log(" All case files to scan ", data.length)
 }
 
 app.listen(process.env.PORT || 3000, () => {
