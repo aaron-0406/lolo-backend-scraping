@@ -15,7 +15,7 @@ async function validateAndNavigateCaseFile(page, caseFile) {
         //   await removeHCaptcha(page);
         // }
         const numberCaseFile = (0, case_file_decoder_1.caseFileNumberDecoder)(caseFile.dataValues.numberCaseFile);
-        const { isSolved, isCasFileTrue, isBotDetected } = await (0, removeNormalCaptchaV2_SR_1.removeNormalCaptchaV2SR)({ page, solver: puppeteer_extra_1.solver, numberCaseFile });
+        const { isSolved, isCasFileTrue, isBotDetected } = await (0, removeNormalCaptchaV2_SR_1.removeNormalCaptchaV2SR)({ page, solver: puppeteer_extra_1.solver, numberCaseFile, caseFile });
         // const { isSolved, isCasFileTrue, isBotDetected } = await removeNormalCaptchaV1({ page, solver });
         if (isSolved && isCasFileTrue && !isBotDetected) {
             return true;

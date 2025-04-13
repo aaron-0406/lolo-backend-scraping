@@ -9,7 +9,7 @@ const fs_1 = __importDefault(require("fs"));
 const judicial_binacle_constants_1 = require("../../../constants/judicial-binacle.constants");
 const removeHCaptcha_1 = require("../removeHCaptcha/removeHCaptcha");
 const fillCaseFileNumber_1 = require("../fillCaseFileNumber/fillCaseFileNumber");
-async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
+async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile, caseFile }) {
     const captchaDir = path_1.default.resolve(__dirname, '../../../../../public/audio-captchas');
     // Verifica si la carpeta existe, si no, la crea
     if (!fs_1.default.existsSync(captchaDir)) {
@@ -34,7 +34,7 @@ async function removeNormalCaptchaV2SR({ page, solver, numberCaseFile }) {
                 await page.waitForSelector("#captcha_image");
                 await page.waitForSelector("#mensajeNoExisteExpedientes");
                 await page.waitForSelector("#codCaptchaError");
-                await (0, fillCaseFileNumber_1.fillCaseFileNumber)(page, numberCaseFile);
+                await (0, fillCaseFileNumber_1.fillCaseFileNumber)(page, numberCaseFile, caseFile);
                 const value = await page.locator("#btnRepro").scroll({
                     scrollTop: -30,
                 }).then(async () => {
