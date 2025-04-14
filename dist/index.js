@@ -11,6 +11,7 @@ const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const ip_handler_1 = __importDefault(require("./middlewares/ip.handler"));
 const error_handler_1 = __importDefault(require("./middlewares/error.handler"));
+const node_cron_1 = __importDefault(require("node-cron"));
 const routes_1 = __importDefault(require("./routes"));
 const customer_user_service_1 = __importDefault(require("./app/dash/services/customer-user.service"));
 const service = new judicial_binacle_service_1.JudicialBinacleService();
@@ -64,30 +65,32 @@ app.listen(process.env.PORT || 3000, () => {
     app.get("/ping", (_req, res) => {
         res.send("Hello World! 2");
     });
-    (async () => {
-        console.log("Using manual boot scan 🚀");
-        await service.resetAllCaseFiles();
-        await service.main();
-        // await service.resetCaseFilesByCustomerHasBankId();
-    })();
+    // (async () => {
+    //   console.log("Using manual boot scan 🚀")
+    //   await service.resetAllCaseFiles()
+    //   await service.main()
+    //   // await service.resetCaseFilesByCustomerHasBankId();
+    // }
+    // )();
     // (async() => await caseFilesService.currencyExchange())();
-    // cron.schedule('35 9 * * *', async () => {
-    //   await service.resetAllCaseFiles();
-    //   console.log('Cron job iniciado: 6 AM');
-    //   await processCaseFiles();
-    //   async function processCaseFiles() {
-    //     const { notScanedCaseFiles, errorsCounter } = await service.main();
-    //     if (notScanedCaseFiles > 0  && errorsCounter > 4) {
-    //       console.log("Case files with no scan, retrying in 30 minutes.");
-    //       setTimeout(async () => {
-    //         await processCaseFiles();
-    //       }, 30 * 60 * 1000);
-    //     } else {
-    //       console.log("All case files scanned.");
-    //     }
-    //   }
-    // },{
-    //   timezone: 'America/Lima'
-    // });
+    node_cron_1.default.schedule('0 7 * * *', async () => {
+        await service.resetAllCaseFiles();
+        console.log('Cron job iniciado: 7 AM');
+        await processCaseFiles();
+        async function processCaseFiles() {
+            const { notScanedCaseFiles, errorsCounter } = await service.main();
+            if (notScanedCaseFiles > 0 && errorsCounter > 4) {
+                console.log("Case files with no scan, retrying in 30 minutes.");
+                setTimeout(async () => {
+                    await processCaseFiles();
+                }, 30 * 60 * 1000);
+            }
+            else {
+                console.log("All case files scanned.");
+            }
+        }
+    }, {
+        timezone: 'America/Lima'
+    });
     console.log("server is running on port", process.env.PORT || 3000);
 });
