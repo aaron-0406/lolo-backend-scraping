@@ -49,7 +49,7 @@ export class JudicialBinacleService {
       {
         where: {
           customer_has_bank_id: {
-            [Op.in]: [31],
+            [Op.in]: [28, 30, 31],
           },
         },
       }
@@ -95,7 +95,7 @@ export class JudicialBinacleService {
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
           customer_has_bank_id: {
-            [Op.in]: [31],
+            [Op.in]: customerHasBanksIds.map((customer) => customer.dataValues.id),
           },
           [Op.and]: [
             { is_scan_valid: true }, // caseFile.dataValues.isScanValid
