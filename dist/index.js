@@ -73,7 +73,7 @@ app.listen(process.env.PORT || 3000, () => {
     // }
     // )();
     // (async() => await caseFilesService.currencyExchange())();
-    node_cron_1.default.schedule('10 4 * * *', async () => {
+    node_cron_1.default.schedule('11 19 * * *', async () => {
         await service.resetAllCaseFiles();
         console.log('Cron job iniciado: 7 AM');
         await processCaseFiles();
