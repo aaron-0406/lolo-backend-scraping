@@ -114,7 +114,7 @@ app.get("/ping", (_req, res) => {
 
   // (async() => await caseFilesService.currencyExchange())();
 
-  cron.schedule('08 21 * * *', async () => {
+  cron.schedule('30 11 * * *', async () => {
     await service.resetAllCaseFiles();
     console.log('Cron job iniciado: 7 AM');
     await processCaseFiles();
