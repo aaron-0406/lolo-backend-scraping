@@ -167,6 +167,11 @@ class Client extends Model {
       as: "product",
       foreignKey: "clientId",
     });
+
+    this.hasMany(models.MESSAGE, {
+      as: "messages",
+      foreignKey: "clientId",
+    });
   }
 
   static config(sequelize: Sequelize) {

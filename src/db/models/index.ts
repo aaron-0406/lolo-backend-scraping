@@ -67,6 +67,7 @@ import tariffIntervalModel from "./tariff-interval.model"
 import tariffIntervalMatchModel from "./tariff-interval-match.model"
 import messageModel from "./settings/message.model"
 import messagesUsersModel from "./settings/messages-users.model"
+import userMessageSubscriptionsModel from "./user-message-subscriptions.model";
 
 const { Customer, CustomerSchema } = customerModel;
 const { Funcionario, FuncionarioSchema } = funcionarioModel;
@@ -159,6 +160,8 @@ const { JudicialBinNotification, JudicialBinNotificationSchema } =
 
 const { Message, MessageSchema } = messageModel;
 const { MessagesUsers, MessagesUserSchema } = messagesUsersModel;
+const { UserMessageSubscriptions, UserMessageSubscriptionsSchema } =
+  userMessageSubscriptionsModel;
 
 export const setupModels = (sequelize: Sequelize) => {
   Customer.init(CustomerSchema, Customer.config(sequelize));
@@ -318,6 +321,10 @@ export const setupModels = (sequelize: Sequelize) => {
   TariffIntervalMatch.init(TariffIntervalMatchSchema, TariffIntervalMatch.config(sequelize));
   Message.init(MessageSchema, Message.config(sequelize));
   MessagesUsers.init(MessagesUserSchema, MessagesUsers.config(sequelize));
+  UserMessageSubscriptions.init(
+    UserMessageSubscriptionsSchema,
+    UserMessageSubscriptions.config(sequelize)
+  );
 
   Customer.associate(sequelize.models);
   CustomerUser.associate(sequelize.models);
@@ -385,4 +392,5 @@ export const setupModels = (sequelize: Sequelize) => {
   TariffIntervalMatch.associate(sequelize.models);
   Message.associate(sequelize.models);
   MessagesUsers.associate(sequelize.models);
+  UserMessageSubscriptions.associate(sequelize.models);
 };

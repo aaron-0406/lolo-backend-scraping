@@ -12,9 +12,11 @@ import cron from 'node-cron';
 import * as nodemailer from 'nodemailer';
 import routerApi from './routes';
 import { judicialCaseFileService } from './app/judicial/judicial-case-file/modules/services/judicial-case-files.service';
-import customeUserService  from './app/dash/services/customer-user.service';
+import customeUserService from './app/dash/services/customer-user.service';
+import UserMessageSubscriptionsService from './app/settings/services/user-message-subscriptions.service';
 const service = new JudicialBinacleService();
 const serviceCustomer = new customeUserService()
+const userMessageSubscriptionsService = new UserMessageSubscriptionsService()
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = errorHandlerr;
 dotenv.config();
 declare global {
@@ -114,28 +116,58 @@ app.get("/ping", (_req, res) => {
 
   // (async() => await caseFilesService.currencyExchange())();
 
-  cron.schedule('30 11 * * *', async () => {
-    await service.resetAllCaseFiles();
-    console.log('Cron job iniciado: 7 AM');
-    await processCaseFiles();
-  
-    async function processCaseFiles() {
+
+  // Crear una cuenta de prueba
+
+  cron.schedule('* * * * *', async () => { // ejecutar cada minuto
+    await runSendeding();
+    console.log('cron job iniciado: 11:30 am');
+    // await runCompleteProcess();
+    console.log('✅ todos los case files procesados y cron finalizado.');
+  }, {
+    timezone: 'america/lima'
+  });
+
+
+  const runSendeding = async () => {
+    console.log("Sending messages to subscribers");
+    await userMessageSubscriptionsService.sendMessagesToSubscribers();
+  }
+
+
+  // cron.schedule('* * * * *', async () => { // ejecutar cada minuto
+  //     await service.resetAllCaseFiles();
+  //     console.log('cron job iniciado: 11:30 am');
+
+  //     await runCompleteProcess();
+
+  //     console.log('✅ todos los case files procesados y cron finalizado.');
+
+  //   }, {
+  //     timezone: 'america/lima'
+  //   });
+
+  async function runCompleteProcess() {
+    async function processCaseFiles(): Promise<void> {
       const { notScanedCaseFiles, errorsCounter } = await service.main();
-  
+
       if (notScanedCaseFiles > 0 && errorsCounter > 4) {
-        console.log("Case files with no scan, retrying in 30 minutes.");
-  
-        setTimeout(async () => {
-          await processCaseFiles();
-        }, 30 * 60 * 1000);
+        console.log("Case files with no scan, retrying in 30 minutes...");
+
+        // Espera 30 minutos y vuelve a intentar
+        await new Promise(resolve =>
+          setTimeout(resolve, 30 * 60 * 1000)
+        );
+
+        return processCaseFiles();
       } else {
         console.log("All case files scanned.");
       }
     }
-  }, {
-    timezone: 'America/Lima'
-  });
-  
+
+    return processCaseFiles();
+  }
+
   console.log("server is running on port", process.env.PORT || 3000);
 });
 
