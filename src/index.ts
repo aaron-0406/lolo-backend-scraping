@@ -109,8 +109,7 @@ app.get("/ping", (_req, res) => {
   //   console.log("Using manual boot scan 🚀")
   //   await service.resetAllCaseFiles()
   //   await service.main()
-  //   // await service.resetCaseFilesByCustomerHasBankId();
-
+  //   await service.resetCaseFilesByCustomerHasBankId();
   // }
   // )();
 
@@ -119,14 +118,14 @@ app.get("/ping", (_req, res) => {
 
   // Crear una cuenta de prueba
 
-  cron.schedule('* * * * *', async () => { // ejecutar cada minuto
-    await runSendeding();
-    console.log('cron job iniciado: 11:30 am');
-    // await runCompleteProcess();
-    console.log('✅ todos los case files procesados y cron finalizado.');
-  }, {
-    timezone: 'america/lima'
-  });
+  // cron.schedule('* * * * *', async () => { // ejecutar cada minuto
+  //   await runSendeding();
+  //   console.log('cron job iniciado: 11:30 am');
+  //   // await runCompleteProcess();
+  //   console.log('✅ todos los case files procesados y cron finalizado.');
+  // }, {
+  //   timezone: 'america/lima'
+  // });
 
 
   const runSendeding = async () => {
@@ -135,17 +134,22 @@ app.get("/ping", (_req, res) => {
   }
 
 
-  // cron.schedule('* * * * *', async () => { // ejecutar cada minuto
-  //     await service.resetAllCaseFiles();
-  //     console.log('cron job iniciado: 11:30 am');
+  cron.schedule('30 11 * * *', async () => { // ejecutar cada minuto
+      await service.resetAllCaseFiles();
+      console.log('cron job iniciado: 11:30 am');
 
-  //     await runCompleteProcess();
+      await runCompleteProcess();
 
-  //     console.log('✅ todos los case files procesados y cron finalizado.');
+      console.log('✅ todos los case files procesados y cron finalizado.');
 
-  //   }, {
-  //     timezone: 'america/lima'
-  //   });
+      console.log("📨 Sending messages to subscribers")
+
+      await userMessageSubscriptionsService.sendMessagesToSubscribers();
+      
+
+    }, {
+      timezone: 'america/lima'
+    });
 
   async function runCompleteProcess() {
     async function processCaseFiles(): Promise<void> {
