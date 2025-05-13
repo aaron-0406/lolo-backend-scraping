@@ -524,6 +524,8 @@ class JudicialBinacleService {
                                     customerUserId: userBot.dataValues.id,
                                     subject: "Nueva bitácora registrada",
                                     keyMessage: "new-binnacle-registered-by-bot",
+                                    judicialCaseFileId: caseFile.dataValues.id,
+                                    clientId: caseFile.dataValues.client.dataValues.id,
                                     body: JSON.stringify((0, generateJsonStructureToNewBinnacle_1.generateJsonStructureToNewBinnacle)({
                                         data: binnacle,
                                         titleDescription: "Nueva bitácora registrada",
@@ -669,6 +671,8 @@ class JudicialBinacleService {
                                             customerUserId: userBot.dataValues.id,
                                             subject: "Nuevas notificaciones registradas",
                                             keyMessage: "new-notifications-registered-by-bot",
+                                            judicialCaseFileId: caseFile.dataValues.id,
+                                            clientId: caseFile.dataValues.client.dataValues.id,
                                             body: JSON.stringify((0, generateJsonStructureToNewBinnacle_1.generateJsonStructureToNewBinnacle)({
                                                 data: Object.assign(Object.assign({}, matchedBinnacle), { notifications: newNotifications }),
                                                 titleDescription: "Nuevas notificaciones registradas",

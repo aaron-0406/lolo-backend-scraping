@@ -14,8 +14,10 @@ const error_handler_1 = __importDefault(require("./middlewares/error.handler"));
 const node_cron_1 = __importDefault(require("node-cron"));
 const routes_1 = __importDefault(require("./routes"));
 const customer_user_service_1 = __importDefault(require("./app/dash/services/customer-user.service"));
+const user_message_subscriptions_service_1 = __importDefault(require("./app/settings/services/user-message-subscriptions.service"));
 const service = new judicial_binacle_service_1.JudicialBinacleService();
 const serviceCustomer = new customer_user_service_1.default();
+const userMessageSubscriptionsService = new user_message_subscriptions_service_1.default();
 const { boomErrorHandler, logErrors, ormErrorHandler, errorHandler } = error_handler_1.default;
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -69,28 +71,47 @@ app.listen(process.env.PORT || 3000, () => {
     //   console.log("Using manual boot scan 🚀")
     //   await service.resetAllCaseFiles()
     //   await service.main()
-    //   // await service.resetCaseFilesByCustomerHasBankId();
+    //   await service.resetCaseFilesByCustomerHasBankId();
     // }
     // )();
     // (async() => await caseFilesService.currencyExchange())();
+    // Crear una cuenta de prueba
+    // cron.schedule('* * * * *', async () => { // ejecutar cada minuto
+    //   await runSendeding();
+    //   console.log('cron job iniciado: 11:30 am');
+    //   // await runCompleteProcess();
+    //   console.log('✅ todos los case files procesados y cron finalizado.');
+    // }, {
+    //   timezone: 'america/lima'
+    // });
+    const runSendeding = async () => {
+        console.log("Sending messages to subscribers");
+        await userMessageSubscriptionsService.sendMessagesToSubscribers();
+    };
     node_cron_1.default.schedule('30 11 * * *', async () => {
         await service.resetAllCaseFiles();
-        console.log('Cron job iniciado: 7 AM');
-        await processCaseFiles();
+        console.log('cron job iniciado: 11:30 am');
+        await runCompleteProcess();
+        console.log('✅ todos los case files procesados y cron finalizado.');
+        console.log("📨 Sending messages to subscribers");
+        await userMessageSubscriptionsService.sendMessagesToSubscribers();
+    }, {
+        timezone: 'america/lima'
+    });
+    async function runCompleteProcess() {
         async function processCaseFiles() {
             const { notScanedCaseFiles, errorsCounter } = await service.main();
             if (notScanedCaseFiles > 0 && errorsCounter > 4) {
-                console.log("Case files with no scan, retrying in 30 minutes.");
-                setTimeout(async () => {
-                    await processCaseFiles();
-                }, 30 * 60 * 1000);
+                console.log("Case files with no scan, retrying in 30 minutes...");
+                // Espera 30 minutos y vuelve a intentar
+                await new Promise(resolve => setTimeout(resolve, 30 * 60 * 1000));
+                return processCaseFiles();
             }
             else {
                 console.log("All case files scanned.");
             }
         }
-    }, {
-        timezone: 'America/Lima'
-    });
+        return processCaseFiles();
+    }
     console.log("server is running on port", process.env.PORT || 3000);
 });

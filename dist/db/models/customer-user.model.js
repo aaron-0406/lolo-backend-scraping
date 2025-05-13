@@ -124,6 +124,10 @@ class CustomerUser extends sequelize_1.Model {
             as: "messages",
             foreignKey: "customerUserId",
         });
+        this.hasMany(models.USER_MESSAGE_SUBSCRIPTIONS, {
+            as: "userMessageSubscriptions",
+            foreignKey: "customerUserId",
+        });
     }
     static config(sequelize) {
         return {

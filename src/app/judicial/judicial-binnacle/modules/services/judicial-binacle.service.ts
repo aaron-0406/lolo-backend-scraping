@@ -41,8 +41,8 @@ export class JudicialBinacleService {
   // async getAllCaseFiles(): Promise<CaseFiles> {
   //   return caseFilesData as CaseFiles;
   // }
- 
-  
+
+
   async resetCaseFilesByCustomerHasBankId(): Promise<void> {
     await models.JUDICIAL_CASE_FILE.update(
       { wasScanned: false, isScanValid: true },
@@ -136,7 +136,7 @@ export class JudicialBinacleService {
             as: "client",
           },
           {
-            model: models.CUSTOMER_USER, 
+            model: models.CUSTOMER_USER,
             as: "customerUser",
           },
         ],
@@ -288,7 +288,7 @@ export class JudicialBinacleService {
 
           if (newBinnaclesIndex.length > prevBinnaclesIndexs.length) {
             const contNewBinnacles = newBinnaclesIndex.length - prevBinnaclesIndexs.length;
-            
+
             let prevBinnacles: any[] = [];
             try {
               prevBinnacles = caseFile.dataValues.judicialBinnacle
@@ -352,7 +352,7 @@ export class JudicialBinacleService {
           } catch (error) {
             console.log("Error al obtener newBinnaclesFound: ", error);
           }
-          
+
           // console.log("Previous binnacles indexs updated:", binnaclesFromDB.filter(binnacle => binnacle.dataValues.index !== null)) // []
           console.log("New binnacles found", newBinnaclesFound) // [8]
           // console.log("New binnacles found length ", newBinnaclesFound.length) // [8]
@@ -690,6 +690,8 @@ export class JudicialBinacleService {
                   customerUserId: userBot.dataValues.id,
                   subject: "Nueva bitácora registrada",
                   keyMessage: "new-binnacle-registered-by-bot",
+                  judicialCaseFileId: caseFile.dataValues.id,
+                  clientId: caseFile.dataValues.client.dataValues.id,
                   body: JSON.stringify(
                     generateJsonStructureToNewBinnacle({
                       data: binnacle,
@@ -853,6 +855,8 @@ export class JudicialBinacleService {
                         customerUserId: userBot.dataValues.id,
                         subject: "Nuevas notificaciones registradas",
                         keyMessage: "new-notifications-registered-by-bot",
+                        judicialCaseFileId: caseFile.dataValues.id,
+                        clientId: caseFile.dataValues.client.dataValues.id,
                         body: JSON.stringify(
                           generateJsonStructureToNewBinnacle({
                             data: {

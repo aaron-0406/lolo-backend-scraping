@@ -310,6 +310,10 @@ class JudicialCaseFile extends sequelize_1.Model {
         //   as: "judicialResources",
         //   foreignKey: "judicialCaseFileId",
         // })
+        this.hasMany(models.MESSAGE, {
+            as: "messages",
+            foreignKey: "judicialCaseFileId",
+        });
     }
     static config(sequelize) {
         return {
