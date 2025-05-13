@@ -261,7 +261,7 @@ class UserMessageSubscriptionsService {
                       ${
                         message.dataValues.keyMessage
                           ? `
-                          <a href="http://localhost:3000${JSON.parse(body.url)[0] ?? ""}" 
+                          <a href="https://lolobank.com${JSON.parse(body.url)[0] ?? ""}" 
                             style="${buttonStyle}"
                             onmouseover="this.style.backgroundColor='#004494'"
                             onmouseout="this.style.backgroundColor='#0056b3'">

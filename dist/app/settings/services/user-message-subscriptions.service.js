@@ -264,7 +264,7 @@ class UserMessageSubscriptionsService {
                     <p style="margin: 5px 0; font-size: 16px;"><span style="color: #555; font-weight: 600;">Asunto:</span> ${subject}</p>
                       ${message.dataValues.keyMessage
                                                 ? `
-                          <a href="http://localhost:3000${(_a = JSON.parse(body.url)[0]) !== null && _a !== void 0 ? _a : ""}" 
+                          <a href="https://lolobank.com${(_a = JSON.parse(body.url)[0]) !== null && _a !== void 0 ? _a : ""}" 
                             style="${buttonStyle}"
                             onmouseover="this.style.backgroundColor='#004494'"
                             onmouseout="this.style.backgroundColor='#0056b3'">
