@@ -314,7 +314,7 @@ class UserMessageSubscriptionsService {
 
             const emailMessage = {
               from: config.AWS_EMAIL,
-              to: `intjavaaron@gmail.com`,
+              to: email,
               subject: `Resumen de Actualizaciones Judiciales Lolo Bank Sistema de Gestión Judicial - ${formattedDate}`,
               html: `
                 <!DOCTYPE html>
