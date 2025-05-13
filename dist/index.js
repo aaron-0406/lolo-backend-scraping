@@ -76,26 +76,28 @@ app.listen(process.env.PORT || 3000, () => {
     // )();
     // (async() => await caseFilesService.currencyExchange())();
     // Crear una cuenta de prueba
-    node_cron_1.default.schedule('* * * * *', async () => {
-        await runSendeding();
-        console.log('cron job iniciado: 11:30 am');
-        // await runCompleteProcess();
-        console.log('✅ todos los case files procesados y cron finalizado.');
-    }, {
-        timezone: 'america/lima'
-    });
+    // cron.schedule('* * * * *', async () => { // ejecutar cada minuto
+    //   await runSendeding();
+    //   console.log('cron job iniciado: 11:30 am');
+    //   // await runCompleteProcess();
+    //   console.log('✅ todos los case files procesados y cron finalizado.');
+    // }, {
+    //   timezone: 'america/lima'
+    // });
     const runSendeding = async () => {
         console.log("Sending messages to subscribers");
         await userMessageSubscriptionsService.sendMessagesToSubscribers();
     };
-    // cron.schedule('* * * * *', async () => { // ejecutar cada minuto
-    //     await service.resetAllCaseFiles();
-    //     console.log('cron job iniciado: 11:30 am');
-    //     await runCompleteProcess();
-    //     console.log('✅ todos los case files procesados y cron finalizado.');
-    //   }, {
-    //     timezone: 'america/lima'
-    //   });
+    node_cron_1.default.schedule('30 11 * * *', async () => {
+        await service.resetAllCaseFiles();
+        console.log('cron job iniciado: 11:30 am');
+        await runCompleteProcess();
+        console.log('✅ todos los case files procesados y cron finalizado.');
+        console.log("📨 Sending messages to subscribers");
+        await userMessageSubscriptionsService.sendMessagesToSubscribers();
+    }, {
+        timezone: 'america/lima'
+    });
     async function runCompleteProcess() {
         async function processCaseFiles() {
             const { notScanedCaseFiles, errorsCounter } = await service.main();
