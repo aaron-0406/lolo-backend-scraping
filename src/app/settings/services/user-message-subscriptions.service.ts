@@ -163,12 +163,12 @@ class UserMessageSubscriptionsService {
                   new Date().toLocaleString("en-US", {
                     timeZone: "America/Lima",
                   })
-                ).setHours(0, 0, 0, 0),
-                [Op.lt]: new Date(
-                  new Date().toLocaleString("en-US", {
-                    timeZone: "America/Lima",
-                  })
-                ).setHours(23, 59, 59, 999),
+                ).setHours(0, 0, 0, 0) - 5,
+                // [Op.lt]: new Date(
+                //   new Date().toLocaleString("en-US", {
+                //     timeZone: "America/Lima",
+                //   })
+                // ).setHours(23, 59, 59, 999),
               },
               [Op.and]: [
                 {
@@ -294,15 +294,15 @@ class UserMessageSubscriptionsService {
           })
           .join("");
 
-          const transporter = nodemailer.createTransport({
-              host: config.AWS_EMAIL_HOST,
-              port: 587,
-              secure: false,
-              auth: {
-                user: config.AWS_EMAIL_USER,
-                pass: config.AWS_EMAIL_PASSWORD,
-              },
-            });
+          const transport = nodemailer.createTransport({
+            host: config.AWS_EMAIL_HOST,
+            port: 465,
+            secure: true,
+            auth: {
+              user: config.AWS_EMAIL_USER,
+              pass: config.AWS_EMAIL_PASSWORD,
+            },
+          });
 
             // Current date formatting
             const today = new Date();
@@ -314,7 +314,7 @@ class UserMessageSubscriptionsService {
 
             const emailMessage = {
               from: config.AWS_EMAIL,
-              to: email,
+              to: `intjavaaron@gmail.com`,
               subject: `Resumen de Actualizaciones Judiciales Lolo Bank Sistema de Gestión Judicial - ${formattedDate}`,
               html: `
                 <!DOCTYPE html>
@@ -366,7 +366,15 @@ class UserMessageSubscriptionsService {
               `,
             };
 
-            await transporter.sendMail(emailMessage);
+            try {
+              console.log("📨 Sending mail to", email)
+              transport.sendMail(emailMessage, (error, info) => {
+                console.log(error);
+                console.log(info);
+              });
+            } catch (error) {
+              console.log("Error sending email", error)
+            }
             // const previewUrl = nodemailer.getTestMessageUrl(info);
             // console.log("Preview URL:", previewUrl);
         }

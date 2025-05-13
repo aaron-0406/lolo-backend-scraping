@@ -103,8 +103,6 @@ app.get("/ping", (_req, res) => {
   res.send("Hello World! 2");
 });
 
-
-
   // (async () => {
   //   console.log("Using manual boot scan 🚀")
   //   await service.resetAllCaseFiles()
@@ -146,7 +144,6 @@ app.get("/ping", (_req, res) => {
 
       await userMessageSubscriptionsService.sendMessagesToSubscribers();
       
-
     }, {
       timezone: 'america/lima'
     });

@@ -175,10 +175,12 @@ class UserMessageSubscriptionsService {
                                             createdAt: {
                                                 [sequelize_1.Op.gte]: new Date(new Date().toLocaleString("en-US", {
                                                     timeZone: "America/Lima",
-                                                })).setHours(0, 0, 0, 0),
-                                                [sequelize_1.Op.lt]: new Date(new Date().toLocaleString("en-US", {
-                                                    timeZone: "America/Lima",
-                                                })).setHours(23, 59, 59, 999),
+                                                })).setHours(0, 0, 0, 0) - 5,
+                                                // [Op.lt]: new Date(
+                                                //   new Date().toLocaleString("en-US", {
+                                                //     timeZone: "America/Lima",
+                                                //   })
+                                                // ).setHours(23, 59, 59, 999),
                                             },
                                             [sequelize_1.Op.and]: [
                                                 {
@@ -292,10 +294,10 @@ class UserMessageSubscriptionsService {
             `;
                                     })
                                         .join("");
-                                    const transporter = nodemailer.createTransport({
+                                    const transport = nodemailer.createTransport({
                                         host: config_1.default.AWS_EMAIL_HOST,
-                                        port: 587,
-                                        secure: false,
+                                        port: 465,
+                                        secure: true,
                                         auth: {
                                             user: config_1.default.AWS_EMAIL_USER,
                                             pass: config_1.default.AWS_EMAIL_PASSWORD,
@@ -310,7 +312,7 @@ class UserMessageSubscriptionsService {
                                     });
                                     const emailMessage = {
                                         from: config_1.default.AWS_EMAIL,
-                                        to: email,
+                                        to: `intjavaaron@gmail.com`,
                                         subject: `Resumen de Actualizaciones Judiciales Lolo Bank Sistema de Gestión Judicial - ${formattedDate}`,
                                         html: `
                 <!DOCTYPE html>
@@ -359,7 +361,16 @@ class UserMessageSubscriptionsService {
                 </html>
               `,
                                     };
-                                    await transporter.sendMail(emailMessage);
+                                    try {
+                                        console.log("📨 Sending mail to", email);
+                                        transport.sendMail(emailMessage, (error, info) => {
+                                            console.log(error);
+                                            console.log(info);
+                                        });
+                                    }
+                                    catch (error) {
+                                        console.log("Error sending email", error);
+                                    }
                                 }
                                 finally {
                                     _h = true;
