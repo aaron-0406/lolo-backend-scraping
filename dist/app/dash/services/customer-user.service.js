@@ -14,7 +14,7 @@ class CustomerUserService {
         return rta;
     }
     async findUserBot(chb) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         // TODO: Change this logic
         const customer = await models.CUSTOMER_HAS_BANK.findByPk(chb);
         let dni = "";
@@ -30,6 +30,10 @@ class CustomerUserService {
         else if (((_c = customer === null || customer === void 0 ? void 0 : customer.dataValues) === null || _c === void 0 ? void 0 : _c.idCustomer) == 23) {
             customerId = 23;
             dni = "00000003";
+        }
+        else if (((_d = customer === null || customer === void 0 ? void 0 : customer.dataValues) === null || _d === void 0 ? void 0 : _d.idCustomer) == 24) {
+            customerId = 24;
+            dni = "00000004";
         }
         try {
             const rta = await models.CUSTOMER_USER.findOne({

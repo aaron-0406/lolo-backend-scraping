@@ -132,7 +132,7 @@ app.get("/ping", (_req, res) => {
   }
 
 
-  cron.schedule('30 11 * * *', async () => { // ejecutar cada minuto
+  cron.schedule('45 7 * * *', async () => { // ejecutar cada minuto
       await service.resetAllCaseFiles();
       console.log('cron job iniciado: 11:30 am');
 
