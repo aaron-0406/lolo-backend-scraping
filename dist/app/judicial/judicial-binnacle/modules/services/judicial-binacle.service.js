@@ -41,7 +41,7 @@ class JudicialBinacleService {
         await models.JUDICIAL_CASE_FILE.update({ wasScanned: false, isScanValid: true }, {
             where: {
                 customer_has_bank_id: {
-                    [sequelize_1.Op.in]: [28, 30, 31, 32],
+                    [sequelize_1.Op.in]: [32],
                 },
             },
         });
@@ -77,7 +77,7 @@ class JudicialBinacleService {
             const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
                 where: {
                     customer_has_bank_id: {
-                        [sequelize_1.Op.in]: [28, 30, 31, 32],
+                        [sequelize_1.Op.in]: [32],
                     },
                     [sequelize_1.Op.and]: [
                         { is_scan_valid: true },
