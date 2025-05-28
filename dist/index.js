@@ -88,13 +88,13 @@ app.listen(process.env.PORT || 3000, () => {
         console.log("Sending messages to subscribers");
         await userMessageSubscriptionsService.sendMessagesToSubscribers();
     };
-    node_cron_1.default.schedule('35 8 * * *', async () => {
+    node_cron_1.default.schedule('46 8 * * *', async () => {
         await service.resetAllCaseFiles();
         console.log('cron job iniciado: 11:30 am');
         await runCompleteProcess();
         console.log('✅ todos los case files procesados y cron finalizado.');
         console.log("📨 Sending messages to subscribers");
-        await userMessageSubscriptionsService.sendMessagesToSubscribers();
+        //await userMessageSubscriptionsService.sendMessagesToSubscribers();
     }, {
         timezone: 'america/lima'
     });

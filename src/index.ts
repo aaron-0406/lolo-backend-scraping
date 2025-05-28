@@ -132,7 +132,7 @@ app.get("/ping", (_req, res) => {
   }
 
 
-  cron.schedule('35 8 * * *', async () => { // ejecutar cada minuto
+  cron.schedule('46 8 * * *', async () => { // ejecutar cada minuto
       await service.resetAllCaseFiles();
       console.log('cron job iniciado: 11:30 am');
 
@@ -142,7 +142,7 @@ app.get("/ping", (_req, res) => {
 
       console.log("📨 Sending messages to subscribers")
 
-      await userMessageSubscriptionsService.sendMessagesToSubscribers();
+      //await userMessageSubscriptionsService.sendMessagesToSubscribers();
       
     }, {
       timezone: 'america/lima'
