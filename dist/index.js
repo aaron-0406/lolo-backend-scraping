@@ -88,7 +88,7 @@ app.listen(process.env.PORT || 3000, () => {
         console.log("Sending messages to subscribers");
         await userMessageSubscriptionsService.sendMessagesToSubscribers();
     };
-    node_cron_1.default.schedule('14 12 * * *', async () => {
+    node_cron_1.default.schedule('25 15 * * *', async () => {
         await service.resetAllCaseFiles();
         console.log('cron job iniciado: 11:30 am');
         await runCompleteProcess();
