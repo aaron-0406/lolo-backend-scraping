@@ -49,7 +49,7 @@ export class JudicialBinacleService {
       {
         where: {
           customer_has_bank_id: {
-            [Op.in]: [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 18, 21, 23, 24, 25, 26, 27, 33],
+            [Op.in]: [32],
           },
         },
       }
@@ -95,7 +95,7 @@ export class JudicialBinacleService {
       const caseFiles = await models.JUDICIAL_CASE_FILE.findAll({
         where: {
           customer_has_bank_id: {
-            [Op.in]: [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 18, 21, 23, 24, 25, 26, 27, 33],
+            [Op.in]: [32],
           },
           [Op.and]: [
             { is_scan_valid: true }, // caseFile.dataValues.isScanValid
